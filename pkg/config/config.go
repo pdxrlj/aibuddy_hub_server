@@ -1,0 +1,215 @@
+// Package config 提供配置管理功能
+package config
+
+import (
+	"log/slog"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+
+	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
+)
+
+// Instance 全局配置实例
+var Instance *Config
+
+// Config 应用程序配置
+type Config struct {
+	App     *AppConfig     `json:"app" mapstructure:"app"`
+	Storage *StorageConfig `json:"storage" mapstructure:"storage"`
+	Agent   *AgentConfig   `json:"agent" mapstructure:"agent"`
+	Tracer  *TracerConfig  `json:"tracer" mapstructure:"tracer"`
+}
+
+// AppConfig 应用配置
+type AppConfig struct {
+	Name     string `json:"name" mapstructure:"name"`
+	Host     string `json:"host" mapstructure:"host"`
+	Port     string `json:"port" mapstructure:"port"`
+	LogLevel string `json:"log_level" mapstructure:"log_level"`
+}
+
+// StorageConfig 存储配置
+type StorageConfig struct {
+	Database *DatabaseConfig `json:"database" mapstructure:"database"`
+	Redis    *RedisConfig    `json:"redis" mapstructure:"redis"`
+	Flash    *FlashConfig    `json:"flash" mapstructure:"flash"`
+}
+
+// DatabaseConfig 数据库配置
+type DatabaseConfig struct {
+	Name     string `json:"name" mapstructure:"name"`
+	User     string `json:"user" mapstructure:"user"`
+	Password string `json:"password" mapstructure:"password"`
+	Host     string `json:"host" mapstructure:"host"`
+	Port     int    `json:"port" mapstructure:"port"`
+}
+
+// RedisConfig Redis配置
+type RedisConfig struct {
+	Password string `json:"password" mapstructure:"password"`
+	Host     string `json:"host" mapstructure:"host"`
+	Port     int    `json:"port" mapstructure:"port"`
+}
+
+// FlashConfig 闪存配置
+type FlashConfig struct {
+	Use string `json:"use" mapstructure:"use"`
+}
+
+// AgentConfig Agent配置
+type AgentConfig struct {
+	Model *AgentModelConfig `json:"model" mapstructure:"model"`
+}
+
+// AgentModelConfig Agent模型配置
+type AgentModelConfig struct {
+	ChatModel *ChatModelConfig `json:"chat_model" mapstructure:"chat_model"`
+	WorkModel *WorkModelConfig `json:"work_model" mapstructure:"work_model"`
+}
+
+// ChatModelConfig 聊天模型配置
+type ChatModelConfig struct {
+	ModelName string `json:"model_name" mapstructure:"model_name"`
+	APIKey    string `json:"api_key" mapstructure:"api_key"`
+	APIURL    string `json:"api_url" mapstructure:"api_url"`
+}
+
+// WorkModelConfig 工作模型配置
+type WorkModelConfig struct {
+	ModelName string `json:"model_name" mapstructure:"model_name"`
+	APIKey    string `json:"api_key" mapstructure:"api_key"`
+	APIURL    string `json:"api_url" mapstructure:"api_url"`
+}
+
+// TracerConfig 追踪配置
+type TracerConfig struct {
+	ServiceName string `json:"service_name" mapstructure:"service_name"`
+	Endpoint    string `json:"endpoint" mapstructure:"endpoint"`
+}
+
+// Setup 初始化配置
+func Setup(base ...string) *Config {
+	cfg := &Config{
+		Tracer: &TracerConfig{
+			ServiceName: "aibuddy_hub",
+		},
+	}
+	basePath := FoundConfigPath()
+	// Windows 路径转换为正斜杠
+	basePath = filepath.ToSlash(basePath)
+	if len(base) > 0 && base[0] != "" {
+		basePath = base[0]
+	}
+
+	// 基于配置文件目录加载 .env 文件
+	err := godotenv.Load(filepath.Join(basePath, "..", ".env"))
+	if err != nil {
+		slog.Debug("Could not load .env file", "error", err)
+	}
+
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(basePath)
+
+	viper.SetEnvPrefix("AIBUDDY_HUB")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	err = viper.ReadInConfig()
+	if err != nil {
+		slog.Warn("加载配置文件失败，使用默认值和环境变量", "error", err)
+	} else {
+		slog.Info("加载配置文件成功", "file", viper.ConfigFileUsed())
+	}
+
+	for _, config := range []string{"dev", "prod", "test"} {
+		configFile := filepath.ToSlash(filepath.Join(basePath, "config."+config+".yaml"))
+		viper.SetConfigFile(configFile)
+		if err = viper.MergeInConfig(); err != nil {
+			slog.Warn("合并配置文件失败", "error", err)
+		} else {
+			slog.Info("合并配置文件成功", "file", viper.ConfigFileUsed())
+		}
+	}
+
+	viper.AutomaticEnv()
+
+	err = viper.Unmarshal(cfg)
+	if err != nil {
+		slog.Error("解析配置文件失败", "error", err)
+		panic(err)
+	}
+	Instance = cfg
+
+	return cfg
+}
+
+// FoundConfigPath 查找配置文件路径
+func FoundConfigPath() string {
+	// 1. 检查环境变量
+	if envPath := os.Getenv("AIBUDDY_CONFIG_PATH"); envPath != "" {
+		if filepath.IsAbs(envPath) {
+			return envPath
+		}
+		if abs, err := filepath.Abs(envPath); err == nil {
+			return abs
+		}
+		return envPath
+	}
+
+	// 2. 检查可执行文件同目录
+	if exe, err := os.Executable(); err == nil {
+		dir := filepath.Dir(exe)
+		if configPath := checkConfigDir(dir); configPath != "" {
+			return configPath
+		}
+	}
+
+	// 3. 检查调用者所在目录
+	_, file, _, ok := runtime.Caller(1)
+	if !ok {
+		return defaultConfigPath()
+	}
+
+	// 4. 向上查找 go.mod 目录
+	dir := filepath.Dir(file)
+	for {
+		goModPath := filepath.Join(dir, "go.mod")
+		if _, err := os.Stat(goModPath); err == nil {
+			configPath := filepath.Join(dir, "config")
+			if _, err := os.Stat(configPath); err == nil {
+				return configPath
+			}
+			break
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+
+	return defaultConfigPath()
+}
+
+func checkConfigDir(dir string) string {
+	configPath := filepath.Join(dir, "config")
+	if _, err := os.Stat(configPath); err == nil {
+		return configPath
+	}
+	configPath = filepath.Join(dir, "..", "config")
+	if _, err := os.Stat(configPath); err == nil {
+		return filepath.Clean(configPath)
+	}
+	return ""
+}
+
+func defaultConfigPath() string {
+	abs, err := filepath.Abs("./config")
+	if err != nil {
+		return "./config"
+	}
+	return abs
+}
