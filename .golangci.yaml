@@ -1,0 +1,116 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    # 错误检查
+    - errcheck # 检查未检查的错误
+    - gosimple # 简化代码
+    - govet # 可疑代码检查
+    - ineffassign # 检查无效赋值
+    - staticcheck # 静态分析检查
+    - unused # 未使用的代码
+
+    # 代码风格
+    - bodyclose
+    - cyclop
+    - dupl
+    - gocognit
+    - goconst
+    - gocritic
+    - gofmt
+    - misspell
+    - nakedret
+    - prealloc
+    - revive
+    - unconvert
+    - unparam
+    - whitespace
+
+    - gocyclo
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  govet:
+    enable-all: true
+
+  gocyclo:
+    min-complexity: 15
+
+  cyclop:
+    max-complexity: 15
+
+  gocognit:
+    min-complexity: 15
+
+  dupl:
+    threshold: 150
+
+  gofmt:
+    simplify: true
+
+  goimports:
+    local-prefixes: aibuddy
+
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+
+  nakedret:
+    max-func-lines: 30
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+      - opinionated
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  exclude-rules:
+    # 排除测试文件的检查
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - bodyclose
+        - gocritic
+
+    - path: _test\.go
+      text: "fieldalignment"
+      linters:
+        - govet
+
+    - text: "cognitive complexity"
+      linters:
+        - gocognit
+    - text: "cyclop"
+      linters:
+        - cyclop

@@ -1,0 +1,28 @@
+app:
+  name: "aibuddy_hub"
+  host: "0.0.0.0"
+  port: 9081
+  log_level: "info"
+storage:
+  database:
+    # host: ""
+    port: 5432
+    name: "aibuddy_hub_test"
+    user: "test"
+    password: "test"
+  redis:
+    host: "127.0.0.1"
+    port: 6379
+    password: "test"
+  flash:
+    use: "redis"
+agent:
+  model:
+    chat_model:
+      model_name: ""
+      api_key: ""
+      api_url: ""
+    work_model:
+      model_name: ""
+      api_key: ""
+      api_url: ""

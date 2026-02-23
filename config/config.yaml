@@ -1,0 +1,32 @@
+app:
+  name: "aibuddy_hub"
+  host: "0.0.0.0"
+  port: 9081
+  log_level: "info"
+storage:
+  database:
+    host: "localhost"
+    port: 5432
+    name: "aibuddy_hub"
+    user: "postgres"
+    password: "postgres"
+  redis:
+    host: "localhost"
+    port: 6379
+    password: "password"
+  flash:
+    use: "redis"
+agent:
+  model:
+    chat_model:
+      model_name: ""
+      api_key: ""
+      api_url: ""
+    work_model:
+      model_name: ""
+      api_key: ""
+      api_url: ""
+
+tracer:
+  service_name: "aibuddy_hub"
+  endpoint: "localhost:4317"
