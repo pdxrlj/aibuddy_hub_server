@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
@@ -21,6 +22,7 @@ type Config struct {
 	Storage *StorageConfig `json:"storage" mapstructure:"storage"`
 	Agent   *AgentConfig   `json:"agent" mapstructure:"agent"`
 	Tracer  *TracerConfig  `json:"tracer" mapstructure:"tracer"`
+	Aliyun  *AliyunConfig  `json:"aliyun" mapstructure:"aliyun"`
 }
 
 // AppConfig 应用配置
@@ -52,6 +54,7 @@ type RedisConfig struct {
 	Password string `json:"password" mapstructure:"password"`
 	Host     string `json:"host" mapstructure:"host"`
 	Port     int    `json:"port" mapstructure:"port"`
+	DB       int    `json:"db" mapstructure:"db"`
 }
 
 // FlashConfig 闪存配置
@@ -90,6 +93,29 @@ type TracerConfig struct {
 	Endpoint    string `json:"endpoint" mapstructure:"endpoint"`
 }
 
+// AliyunConfig Aliyun配置
+type AliyunConfig struct {
+	AccessKeyID     string      `json:"access_key_id" mapstructure:"access_key_id"`
+	AccessKeySecret string      `json:"access_key_secret" mapstructure:"access_key_secret"`
+	Mqtt            *MqttConfig `json:"mqtt" mapstructure:"mqtt"`
+}
+
+// MqttConfig Mqtt配置
+type MqttConfig struct {
+	URL            string           `json:"url" mapstructure:"url"`
+	ClientIDPrefix string           `json:"client_id_prefix" mapstructure:"client_id_prefix"`
+	InstanceID     string           `json:"instance_id" mapstructure:"instance_id"`
+	TopicPrefix    string           `json:"topic_prefix" mapstructure:"topic_prefix"`
+	CleanSession   bool             `json:"clean_session" mapstructure:"clean_session"`
+	KeepAlive      time.Duration    `json:"keep_alive" mapstructure:"keep_alive"`
+	Reconnect      *ReconnectConfig `json:"reconnect" mapstructure:"reconnect"`
+}
+
+// ReconnectConfig 重连配置
+type ReconnectConfig struct {
+	Delay time.Duration `json:"delay" mapstructure:"delay"`
+}
+
 // Setup 初始化配置
 func Setup(base ...string) *Config {
 	cfg := &Config{
@@ -98,13 +124,12 @@ func Setup(base ...string) *Config {
 		},
 	}
 	basePath := FoundConfigPath()
-	// Windows 路径转换为正斜杠
+
 	basePath = filepath.ToSlash(basePath)
 	if len(base) > 0 && base[0] != "" {
 		basePath = base[0]
 	}
 
-	// 基于配置文件目录加载 .env 文件
 	err := godotenv.Load(filepath.Join(basePath, "..", ".env"))
 	if err != nil {
 		slog.Debug("Could not load .env file", "error", err)
@@ -149,6 +174,24 @@ func Setup(base ...string) *Config {
 // FoundConfigPath 查找配置文件路径
 func FoundConfigPath() string {
 	// 1. 检查环境变量
+	if path := checkEnvConfig(); path != "" {
+		return path
+	}
+
+	// 2. 检查可执行文件同目录
+	if path := checkExeConfig(); path != "" {
+		return path
+	}
+
+	// 3. 检查调用者所在目录并向上查找
+	if path := checkCallerConfig(); path != "" {
+		return path
+	}
+
+	return defaultConfigPath()
+}
+
+func checkEnvConfig() string {
 	if envPath := os.Getenv("AIBUDDY_CONFIG_PATH"); envPath != "" {
 		if filepath.IsAbs(envPath) {
 			return envPath
@@ -158,22 +201,23 @@ func FoundConfigPath() string {
 		}
 		return envPath
 	}
+	return ""
+}
 
-	// 2. 检查可执行文件同目录
+func checkExeConfig() string {
 	if exe, err := os.Executable(); err == nil {
 		dir := filepath.Dir(exe)
-		if configPath := checkConfigDir(dir); configPath != "" {
-			return configPath
-		}
+		return checkConfigDir(dir)
 	}
+	return ""
+}
 
-	// 3. 检查调用者所在目录
+func checkCallerConfig() string {
 	_, file, _, ok := runtime.Caller(1)
 	if !ok {
-		return defaultConfigPath()
+		return ""
 	}
 
-	// 4. 向上查找 go.mod 目录
 	dir := filepath.Dir(file)
 	for {
 		goModPath := filepath.Join(dir, "go.mod")
@@ -190,8 +234,7 @@ func FoundConfigPath() string {
 		}
 		dir = parent
 	}
-
-	return defaultConfigPath()
+	return ""
 }
 
 func checkConfigDir(dir string) string {

@@ -7,13 +7,14 @@ storage:
   database:
     # host: ""
     port: 5432
-    name: "aibuddy_hub_test"
+    name: "aibuddy"
     user: "test"
     password: "test"
   redis:
     host: "127.0.0.1"
     port: 6379
     password: "test"
+    db: 0
   flash:
     use: "redis"
 agent:

@@ -1,10 +1,9 @@
-// Package http 提供 HTTP 服务相关功能
-package http
+// Package ahttp 提供 HTTP 服务相关功能
+package ahttp
 
 import (
-	"aibuddy/cmd/server/http/auth"
+	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
-	"aibuddy/pkg/http"
 	"context"
 	"fmt"
 	"log/slog"
@@ -30,9 +29,9 @@ func StartHTTPServer(ctx context.Context) error {
 	SetupRoutes(router)
 	port := config.Instance.App.Port
 	host := config.Instance.App.Host
-	base := http.NewBase(router, nil)
+	base := ahttp.NewBase(router, nil)
 
-	auth.RegisterRoutes(base)
+	RegisterRoutes(base)
 
 	address := net.JoinHostPort(host, port)
 
@@ -72,7 +71,7 @@ func UniversalMiddlewares() []echo.MiddlewareFunc {
 		middleware.RecoverWithConfig(middleware.RecoverConfig{
 			DisableStackAll:     false,
 			DisableErrorHandler: true,
-			LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
+			LogErrorFunc: func(_ echo.Context, err error, stack []byte) error {
 				fmt.Println(err, string(stack))
 				return nil
 			},
@@ -101,7 +100,7 @@ func SetupRoutes(router *echo.Echo) {
 		}
 	}
 
-	router.Validator = &http.Validator{
+	router.Validator = &ahttp.Validator{
 		Validator: validator.New(),
 	}
 }

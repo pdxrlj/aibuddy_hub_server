@@ -1,4 +1,4 @@
-package http
+package ahttp
 
 import (
 	"bytes"
@@ -112,7 +112,7 @@ func sendTestRequest(method, url string, body interface{}) (*http.Response, test
 	if err != nil {
 		return nil, testResponse{}, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -303,7 +303,7 @@ func TestBase_HEAD(t *testing.T) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	assert.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// HEAD 请求应该返回 200 状态码但没有响应体
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -426,7 +426,7 @@ func TestBase_ParameterValidation(t *testing.T) {
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		body, err := io.ReadAll(resp.Body)
 		assert.NoError(t, err)
@@ -459,7 +459,7 @@ func TestBase_ParameterValidation(t *testing.T) {
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		body, err := io.ReadAll(resp.Body)
 		assert.NoError(t, err)
@@ -483,7 +483,7 @@ func TestBase_ParameterValidation(t *testing.T) {
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		assert.NoError(t, err)
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		body, err := io.ReadAll(resp.Body)
 		assert.NoError(t, err)
@@ -512,7 +512,7 @@ func TestBase_ErrorHandling(t *testing.T) {
 	base, e := createTestServer()
 
 	// 创建一个会返回错误的处理器
-	errorHandler := func(state *State) error {
+	errorHandler := func(_ *State) error {
 		return fmt.Errorf("test error")
 	}
 
@@ -530,7 +530,7 @@ func TestBase_ErrorHandling(t *testing.T) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	assert.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// 读取响应体
 	body, err := io.ReadAll(resp.Body)
