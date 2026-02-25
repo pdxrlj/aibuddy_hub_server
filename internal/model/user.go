@@ -14,7 +14,7 @@ type User struct {
 
 	DeviceID string `gorm:"column:device_id;index;type:varchar(255);not null;"`
 
-	Device *Device `gorm:"foreignKey:DeviceID;references:ID;"`
+	Device *Device `gorm:"foreignKey:DeviceID;references:DeviceID;"`
 
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;"`

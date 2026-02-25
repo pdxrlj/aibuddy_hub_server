@@ -28,7 +28,7 @@ func newAgent(db *gorm.DB, opts ...gen.DOOption) agent {
 
 	tableName := _agent.agentDo.TableName()
 	_agent.ALL = field.NewAsterisk(tableName)
-	_agent.Id = field.NewInt64(tableName, "id")
+	_agent.ID = field.NewInt64(tableName, "id")
 	_agent.AgentName = field.NewString(tableName, "agent_name")
 	_agent.RoleIntroduction = field.NewString(tableName, "role_introduction")
 	_agent.SystemPrompt = field.NewString(tableName, "system_prompt")
@@ -44,7 +44,7 @@ type agent struct {
 	agentDo
 
 	ALL              field.Asterisk
-	Id               field.Int64
+	ID               field.Int64
 	AgentName        field.String // 角色名称
 	RoleIntroduction field.String // 角色介绍
 	SystemPrompt     field.String // 系统提示词
@@ -66,7 +66,7 @@ func (a agent) As(alias string) *agent {
 
 func (a *agent) updateTableName(table string) *agent {
 	a.ALL = field.NewAsterisk(table)
-	a.Id = field.NewInt64(table, "id")
+	a.ID = field.NewInt64(table, "id")
 	a.AgentName = field.NewString(table, "agent_name")
 	a.RoleIntroduction = field.NewString(table, "role_introduction")
 	a.SystemPrompt = field.NewString(table, "system_prompt")
@@ -89,7 +89,7 @@ func (a *agent) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 
 func (a *agent) fillFieldMap() {
 	a.fieldMap = make(map[string]field.Expr, 6)
-	a.fieldMap["id"] = a.Id
+	a.fieldMap["id"] = a.ID
 	a.fieldMap["agent_name"] = a.AgentName
 	a.fieldMap["role_introduction"] = a.RoleIntroduction
 	a.fieldMap["system_prompt"] = a.SystemPrompt

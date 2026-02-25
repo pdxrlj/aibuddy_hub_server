@@ -28,14 +28,14 @@ func newReminder(db *gorm.DB, opts ...gen.DOOption) reminder {
 
 	tableName := _reminder.reminderDo.TableName()
 	_reminder.ALL = field.NewAsterisk(tableName)
-	_reminder.Id = field.NewInt64(tableName, "id")
+	_reminder.ID = field.NewInt64(tableName, "id")
 	_reminder.ReminderType = field.NewString(tableName, "reminder_type")
 	_reminder.ReminderTime = field.NewTime(tableName, "reminder_time")
 	_reminder.ReminderContent = field.NewString(tableName, "reminder_content")
-	_reminder.DeviceId = field.NewString(tableName, "device_id")
+	_reminder.DeviceID = field.NewString(tableName, "device_id")
 	_reminder.CronExpression = field.NewString(tableName, "cron_expression")
 	_reminder.Status = field.NewString(tableName, "status")
-	_reminder.ReminderDeviceId = field.NewInt64(tableName, "reminder_device_id")
+	_reminder.ReminderDeviceID = field.NewInt64(tableName, "reminder_device_id")
 	_reminder.CreatedAt = field.NewTime(tableName, "created_at")
 	_reminder.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_reminder.Device = reminderHasOneDevice{
@@ -46,19 +46,6 @@ func newReminder(db *gorm.DB, opts ...gen.DOOption) reminder {
 			field.RelationField
 		}{
 			RelationField: field.NewRelation("Device.Agent", "model.Agent"),
-		},
-		User: struct {
-			field.RelationField
-			Device struct {
-				field.RelationField
-			}
-		}{
-			RelationField: field.NewRelation("Device.User", "model.User"),
-			Device: struct {
-				field.RelationField
-			}{
-				RelationField: field.NewRelation("Device.User.Device", "model.Device"),
-			},
 		},
 	}
 
@@ -71,14 +58,14 @@ type reminder struct {
 	reminderDo
 
 	ALL              field.Asterisk
-	Id               field.Int64
+	ID               field.Int64
 	ReminderType     field.String // 提醒类型
 	ReminderTime     field.Time   // 提醒时间
 	ReminderContent  field.String // 提醒内容
-	DeviceId         field.String // 设备ID
+	DeviceID         field.String // 设备ID
 	CronExpression   field.String // cron表达式
 	Status           field.String
-	ReminderDeviceId field.Int64 // 提醒设备ID
+	ReminderDeviceID field.Int64 // 提醒设备ID
 	CreatedAt        field.Time  // 创建时间
 	UpdatedAt        field.Time  // 更新时间
 	Device           reminderHasOneDevice
@@ -98,14 +85,14 @@ func (r reminder) As(alias string) *reminder {
 
 func (r *reminder) updateTableName(table string) *reminder {
 	r.ALL = field.NewAsterisk(table)
-	r.Id = field.NewInt64(table, "id")
+	r.ID = field.NewInt64(table, "id")
 	r.ReminderType = field.NewString(table, "reminder_type")
 	r.ReminderTime = field.NewTime(table, "reminder_time")
 	r.ReminderContent = field.NewString(table, "reminder_content")
-	r.DeviceId = field.NewString(table, "device_id")
+	r.DeviceID = field.NewString(table, "device_id")
 	r.CronExpression = field.NewString(table, "cron_expression")
 	r.Status = field.NewString(table, "status")
-	r.ReminderDeviceId = field.NewInt64(table, "reminder_device_id")
+	r.ReminderDeviceID = field.NewInt64(table, "reminder_device_id")
 	r.CreatedAt = field.NewTime(table, "created_at")
 	r.UpdatedAt = field.NewTime(table, "updated_at")
 
@@ -125,14 +112,14 @@ func (r *reminder) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 
 func (r *reminder) fillFieldMap() {
 	r.fieldMap = make(map[string]field.Expr, 11)
-	r.fieldMap["id"] = r.Id
+	r.fieldMap["id"] = r.ID
 	r.fieldMap["reminder_type"] = r.ReminderType
 	r.fieldMap["reminder_time"] = r.ReminderTime
 	r.fieldMap["reminder_content"] = r.ReminderContent
-	r.fieldMap["device_id"] = r.DeviceId
+	r.fieldMap["device_id"] = r.DeviceID
 	r.fieldMap["cron_expression"] = r.CronExpression
 	r.fieldMap["status"] = r.Status
-	r.fieldMap["reminder_device_id"] = r.ReminderDeviceId
+	r.fieldMap["reminder_device_id"] = r.ReminderDeviceID
 	r.fieldMap["created_at"] = r.CreatedAt
 	r.fieldMap["updated_at"] = r.UpdatedAt
 
@@ -158,12 +145,6 @@ type reminderHasOneDevice struct {
 
 	Agent struct {
 		field.RelationField
-	}
-	User struct {
-		field.RelationField
-		Device struct {
-			field.RelationField
-		}
 	}
 }
 
