@@ -13,4 +13,9 @@ test_coverage:
 
 .PHONY: lint
 lint:
+	@# scoop install main/golangci-lint
 	golangci-lint run ./...
+
+.PHONY: gen
+gen: 
+	@go run cmd/generate/generate.go

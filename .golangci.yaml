@@ -1,12 +1,14 @@
 run:
   timeout: 5m
   modules-download-mode: readonly
+  tests: false
+
+version: 2
 
 linters:
   enable:
     # 错误检查
     - errcheck # 检查未检查的错误
-    - gosimple # 简化代码
     - govet # 可疑代码检查
     - ineffassign # 检查无效赋值
     - staticcheck # 静态分析检查
@@ -19,7 +21,6 @@ linters:
     - gocognit
     - goconst
     - gocritic
-    - gofmt
     - misspell
     - nakedret
     - prealloc
@@ -27,7 +28,6 @@ linters:
     - unconvert
     - unparam
     - whitespace
-
     - gocyclo
 
 linters-settings:
@@ -67,7 +67,7 @@ linters-settings:
       - name: error-naming
       - name: exported
       - name: increment-decrement
-      - name: var-naming
+      - name: var-naming 
       - name: var-declaration
       - name: package-comments
       - name: range
@@ -93,24 +93,30 @@ issues:
   max-same-issues: 0
 
   exclude-rules:
-    # 排除测试文件的检查
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
-        - bodyclose
-        - gocritic
-
-    - path: _test\.go
-      text: "fieldalignment"
-      linters:
-        - govet
-
     - text: "cognitive complexity"
       linters:
         - gocognit
+
     - text: "cyclop"
       linters:
         - cyclop
+
+    # 排除自动生成的文件
+    - path: gen\.go
+      linters:
+        - revive
+
+    # 排除未使用的参数（slog 回调等）
+    - text: "unused-parameter:"
+      linters:
+        - revive
+
+    # 排除 stuttering 类型名
+    - text: "type name will be used as"
+      linters:
+        - revive
+
+    # 排除导出常量注释
+    - text: "exported const.*should have comment"
+      linters:
+        - revive

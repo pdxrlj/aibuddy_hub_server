@@ -5,15 +5,16 @@ app:
   log_level: "info"
 storage:
   database:
-    host: "localhost"
-    port: 5432
-    name: "aibuddy_hub"
-    user: "postgres"
-    password: "postgres"
+    host: "8.153.82.116"
+    port: ""
+    name: "aibuddy"
+    user: ""
+    password: ""
   redis:
-    host: "localhost"
+    host: "127.0.0.1"
     port: 6379
-    password: "password"
+    password: "123456"
+    db: 0
   flash:
     use: "redis"
 agent:
