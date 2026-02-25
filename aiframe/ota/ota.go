@@ -3,7 +3,7 @@ package ota
 
 import "encoding/json"
 
-// 		"type": "ota_version",
+// 	   "type": "ota_version",
 //     "ota_url": "https://example.com/firmware/v2.0.0.bin",  // 升级包下载地址
 //     "model_url":"xxxxx",
 //     "ota_version": "2.0.0",        // 升级包版本号
