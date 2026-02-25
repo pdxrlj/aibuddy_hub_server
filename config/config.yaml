@@ -27,7 +27,18 @@ agent:
       model_name: ""
       api_key: ""
       api_url: ""
-
+aliyun:
+  access_key_id: ""
+  access_key_secret: ""
+  mqtt:
+    url: "tcp://post-cn-m414bwfgf03.mqtt.aliyuncs.com:1883"
+    instance_id: "post-cn-m414bwfgf03"
+    client_id_prefix: "GID_AIBuddy@@@"
+    topic_prefix: "nlaibuddy"
+    clean_session: false
+    keep_alive: 60s
+    reconnect:
+      delay: 1000ms
 tracer:
   service_name: "aibuddy_hub"
   endpoint: "localhost:4317"

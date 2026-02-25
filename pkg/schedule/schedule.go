@@ -102,20 +102,13 @@ func (s *Schedule) Shutdown() error {
 	defer s.mu.Unlock()
 
 	if s.worker != nil {
-		defer func() {
-			s.worker = nil
-		}()
-
 		func() {
 			defer func() {
 				_ = recover()
 			}()
 			s.worker.Quit()
 		}()
-	}
-	if s.closing != nil {
-		close(s.closing)
-		s.closing = nil
+		s.worker = nil
 	}
 	return nil
 }
