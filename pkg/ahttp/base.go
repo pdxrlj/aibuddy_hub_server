@@ -68,9 +68,84 @@ func (b *Base) DELETE(path string, handler any, middlewares ...echo.MiddlewareFu
 	b.Add(http.MethodDelete, path, handler, middlewares...)
 }
 
+// Group HTTP 路由组
+type Group struct {
+	EchoGroup *echo.Group
+	*Base
+}
+
+// Group 创建路由组
+func (b *Base) Group(path string, handler func(group *Group)) *echo.Group {
+	group := b.Echo.Group(path)
+	g := &Group{
+		EchoGroup: group,
+		Base:      b,
+	}
+	handler(g)
+	return group
+}
+
+// Group 在 Group 中创建子路由组
+func (g *Group) Group(path string, handler func(group *Group)) *echo.Group {
+	subGroup := g.EchoGroup.Group(path)
+	gg := &Group{
+		EchoGroup: subGroup,
+		Base:      g.Base,
+	}
+	handler(gg)
+	return subGroup
+}
+
+// GET 注册 GET 路由
+func (g *Group) GET(path string, handler any, middlewares ...echo.MiddlewareFunc) {
+	g.Add(http.MethodGet, path, handler, middlewares...)
+}
+
+// POST 注册 POST 路由
+func (g *Group) POST(path string, handler any, middlewares ...echo.MiddlewareFunc) {
+	g.Add(http.MethodPost, path, handler, middlewares...)
+}
+
+// PUT 注册 PUT 路由
+func (g *Group) PUT(path string, handler any, middlewares ...echo.MiddlewareFunc) {
+	g.Add(http.MethodPut, path, handler, middlewares...)
+}
+
+// PATCH 注册 PATCH 路由
+func (g *Group) PATCH(path string, handler any, middlewares ...echo.MiddlewareFunc) {
+	g.Add(http.MethodPatch, path, handler, middlewares...)
+}
+
+// OPTIONS 注册 OPTIONS 路由
+func (g *Group) OPTIONS(path string, handler any, middlewares ...echo.MiddlewareFunc) {
+	g.Add(http.MethodOptions, path, handler, middlewares...)
+}
+
+// HEAD 注册 HEAD 路由
+func (g *Group) HEAD(path string, handler any, middlewares ...echo.MiddlewareFunc) {
+	g.Add(http.MethodHead, path, handler, middlewares...)
+}
+
+// DELETE 注册 DELETE 路由
+func (g *Group) DELETE(path string, handler any, middlewares ...echo.MiddlewareFunc) {
+	g.Add(http.MethodDelete, path, handler, middlewares...)
+}
+
+// Add 添加路由到 Group
+func (g *Group) Add(method, path string, handler any, middlewares ...echo.MiddlewareFunc) {
+	handlerValue, inputNumber := validateHandler(handler)
+	g.EchoGroup.Add(method, path, g.createHandler(handlerValue, inputNumber), middlewares...)
+}
+
 // Add 添加路由
 // handler 函数签名: func(state *State, request any) error
 func (b *Base) Add(method, path string, handler any, middlewares ...echo.MiddlewareFunc) {
+	handlerValue, inputNumber := validateHandler(handler)
+	b.Echo.Add(method, path, b.createHandler(handlerValue, inputNumber), middlewares...)
+}
+
+// validateHandler 验证 handler 函数签名
+func validateHandler(handler any) (reflect.Value, int) {
 	handlerValue := reflect.ValueOf(handler)
 	if handlerValue.Kind() != reflect.Func {
 		panic("参数handler必须是一个函数")
@@ -87,32 +162,43 @@ func (b *Base) Add(method, path string, handler any, middlewares ...echo.Middlew
 		panic("参数handler必须返回一个error")
 	}
 
-	inputNumber := handlerType.NumIn()
+	return handlerValue, handlerType.NumIn()
+}
 
-	b.Echo.Add(method, path, func(ctx echo.Context) error {
+// createHandler 创建 echo.HandlerFunc
+func (b *Base) createHandler(handlerValue reflect.Value, inputNumber int) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
 		if inputNumber == 1 {
 			return b.ResoverHandler(ctx, handlerValue)
 		}
-		request := handlerType.In(1)
-		if request.Kind() == reflect.Ptr {
-			request = request.Elem()
+		// 获取 handler 原始参数类型
+		handlerParamType := handlerValue.Type().In(1)
+		// 如果参数是指针类型，解引用获取基础类型用于创建实例
+		requestType := handlerParamType
+		if requestType.Kind() == reflect.Ptr {
+			requestType = requestType.Elem()
 		}
 
-		requestType := reflect.New(request).Interface()
+		instance := reflect.New(requestType).Interface()
 
-		if err := ctx.Bind(requestType); err != nil {
+		if err := ctx.Bind(instance); err != nil {
 			return NewResponse(ctx).
 				SetStatus(buddyerror.GetBuddyErrorCode(buddyerror.ErrParamError)).
 				SetMessage(buddyerror.ErrParamError.Error()).
 				Error(err)
 		}
 
-		if err := b.RequestValidator(ctx, requestType, request); err != nil {
+		if err := b.RequestValidator(ctx, instance, requestType); err != nil {
 			return err
 		}
 
-		return b.ResoverHandler(ctx, handlerValue, requestType)
-	}, middlewares...)
+		// 如果 handler 期望指针，则传指针；否则传值
+		if handlerParamType.Kind() == reflect.Ptr {
+			return b.ResoverHandler(ctx, handlerValue, instance)
+		}
+		// 解引用获取值
+		return b.ResoverHandler(ctx, handlerValue, reflect.ValueOf(instance).Elem().Interface())
+	}
 }
 
 // RequestValidator 验证请求参数
