@@ -1,5 +1,5 @@
-// Package http 提供 HTTP 框架封装
-package http
+// Package ahttp 提供 HTTP 框架封装
+package ahttp
 
 import (
 	"aibuddy/pkg/buddyerror"
@@ -176,7 +176,7 @@ type ValidationErrors struct {
 
 // Error 实现 error 接口
 func (v *ValidationErrors) Error() string {
-	errs := []string{}
+	errs := make([]string, 0, len(v.Errors))
 	for _, err := range v.Errors {
 		errs = append(errs, err.Error())
 	}

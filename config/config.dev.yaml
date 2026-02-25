@@ -7,13 +7,14 @@ storage:
   database:
     host: "localhost"
     port: 5432
-    name: "aibuddy_hub_dev"
+    name: "aibuddy"
     user: "dev"
     password: "dev"
   redis:
-    host: "localhost"
+    host: "127.0.0.1"
     port: 6379
-    password: "dev"
+    password: "123456"
+    db: 0
   flash:
     use: "redis"
 agent:
@@ -26,4 +27,3 @@ agent:
       model_name: ""
       api_key: ""
       api_url: ""
-      
