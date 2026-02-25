@@ -2,7 +2,6 @@
 package ahttp
 
 import (
-	"aibuddy/cmd/server/ahttp/auth"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 	"context"
@@ -32,7 +31,7 @@ func StartHTTPServer(ctx context.Context) error {
 	host := config.Instance.App.Host
 	base := ahttp.NewBase(router, nil)
 
-	auth.RegisterRoutes(base)
+	RegisterRoutes(base)
 
 	address := net.JoinHostPort(host, port)
 
