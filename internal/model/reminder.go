@@ -57,7 +57,7 @@ type Reminder struct {
 
 	Status ReminderStatus `gorm:"column:status;type:varchar(255);not null;default:待提醒;"`
 
-	Device *Device `gorm:"foreignKey:DeviceID;references:ID;"`
+	Device *Device `gorm:"foreignKey:DeviceID;references:DeviceID;"`
 
 	ReminderDeviceID int64     `gorm:"column:reminder_device_id;type:bigint;not null;comment:提醒设备ID;"`
 	CreatedAt        time.Time `gorm:"column:created_at;type:timestamp;comment:创建时间;"`

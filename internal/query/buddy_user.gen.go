@@ -28,13 +28,13 @@ func newUser(db *gorm.DB, opts ...gen.DOOption) user {
 
 	tableName := _user.userDo.TableName()
 	_user.ALL = field.NewAsterisk(tableName)
-	_user.Id = field.NewInt64(tableName, "id")
-	_user.OpenId = field.NewString(tableName, "open_id")
+	_user.ID = field.NewInt64(tableName, "id")
+	_user.OpenID = field.NewString(tableName, "open_id")
 	_user.Nickname = field.NewString(tableName, "nickname")
 	_user.Phone = field.NewString(tableName, "phone")
 	_user.Avatar = field.NewString(tableName, "avatar")
-	_user.ParentId = field.NewInt64(tableName, "parent_id")
-	_user.DeviceId = field.NewString(tableName, "device_id")
+	_user.ParentID = field.NewInt64(tableName, "parent_id")
+	_user.DeviceID = field.NewString(tableName, "device_id")
 	_user.CreatedAt = field.NewTime(tableName, "created_at")
 	_user.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_user.Device = userHasOneDevice{
@@ -45,19 +45,6 @@ func newUser(db *gorm.DB, opts ...gen.DOOption) user {
 			field.RelationField
 		}{
 			RelationField: field.NewRelation("Device.Agent", "model.Agent"),
-		},
-		User: struct {
-			field.RelationField
-			Device struct {
-				field.RelationField
-			}
-		}{
-			RelationField: field.NewRelation("Device.User", "model.User"),
-			Device: struct {
-				field.RelationField
-			}{
-				RelationField: field.NewRelation("Device.User.Device", "model.Device"),
-			},
 		},
 	}
 
@@ -70,13 +57,13 @@ type user struct {
 	userDo
 
 	ALL       field.Asterisk
-	Id        field.Int64
-	OpenId    field.String
+	ID        field.Int64
+	OpenID    field.String
 	Nickname  field.String
 	Phone     field.String
 	Avatar    field.String
-	ParentId  field.Int64 // 推荐人ID
-	DeviceId  field.String
+	ParentID  field.Int64 // 推荐人ID
+	DeviceID  field.String
 	CreatedAt field.Time
 	UpdatedAt field.Time
 	Device    userHasOneDevice
@@ -96,13 +83,13 @@ func (u user) As(alias string) *user {
 
 func (u *user) updateTableName(table string) *user {
 	u.ALL = field.NewAsterisk(table)
-	u.Id = field.NewInt64(table, "id")
-	u.OpenId = field.NewString(table, "open_id")
+	u.ID = field.NewInt64(table, "id")
+	u.OpenID = field.NewString(table, "open_id")
 	u.Nickname = field.NewString(table, "nickname")
 	u.Phone = field.NewString(table, "phone")
 	u.Avatar = field.NewString(table, "avatar")
-	u.ParentId = field.NewInt64(table, "parent_id")
-	u.DeviceId = field.NewString(table, "device_id")
+	u.ParentID = field.NewInt64(table, "parent_id")
+	u.DeviceID = field.NewString(table, "device_id")
 	u.CreatedAt = field.NewTime(table, "created_at")
 	u.UpdatedAt = field.NewTime(table, "updated_at")
 
@@ -122,13 +109,13 @@ func (u *user) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 
 func (u *user) fillFieldMap() {
 	u.fieldMap = make(map[string]field.Expr, 10)
-	u.fieldMap["id"] = u.Id
-	u.fieldMap["open_id"] = u.OpenId
+	u.fieldMap["id"] = u.ID
+	u.fieldMap["open_id"] = u.OpenID
 	u.fieldMap["nickname"] = u.Nickname
 	u.fieldMap["phone"] = u.Phone
 	u.fieldMap["avatar"] = u.Avatar
-	u.fieldMap["parent_id"] = u.ParentId
-	u.fieldMap["device_id"] = u.DeviceId
+	u.fieldMap["parent_id"] = u.ParentID
+	u.fieldMap["device_id"] = u.DeviceID
 	u.fieldMap["created_at"] = u.CreatedAt
 	u.fieldMap["updated_at"] = u.UpdatedAt
 
@@ -154,12 +141,6 @@ type userHasOneDevice struct {
 
 	Agent struct {
 		field.RelationField
-	}
-	User struct {
-		field.RelationField
-		Device struct {
-			field.RelationField
-		}
 	}
 }
 

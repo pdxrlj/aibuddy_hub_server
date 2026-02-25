@@ -27,17 +27,16 @@ func (s DeviceStatus) String() string {
 
 // Device represents a device in the system.
 type Device struct {
-	ID          int64     `gorm:"primaryKey;autoIncrement;column:id;"`
-	DeviceID    string    `gorm:"column:device_id;index;type:varchar(255);not null;uniqueIndex;comment:设备ID;"`
-	LastLoginAt time.Time `gorm:"column:last_login_at;type:timestamp;comment:最后登录时间;"`
+	ID       int64  `gorm:"primaryKey;autoIncrement;column:id;"`
+	DeviceID string `gorm:"column:device_id;index;type:varchar(255);not null;uniqueIndex;comment:设备ID;"`
+
+	LastActiveAt time.Time `gorm:"column:last_active_at;type:timestamp;comment:最后活跃时间;"`
 
 	Status DeviceStatus `gorm:"column:status;type:varchar(50);not null;default:未知;comment:状态:未知;"`
 
 	AgentID int64 `gorm:"column:agent_id;index;type:bigint;not null;comment:角色ID;"`
 
 	Agent *Agent `gorm:"foreignKey:AgentID;references:ID;"`
-
-	User *User `gorm:"foreignKey:ID;references:DeviceID;"`
 
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;comment:创建时间;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;comment:更新时间;"`
