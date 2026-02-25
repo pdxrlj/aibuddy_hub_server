@@ -1,5 +1,6 @@
 package logger
 
 const (
-	Authorization = "Authorization"
+	// Authorization 用户认证
+	Authorization = "[Authorization]"
 )
