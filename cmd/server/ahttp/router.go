@@ -2,11 +2,12 @@
 package ahttp
 
 import (
-	"aibuddy/cmd/server/ahttp/userhandler"
+	userhandler "aibuddy/cmd/server/ahttp/handler/user"
 	"aibuddy/pkg/ahttp"
 	"time"
 )
 
+// DemmoRequest 演示请求结构
 type DemmoRequest struct {
 	Name string `json:"name" validate:"required,min=3,max=10"`
 	Age  int    `json:"age" validate:"required,min=18,max=100"`
@@ -14,8 +15,8 @@ type DemmoRequest struct {
 
 // RegisterRoutes 注册认证路由
 func RegisterRoutes(base *ahttp.Base) {
-	user := userhandler.New()
-	base.POST("/login", user.Login)
+	h := userhandler.New()
+	base.POST("/login", h.Login)
 	base.Group("/user", func(group *ahttp.Group) {
 		group.POST("/info", func(state *ahttp.State, request *DemmoRequest) error {
 			return state.Resposne().Success(request)

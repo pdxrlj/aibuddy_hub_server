@@ -24,10 +24,12 @@ type Ota struct {
 	DeviceID         string `json:"device_id"`
 }
 
+// Encode 将 OTA 信息序列化为 JSON
 func (o *Ota) Encode() ([]byte, error) {
 	return json.Marshal(o)
 }
 
+// Decode 从 JSON 数据反序列化到 OTA 结构
 func (o *Ota) Decode(data []byte) error {
 	return json.Unmarshal(data, o)
 }
