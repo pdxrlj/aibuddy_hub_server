@@ -4,3 +4,4 @@
 logs
 aibuddy
 .env
+*.exe
