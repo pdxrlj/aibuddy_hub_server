@@ -3,6 +3,7 @@ package ahttp
 
 import (
 	"aibuddy/pkg/buddyerror"
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -330,4 +331,9 @@ func getValidationFieldTag(structType reflect.Type, defaultTag, actualTag string
 // Resposne 返回响应对象（注意：方法名拼写错误，保持兼容性）
 func (s *State) Resposne() *Response {
 	return NewResponse(s.Ctx)
+}
+
+// Context 获取请求上下文
+func (s *State) Context() context.Context {
+	return s.Ctx.Request().Context()
 }

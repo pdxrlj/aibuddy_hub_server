@@ -91,6 +91,7 @@ func GenerateAliyunMQTTAuth(clientID, accessKeyID, accessKeySecret, instanceID s
 	if err := ValidateAliyunClientIDFormat(clientID); err != nil {
 		return "", "", fmt.Errorf("客户端ID格式错误: %w", err)
 	}
+
 	if accessKeyID == "" || accessKeySecret == "" || instanceID == "" {
 		return "", "", fmt.Errorf("缺少必要的阿里云凭据: accessKeyId/accessKeySecret/instanceId")
 	}

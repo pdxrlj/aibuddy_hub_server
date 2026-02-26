@@ -6,6 +6,8 @@ import (
 	"aibuddy/cmd/server/ahttp"
 	"aibuddy/cmd/server/amqtt"
 	"aibuddy/cmd/server/schedule"
+	"aibuddy/internal/model"
+	"aibuddy/internal/query"
 	"aibuddy/pkg/config"
 	logger "aibuddy/pkg/log"
 	"aibuddy/pkg/tracer"
@@ -39,6 +41,8 @@ func Setup() error {
 		slog.Error("Failed to setup tracer", "error", err)
 		return err
 	}
+
+	query.SetDefault(model.Conn().GetDB())
 	return nil
 }
 

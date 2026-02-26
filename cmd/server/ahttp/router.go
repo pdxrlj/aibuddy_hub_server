@@ -2,12 +2,10 @@
 package ahttp
 
 import (
+	devicehandler "aibuddy/cmd/server/ahttp/handler/device"
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
 	"aibuddy/pkg/ahttp"
-	"log/slog"
 	"time"
-
-	"github.com/labstack/echo/v4"
 )
 
 // DemmoRequest 演示请求结构
@@ -19,16 +17,16 @@ type DemmoRequest struct {
 // RegisterRoutes 注册认证路由
 func RegisterRoutes(base *ahttp.Base) {
 	h := userhandler.New()
+
+	base.Group("/api/v1", nil, func(group *ahttp.Group) {
+		group.Group("/device", nil, func(deviceGroup *ahttp.Group) {
+			device := devicehandler.NewDevice()
+			deviceGroup.GET("/firstonline", device.FirstOnline)
+		})
+	})
+
 	base.POST("/login", h.Login)
-	base.Group("/user", []echo.MiddlewareFunc{
-		func(next echo.HandlerFunc) echo.HandlerFunc {
-			return func(c echo.Context) error {
-				slog.Info("user first")
-				n := next(c)
-				slog.Info("user end")
-				return n
-			}
-		}}, func(group *ahttp.Group) {
+	base.Group("/user", nil, func(group *ahttp.Group) {
 		group.POST("/info", func(state *ahttp.State, request *DemmoRequest) error {
 			return state.Resposne().Success(request)
 		})
