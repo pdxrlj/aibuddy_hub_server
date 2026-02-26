@@ -58,6 +58,8 @@ func (d *DB) GenerateQuery() {
 		Agent{},
 		Device{},
 		Reminder{},
+
+		DeviceSN{},
 	}
 
 	_ = d.db.AutoMigrate(models...)

@@ -77,13 +77,13 @@ func (r *Response) NoContent() error {
 }
 
 // Error 返回错误响应
-func (r *Response) Error(data error) error {
+func (r *Response) Error(err error) error {
 	if r.Ctx.Response().Committed {
 		return nil
 	}
 	if r.Status == 0 {
 		r.Status = http.StatusInternalServerError
 	}
-	r.Data = data.Error()
+	r.Message = err.Error()
 	return r.Ctx.JSON(http.StatusOK, r)
 }

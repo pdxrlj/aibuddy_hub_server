@@ -2,9 +2,7 @@
 package device
 
 import (
-	"aibuddy/internal/query"
 	"aibuddy/pkg/config"
-	"aibuddy/pkg/helpers"
 	"aibuddy/pkg/mqtt"
 	"context"
 
@@ -57,14 +55,6 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID string) (*ConfigInfo
 	span.SetAttributes(attribute.String("client_id", clientID))
 	span.SetAttributes(attribute.String("username", username))
 	span.SetAttributes(attribute.String("password", password))
-
-	result, err := query.Agent.Where(query.Agent.ID.Eq(1)).Find()
-	if err != nil {
-		span.RecordError(err)
-		return nil, err
-	}
-
-	helpers.PP(result)
 
 	return &ConfigInfo{
 		MQTTURL:      mqttConfig.Mqtt.URL,
