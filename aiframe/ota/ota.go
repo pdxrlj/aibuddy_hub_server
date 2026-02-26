@@ -1,7 +1,9 @@
 // Package ota 提供 OTA 固件升级相关功能
 package ota
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // 	   "type": "ota_version",
 //     "ota_url": "https://example.com/firmware/v2.0.0.bin",  // 升级包下载地址
