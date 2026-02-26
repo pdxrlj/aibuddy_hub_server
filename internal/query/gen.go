@@ -19,6 +19,7 @@ var (
 	Q        = new(Query)
 	Agent    *agent
 	Device   *device
+	DeviceSN *deviceSN
 	Reminder *reminder
 	User     *user
 )
@@ -27,6 +28,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	*Q = *Use(db, opts...)
 	Agent = &Q.Agent
 	Device = &Q.Device
+	DeviceSN = &Q.DeviceSN
 	Reminder = &Q.Reminder
 	User = &Q.User
 }
@@ -36,6 +38,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		db:       db,
 		Agent:    newAgent(db, opts...),
 		Device:   newDevice(db, opts...),
+		DeviceSN: newDeviceSN(db, opts...),
 		Reminder: newReminder(db, opts...),
 		User:     newUser(db, opts...),
 	}
@@ -46,6 +49,7 @@ type Query struct {
 
 	Agent    agent
 	Device   device
+	DeviceSN deviceSN
 	Reminder reminder
 	User     user
 }
@@ -57,6 +61,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		db:       db,
 		Agent:    q.Agent.clone(db),
 		Device:   q.Device.clone(db),
+		DeviceSN: q.DeviceSN.clone(db),
 		Reminder: q.Reminder.clone(db),
 		User:     q.User.clone(db),
 	}
@@ -75,6 +80,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		db:       db,
 		Agent:    q.Agent.replaceDB(db),
 		Device:   q.Device.replaceDB(db),
+		DeviceSN: q.DeviceSN.replaceDB(db),
 		Reminder: q.Reminder.replaceDB(db),
 		User:     q.User.replaceDB(db),
 	}
@@ -83,6 +89,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 type queryCtx struct {
 	Agent    IAgentDo
 	Device   IDeviceDo
+	DeviceSN IDeviceSNDo
 	Reminder IReminderDo
 	User     IUserDo
 }
@@ -91,6 +98,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
 		Agent:    q.Agent.WithContext(ctx),
 		Device:   q.Device.WithContext(ctx),
+		DeviceSN: q.DeviceSN.WithContext(ctx),
 		Reminder: q.Reminder.WithContext(ctx),
 		User:     q.User.WithContext(ctx),
 	}
