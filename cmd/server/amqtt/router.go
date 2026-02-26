@@ -4,6 +4,7 @@ package amqtt
 import (
 	"log/slog"
 
+	"aibuddy/cmd/server/amqtt/handler"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/helpers"
 	"aibuddy/pkg/mqtt"
@@ -30,6 +31,21 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 
 	r := mqtt.GetRouter()
 
+	locHandler := handler.NewLocHandler()
+	// 基站定位
+	r.On(":device_id/loc", locHandler.Location)
+
+	statusHandler := handler.NewStateHandler()
+	// 状态上报
+	r.On(":device_id/status", statusHandler.Report)
+
+	// AI 对话
+	aiChatHandler := handler.NewAiChatHandler()
+	r.On(":device_id/ai", aiChatHandler.Chat)
+
+	msgHandler := handler.NewMsgHandler()
+	r.On(":device_id/msg", msgHandler.Handle)
+
 	// 设备状态
 	r.On("device/:id/status", func(ctx *mqtt.Context) {
 		deviceID := ctx.Params["id"]
@@ -53,10 +69,5 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 		if err := ctx.Reply("device/"+deviceID+"/response", "ack"); err != nil {
 			slog.Error("[MQTT] Reply failed", "error", err)
 		}
-	})
-
-	// AI 请求
-	r.On("ai_buddy/request", func(ctx *mqtt.Context) {
-		slog.Info("[MQTT] AI request", "payload", ctx.String())
 	})
 }

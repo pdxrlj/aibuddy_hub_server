@@ -4,6 +4,9 @@ const (
 	// Authorization 用户认证
 	Authorization = "[Authorization]"
 
-	// MQTT 日志
-	MQTT = "[MQTT]"
+	// MQTTLocation 位置信息上报
+	MQTTLocation = "[MQTT LOCATION]"
+
+	// MQTTState 状态上报
+	MQTTState = "[MQTT STATE]"
 )
