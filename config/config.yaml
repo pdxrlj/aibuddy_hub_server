@@ -41,4 +41,4 @@ aliyun:
       delay: 1000ms
 tracer:
   service_name: "aibuddy_hub"
-  endpoint: "localhost:4317"
+  endpoint: "112.132.224.74:4317"
