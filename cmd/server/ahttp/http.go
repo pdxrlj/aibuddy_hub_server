@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -33,6 +32,16 @@ func StartHTTPServer(ctx context.Context) error {
 
 	RegisterRoutes(base)
 
+	fmt.Println("\n🚀 Routes registered:")
+	fmt.Println("  Method   │ Path")
+	fmt.Println("  ─────────┼───────────────────")
+	for _, r := range router.Routes() {
+		if r.Path != "/*" {
+			fmt.Printf("  %-8s │ %s\n", r.Method, r.Path)
+		}
+	}
+	fmt.Println("")
+
 	address := net.JoinHostPort(host, port)
 
 	return router.Start(address)
@@ -42,28 +51,27 @@ func StartHTTPServer(ctx context.Context) error {
 func UniversalMiddlewares() []echo.MiddlewareFunc {
 	return []echo.MiddlewareFunc{
 		middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+			LogMethod:  true,
 			LogURI:     true,
 			LogStatus:  true,
 			LogLatency: true,
 			LogError:   true,
 			LogHeaders: []string{"Content-Type", "Authorization"},
-			LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
-				valuesString := fmt.Sprintf("time=%s, method=%s, uri=%s, status=%d, latency=%s, error=%s, headers=%s",
-					time.Now().Format(time.DateTime),
+			LogValuesFunc: func(_ echo.Context, values middleware.RequestLoggerValues) error {
+				valuesString := fmt.Sprintf("method=%s, uri=%s, status=%d, latency=%s, headers=%s",
 					values.Method,
 					values.URI,
 					values.Status,
 					values.Latency,
-					values.Error,
 					values.Headers,
 				)
 				switch {
 				case values.Status >= 500:
-					c.Logger().Error(valuesString)
+					slog.Error("HTTP: " + valuesString)
 				case values.Status >= 400:
-					c.Logger().Warn(valuesString)
+					slog.Warn("HTTP: " + valuesString)
 				default:
-					c.Logger().Info(valuesString)
+					slog.Info("HTTP: " + valuesString)
 				}
 				return nil
 			},

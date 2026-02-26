@@ -1,8 +1,9 @@
 .PHONY: run
 run:
 	@echo "Building the application..."
-	@go build -gcflags='all=-N -l' -o aibuddy main.go
-	@./aibuddy
+	@#go build -gcflags='all=-N -l' -o aibuddy main.go
+	@#./aibuddy
+	@go run main.go
 
 .PHONY: test_coverage
 test_coverage:

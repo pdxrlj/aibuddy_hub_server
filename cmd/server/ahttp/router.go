@@ -4,7 +4,10 @@ package ahttp
 import (
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
 	"aibuddy/pkg/ahttp"
+	"log/slog"
 	"time"
+
+	"github.com/labstack/echo/v4"
 )
 
 // DemmoRequest 演示请求结构
@@ -17,7 +20,15 @@ type DemmoRequest struct {
 func RegisterRoutes(base *ahttp.Base) {
 	h := userhandler.New()
 	base.POST("/login", h.Login)
-	base.Group("/user", func(group *ahttp.Group) {
+	base.Group("/user", []echo.MiddlewareFunc{
+		func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(c echo.Context) error {
+				slog.Info("user first")
+				n := next(c)
+				slog.Info("user end")
+				return n
+			}
+		}}, func(group *ahttp.Group) {
 		group.POST("/info", func(state *ahttp.State, request *DemmoRequest) error {
 			return state.Resposne().Success(request)
 		})

@@ -75,8 +75,8 @@ type Group struct {
 }
 
 // Group 创建路由组
-func (b *Base) Group(path string, handler func(group *Group)) *echo.Group {
-	group := b.Echo.Group(path)
+func (b *Base) Group(path string, middlewares []echo.MiddlewareFunc, handler func(group *Group)) *echo.Group {
+	group := b.Echo.Group(path, middlewares...)
 	g := &Group{
 		EchoGroup: group,
 		Base:      b,
@@ -86,8 +86,8 @@ func (b *Base) Group(path string, handler func(group *Group)) *echo.Group {
 }
 
 // Group 在 Group 中创建子路由组
-func (g *Group) Group(path string, handler func(group *Group)) *echo.Group {
-	subGroup := g.EchoGroup.Group(path)
+func (g *Group) Group(path string, middlewares []echo.MiddlewareFunc, handler func(group *Group)) *echo.Group {
+	subGroup := g.EchoGroup.Group(path, middlewares...)
 	gg := &Group{
 		EchoGroup: subGroup,
 		Base:      g.Base,
