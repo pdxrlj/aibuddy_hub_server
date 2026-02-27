@@ -8,7 +8,7 @@ import (
 // User represents a user in the system.
 type User struct {
 	ID       int64  `gorm:"primaryKey;autoIncrement;column:id;"`
-	OpenID   string `gorm:"column:open_id;type:varchar(255);not null;uniqueIndex;"`
+	OpenID   string `gorm:"column:open_id;type:varchar(255);not null;index;"`
 	Nickname string `gorm:"column:nickname;type:varchar(255);not null;"`
 	Phone    string `gorm:"column:phone;index;type:varchar(255);not null;"`
 

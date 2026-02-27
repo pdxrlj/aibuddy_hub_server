@@ -4,17 +4,12 @@ package userhandler
 import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/services/auth"
-	"aibuddy/internal/services/cache"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 	logger "aibuddy/pkg/log"
-	"aibuddy/pkg/wechatservice"
-	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 
-	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -54,16 +49,16 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 
 	if req.Source == "phone" {
 		// 验证码登陆
-		if err := checkLoginCode(req.Phone, req.PhoneCode); err != nil {
+		if err := h.AuthServer.CheckLoginCode(req.Phone, req.PhoneCode); err != nil {
 			return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 		}
 	} else {
 		// 微信小程序登录
-		wxuser, err := checkLoginMiniProgram(req.WechatCode, req.EncryptedData, req.IV, userInfo)
-		if err != nil || wxuser == nil {
+		wxUser, err := h.AuthServer.CheckLoginMiniProgram(req.WechatCode, req.EncryptedData, req.IV, userInfo)
+		if err != nil || wxUser == nil {
 			return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 		}
-		userInfo = wxuser
+		userInfo = wxUser
 	}
 
 	// 根据手机号获取用户信息
@@ -72,8 +67,10 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 		slog.Error(logger.Authorization, "msg", "Failed to get parent by phone", "error", err)
 		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
 	}
-	userInfo.ID = user.ID
 
+	if user != nil {
+		userInfo.ID = user.ID
+	}
 	if err := h.AuthServer.UpsertUser(state.Context(), userInfo); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("error", err.Error()))
@@ -95,52 +92,4 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 		Nickname: userInfo.Nickname,
 		Phone:    userInfo.Phone,
 	}).Success()
-}
-
-// checkLoginCode 验证手机号登录验证码
-func checkLoginCode(phone, code string) error {
-	// redis验证码验证
-	key := fmt.Sprintf("sms:%s", phone)
-	result, err := cache.Flash().Get(key)
-	if errors.Is(err, redis.Nil) {
-		return errors.New("请先发送验证码")
-	} else if err != nil {
-		return err
-	}
-	slog.Info(logger.Authorization, "key", key, "code", result.(string))
-	if result.(string) != code {
-		return errors.New("验证码错误")
-	}
-	return nil
-}
-
-// checkLoginMiniProgram 验证微信小程序登录参数
-func checkLoginMiniProgram(code, encryptedData, iv string, userInfo *model.User) (user *model.User, err error) {
-	// 获取微信小程序实例
-	miniprogram, err := wechatservice.GetWechatMiniProgram()
-	if err != nil {
-		slog.Error(logger.Authorization, "msg", "Failed to get WeChat mini program instance", "error", err)
-		return nil, errors.New("failed to get WeChat mini program instance")
-	}
-
-	// 调用微信登录接口获取 session 信息
-	session, err := miniprogram.GetAuth().Code2Session(code)
-	if err != nil {
-		slog.Error(logger.Authorization, "msg", "Failed to exchange WeChat code for session", "error", err)
-		return nil, errors.New("登录参数不合法")
-	}
-
-	// 获取用户手机号
-	plainData, err := miniprogram.GetEncryptor().Decrypt(session.SessionKey, encryptedData, iv)
-	if err != nil {
-		slog.Error(logger.Authorization, "msg", "Failed to decrypt WeChat encrypted data", "error", err)
-		return nil, errors.New("参数异常")
-	}
-
-	userInfo.OpenID = session.OpenID
-	userInfo.Phone = plainData.PhoneNumber
-	userInfo.Nickname = plainData.NickName
-	userInfo.Avatar = plainData.AvatarURL
-
-	return userInfo, nil
 }
