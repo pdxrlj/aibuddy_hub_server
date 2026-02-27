@@ -39,4 +39,6 @@ func RegisterRoutes(base *ahttp.Base) {
 			return state.Resposne().Success(time.Now())
 		})
 	})
+
+	base.POST("/phone_login", h.PhoneLogin)
 }

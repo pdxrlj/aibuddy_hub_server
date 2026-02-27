@@ -23,14 +23,22 @@ type Config struct {
 	Agent   *AgentConfig   `json:"agent" mapstructure:"agent"`
 	Tracer  *TracerConfig  `json:"tracer" mapstructure:"tracer"`
 	Aliyun  *AliyunConfig  `json:"aliyun" mapstructure:"aliyun"`
+	Wechat  *WechatConfig  `json:"wechat" mapstructure:"wechat"`
 }
 
 // AppConfig 应用配置
 type AppConfig struct {
-	Name     string `json:"name" mapstructure:"name"`
-	Host     string `json:"host" mapstructure:"host"`
-	Port     string `json:"port" mapstructure:"port"`
-	LogLevel string `json:"log_level" mapstructure:"log_level"`
+	Name      string `json:"name" mapstructure:"name"`
+	Host      string `json:"host" mapstructure:"host"`
+	Port      string `json:"port" mapstructure:"port"`
+	LogLevel  string `json:"log_level" mapstructure:"log_level"`
+	AppSecret string `json:"app_secret" mapstructure:"app_secret"`
+}
+
+// WechatConfig 微信配置
+type WechatConfig struct {
+	AppID     string `json:"app_id" mapstructure:"app_id"`
+	AppSecret string `json:"app_secret" mapstructure:"app_secret"`
 }
 
 // StorageConfig 存储配置

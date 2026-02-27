@@ -3,6 +3,7 @@ app:
   host: "0.0.0.0"
   port: 9081
   log_level: "info"
+  app_secret: "1d3f5f5d0aaaf5c970ff943a7972ae89"
 storage:
   database:
     host: "8.153.82.116"
@@ -13,10 +14,14 @@ storage:
   redis:
     host: "127.0.0.1"
     port: 6379
-    password: "123456"
+    password: ""
     db: 0
+    username: ""
   flash:
     use: "redis"
+wechat:
+  app_id: "wx98480f2543ecbb95"
+  app_secret: "1d3f5f5d0aaaf5c970ff943a7972ae89"
 agent:
   model:
     chat_model:
