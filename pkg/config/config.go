@@ -2,6 +2,7 @@
 package config
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -176,7 +177,7 @@ func Setup(base ...string) *Config {
 		panic(err)
 	}
 	Instance = cfg
-
+	fmt.Printf("%+v\n", Instance.Wechat)
 	return cfg
 }
 

@@ -2,7 +2,6 @@
 package userhandler
 
 import (
-	"aibuddy/cmd/server/ahttp/middleware"
 	"aibuddy/internal/model"
 	"aibuddy/internal/services/auth"
 	"aibuddy/internal/services/cache"
@@ -110,7 +109,7 @@ func (h *Handler) PhoneLogin(state *ahttp.State, req *NewLoginRequest) error {
 	}
 
 	// 生成token并返回用户信息
-	token, err := middleware.GenerateToken(parentInfo.ID, parentInfo.Phone, parentInfo.OpenID)
+	token, err := auth.GenerateToken(parentInfo.ID, parentInfo.Phone, parentInfo.OpenID)
 	if err != nil {
 		slog.Error(logger.Authorization, "msg", "Failed to sign JWT token", "error", err)
 		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)

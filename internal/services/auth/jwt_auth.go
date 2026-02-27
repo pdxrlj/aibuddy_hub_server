@@ -1,5 +1,5 @@
-// Package middleware 处理 JWT 认证相关的中间件和函数
-package middleware
+// Package auth 用户认证
+package auth
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// MyClaims 定义 JWT 载荷结构
+// MyClaims 用户认证结构体
 type MyClaims struct {
 	UID       int64  `json:"uid"`
 	Phone     string `json:"phone"`
@@ -49,7 +49,6 @@ func GenerateToken(uid int64, phone string, openID string) (string, error) {
 		},
 	}
 
-	fmt.Printf("claims is:%+v\n", claims)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(jwtConfig.SecretKey))
 }
@@ -68,9 +67,7 @@ func ValidateToken(tokenString string) (*MyClaims, error) {
 	}
 
 	if claims, ok := token.Claims.(*MyClaims); ok && token.Valid {
-		fmt.Printf("Claims: %+v\n", claims)
 		// 检查令牌是否过期
-		fmt.Printf("Token ExpiresAt: %d,Now time :%d\n", claims.ExpiresAt, time.Now().Unix())
 		if time.Now().Unix() > claims.ExpiresAt {
 			return nil, fmt.Errorf("token has expired")
 		}
@@ -105,7 +102,7 @@ func RefreshToken(oldTokenString string) (string, error) {
 	return GenerateToken(claims.UID, claims.Phone, claims.OpenID)
 }
 
-// validateSimpleToken 简单的令牌验证函数
-func validateSimpleToken(token, expectedToken string) bool {
+// ValidateSimpleToken 简单的令牌验证函数
+func ValidateSimpleToken(token, expectedToken string) bool {
 	return strings.EqualFold(token, expectedToken)
 }
