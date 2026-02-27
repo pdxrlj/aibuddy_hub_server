@@ -9,7 +9,7 @@ type LoginRequest struct {
 
 // NewLoginRequest 微信登录请求
 type NewLoginRequest struct {
-	WechatCode    string `json:"wechat_code" validate:"required"`    // 微信登录临时 code
+	WechatCode    string `json:"wechat_code" validate:"required_if"`    // 微信登录临时 code
 	EncryptedData string `json:"encrypted_data" validate:"required"` // 微信加密数据
 	IV            string `json:"iv" validate:"required"`             // 微信加密数据的初始向量
 	Source        string `json:"source"`                             // 登录来源（mini=小程序,phone=手机号）

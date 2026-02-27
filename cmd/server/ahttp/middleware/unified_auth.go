@@ -6,16 +6,25 @@ import (
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/labstack/echo/v4"
 )
+
+// SkipPaths 跳过认证的路径
+var SkipPaths = []string{"/api/v1/user/login"}
 
 // UnifiedAuthMiddleware 统一认证中间件，支持多种认证方式（如 JWT、API Key 等）
 func UnifiedAuthMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		cfg := config.Instance.App
 		return func(c echo.Context) error {
+			// 跳过白名单路径
+			if slices.Contains(SkipPaths, c.Path()) {
+				return next(c)
+			}
+
 			// 1.尝试微信验证
 			if token := c.Request().Header.Get("Authorization"); token != "" {
 				token = strings.TrimPrefix(token, "Bearer ")

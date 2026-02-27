@@ -36,27 +36,8 @@ func New() *Handler {
 	}
 }
 
-// Login 用户登录
-func (h *Handler) Login(state *ahttp.State, req *LoginRequest) error {
-	// 从 Echo context 获取请求 context，保持追踪链路
-	ctx, span := tracer().Start(state.Ctx.Request().Context(), "login")
-	defer span.End()
-
-	span.SetAttributes(attribute.String("username", req.Username))
-	span.SetAttributes(attribute.String("password", req.Password))
-
-	slog.Info(logger.Authorization, "username", req.Username, "password", req.Password)
-
-	user, err := h.AuthServer.GetUserByUsername(ctx, req.Username)
-	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
-	}
-
-	return state.Resposne().SetData(LoginResponse{Token: user}).Success()
-}
-
-// PhoneLogin 手机号码登录
-func (h *Handler) PhoneLogin(state *ahttp.State, req *NewLoginRequest) error {
+// Login 手机号码登录
+func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 	_, span := tracer().Start(state.Ctx.Request().Context(), "wechat_login")
 	defer span.End()
 
