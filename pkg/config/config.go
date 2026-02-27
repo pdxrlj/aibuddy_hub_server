@@ -28,11 +28,12 @@ type Config struct {
 
 // AppConfig 应用配置
 type AppConfig struct {
-	Name      string `json:"name" mapstructure:"name"`
-	Host      string `json:"host" mapstructure:"host"`
-	Port      string `json:"port" mapstructure:"port"`
-	LogLevel  string `json:"log_level" mapstructure:"log_level"`
-	AppSecret string `json:"app_secret" mapstructure:"app_secret"`
+	Name         string `json:"name" mapstructure:"name"`
+	Host         string `json:"host" mapstructure:"host"`
+	Port         string `json:"port" mapstructure:"port"`
+	LogLevel     string `json:"log_level" mapstructure:"log_level"`
+	AppSecret    string `json:"app_secret" mapstructure:"app_secret"`
+	MsgSendCount int    `json:"msg_send_count" mapstructure:"msg_send_count"`
 }
 
 // WechatConfig 微信配置
@@ -104,9 +105,19 @@ type TracerConfig struct {
 
 // AliyunConfig Aliyun配置
 type AliyunConfig struct {
-	AccessKeyID     string      `json:"access_key_id" mapstructure:"access_key_id"`
-	AccessKeySecret string      `json:"access_key_secret" mapstructure:"access_key_secret"`
-	Mqtt            *MqttConfig `json:"mqtt" mapstructure:"mqtt"`
+	Ak              string          `json:"ak" mapstructure:"ak"`
+	Sk              string          `json:"sk" mapstructure:"sk"`
+	AccessKeyID     string          `json:"access_key_id" mapstructure:"access_key_id"`
+	AccessKeySecret string          `json:"access_key_secret" mapstructure:"access_key_secret"`
+	Mqtt            *MqttConfig     `json:"mqtt" mapstructure:"mqtt"`
+	Sms             AliyunSMSConfig `mapstructure:"sms"`
+}
+
+// AliyunSMSConfig Aliyun短信配置
+type AliyunSMSConfig struct {
+	SignName                  string `mapstructure:"sign_name"`
+	TemplateCode              string `mapstructure:"template_code"`
+	DeviceMessageTemplateCode string `mapstructure:"device_message_template_code"`
 }
 
 // MqttConfig Mqtt配置

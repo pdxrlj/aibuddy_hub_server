@@ -4,6 +4,7 @@ app:
   port: 9081
   log_level: "info"
   app_sercet: ""
+  msg_send_count: 5
 storage:
   database:
     host: "8.153.82.116"
@@ -33,6 +34,11 @@ agent:
       api_key: ""
       api_url: ""
 aliyun:
+  ak: ""
+  sk: ""
+  sms:
+    sign_name: "合肥绝对派智能科技"
+    template_code: "SMS_487395253"
   access_key_id: ""
   access_key_secret: ""
   mqtt:

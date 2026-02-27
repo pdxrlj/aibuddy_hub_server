@@ -13,7 +13,7 @@ import (
 )
 
 // SkipPaths 跳过认证的路径
-var SkipPaths = []string{"/api/v1/user/login"}
+var SkipPaths = []string{"/api/v1/user/login", "/api/v1/user/send_code"}
 
 // UnifiedAuthMiddleware 统一认证中间件，支持多种认证方式（如 JWT、API Key 等）
 func UnifiedAuthMiddleware() echo.MiddlewareFunc {

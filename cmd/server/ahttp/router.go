@@ -25,6 +25,7 @@ func RegisterRoutes(base *ahttp.Base) {
 		})
 		group.Group("/user", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(userGroup *ahttp.Group) {
 			h := userhandler.New()
+			userGroup.POST("/send_code", h.SendCode)
 			userGroup.POST("/login", h.Login)
 		})
 	})

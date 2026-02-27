@@ -93,3 +93,16 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 		Phone:    userInfo.Phone,
 	}).Success()
 }
+
+// SendCode 验证码发送
+func (h *Handler) SendCode(state *ahttp.State, req *SendCodeRequest) error {
+	_, span := tracer().Start(state.Ctx.Request().Context(), "send_code")
+	defer span.End()
+
+	code, err := h.AuthServer.SendPhoneCode(req.Phone)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
+	}
+	slog.Info(logger.Authorization, "phone", req.Phone, "code", code)
+	return state.Resposne().Success()
+}

@@ -6,13 +6,17 @@ import (
 	"aibuddy/internal/repository"
 	"aibuddy/internal/services/cache"
 	"aibuddy/pkg/config"
+	"aibuddy/pkg/helpers"
 	logger "aibuddy/pkg/log"
+	"aibuddy/pkg/sms"
 	"aibuddy/pkg/wechatservice"
 	"context"
 	"errors"
 	"fmt"
 	"log/slog"
 	"slices"
+	"strconv"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"go.opentelemetry.io/otel"
@@ -27,6 +31,7 @@ var testCode = "12345"
 // Service 用户认证服务
 type Service struct {
 	UserRepo *repository.UserRepo
+	sms      *sms.AliyunSMS
 }
 
 var tracer = func() trace.Tracer {
@@ -35,8 +40,21 @@ var tracer = func() trace.Tracer {
 
 // New 创建用户认证服务实例
 func New() *Service {
+	smsConfig := config.Instance.Aliyun.Sms
+	sms, err := sms.NewAliyunSMS(
+		sms.WithAccessKeyID(config.Instance.Aliyun.Ak),
+		sms.WithAccessKeySecret(config.Instance.Aliyun.Sk),
+		sms.WithSignName(smsConfig.SignName),
+		sms.WithTemplateCode(smsConfig.TemplateCode),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
 	return &Service{
 		UserRepo: repository.New(),
+		sms:      sms,
 	}
 }
 
@@ -142,4 +160,51 @@ func (s *Service) CheckLoginMiniProgram(code, encryptedData, iv string, userInfo
 	userInfo.Avatar = plainData.AvatarURL
 
 	return userInfo, nil
+}
+
+// SendPhoneCode 发送手机验证码
+func (s *Service) SendPhoneCode(phone string) (string, error) {
+	cr := cache.Flash()
+	maxCount := config.Instance.App.MsgSendCount
+	cacheKey := fmt.Sprintf("sms:%s", phone)
+	sendKey := fmt.Sprintf("sms_count:%s", phone)
+
+	if cr.Exists(cacheKey) {
+		return "", errors.New("验证码已发送，请稍后重试")
+	}
+
+	num := 0
+	code := helpers.GenerateNumber(5)
+	if !slices.Contains(testPhoneNumber, phone) {
+		val, _ := cr.Get(sendKey)
+		num, _ = strconv.Atoi(val.(string))
+
+		slog.Error("info", "send_key", sendKey, "num", num, "max", maxCount)
+		if num >= maxCount {
+			return "", errors.New("发送验证码次数达到最大限制，请稍后重试")
+		}
+
+		//  发送验证码
+		_, err := s.sms.SendSMS(phone, code)
+		if err != nil {
+			return "", err
+		}
+		if num == 0 {
+			if err := cr.Set(sendKey, num+1, 24*time.Hour); err != nil {
+				return "", errors.New("发送验证码失败")
+			}
+		} else {
+			if err := cr.Set(sendKey, num+1); err != nil {
+				return "", errors.New("发送验证码失败")
+			}
+		}
+	} else {
+		code = testCode
+	}
+
+	if err := cr.Set(cacheKey, code, 5*time.Minute); err != nil {
+		return "", err
+	}
+
+	return code, nil
 }
