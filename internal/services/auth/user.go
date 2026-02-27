@@ -21,8 +21,8 @@ import (
 	"gorm.io/gorm"
 )
 
-var TestPhoneNumber = []string{"18888888888", "18895516550"}
-var TestCode = "12345"
+var testPhoneNumber = []string{"18888888888", "18895516550"}
+var testCode = "12345"
 
 // Service 用户认证服务
 type Service struct {
@@ -96,7 +96,7 @@ func (s *Service) UpsertUser(ctx context.Context, user *model.User) error {
 // CheckLoginCode 检验验证码
 func (s *Service) CheckLoginCode(phone, code string) error {
 	// 测试数据
-	if slices.Contains(TestPhoneNumber, phone) && code == TestCode {
+	if slices.Contains(testPhoneNumber, phone) && code == testCode {
 		return nil
 	}
 	key := fmt.Sprintf("sms:%s", phone)
