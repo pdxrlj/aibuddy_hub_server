@@ -45,7 +45,7 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 	span.SetAttributes(attribute.String("encrypted_data", req.EncryptedData))
 	span.SetAttributes(attribute.String("iv", req.IV))
 
-	parentInfo := &model.User{
+	userInfo := &model.User{
 		OpenID:   "",
 		Nickname: "",
 		Phone:    req.Phone,
@@ -59,38 +59,30 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 		}
 	} else {
 		// 微信小程序登录
-		if err := checkLoginMiniProgram(req.WechatCode, req.EncryptedData, req.IV, parentInfo); err != nil {
+		wxuser, err := checkLoginMiniProgram(req.WechatCode, req.EncryptedData, req.IV, userInfo)
+		if err != nil || wxuser == nil {
 			return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 		}
+		userInfo = wxuser
 	}
 
 	// 根据手机号获取用户信息
-	parent, err := h.AuthServer.GetParentByPhone(state.Ctx.Request().Context(), parentInfo.Phone)
+	user, err := h.AuthServer.GetUserByPhone(state.Context(), userInfo.Phone)
 	if err != nil {
 		slog.Error(logger.Authorization, "msg", "Failed to get parent by phone", "error", err)
 		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
 	}
+	userInfo.ID = user.ID
 
-	if parent == nil {
-		// 如果用户不存在，创建新用户
-		uid, err := h.AuthServer.CreateUser(state.Ctx.Request().Context(), parentInfo)
-		if err != nil {
-			slog.Error(logger.Authorization, "msg", "Failed to create user", "error", err)
-			return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
-		}
-		parentInfo.ID = uid
-	} else {
-		// 如果用户已存在，更新用户信息
-		err = h.AuthServer.UpdateUser(state.Ctx.Request().Context(), parent.ID, parentInfo, parent)
-		if err != nil {
-			slog.Error(logger.Authorization, "msg", "Failed to update user", "error", err)
-			return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
-		}
-		parentInfo.ID = parent.ID
+	if err := h.AuthServer.UpsertUser(state.Context(), userInfo); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("error", err.Error()))
+		span.SetAttributes(attribute.String("userinfo", userInfo.String()))
+		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
 	}
 
 	// 生成token并返回用户信息
-	token, err := auth.GenerateToken(parentInfo.ID, parentInfo.Phone, parentInfo.OpenID)
+	token, err := auth.GenerateToken(userInfo.ID, userInfo.Phone, userInfo.OpenID)
 	if err != nil {
 		slog.Error(logger.Authorization, "msg", "Failed to sign JWT token", "error", err)
 		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
@@ -98,19 +90,15 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 
 	return state.Resposne().SetData(LoginResponse{
 		Token:    token,
-		UID:      parentInfo.ID,
-		OpenID:   parentInfo.OpenID,
-		Nickname: parentInfo.Nickname,
-		Phone:    parentInfo.Phone,
+		UID:      userInfo.ID,
+		OpenID:   userInfo.OpenID,
+		Nickname: userInfo.Nickname,
+		Phone:    userInfo.Phone,
 	}).Success()
 }
 
 // checkLoginCode 验证手机号登录验证码
 func checkLoginCode(phone, code string) error {
-	if phone == "" || code == "" {
-		return errors.New("手机号码登录必要参数缺失")
-	}
-
 	// redis验证码验证
 	key := fmt.Sprintf("sms:%s", phone)
 	result, err := cache.Flash().Get(key)
@@ -127,35 +115,32 @@ func checkLoginCode(phone, code string) error {
 }
 
 // checkLoginMiniProgram 验证微信小程序登录参数
-func checkLoginMiniProgram(code, encryptedData, iv string, parentInfo *model.User) error {
-	if code == "" || encryptedData == "" || iv == "" {
-		return errors.New("小程序登录必要参数缺失")
-	}
+func checkLoginMiniProgram(code, encryptedData, iv string, userInfo *model.User) (user *model.User, err error) {
 	// 获取微信小程序实例
 	miniprogram, err := wechatservice.GetWechatMiniProgram()
 	if err != nil {
 		slog.Error(logger.Authorization, "msg", "Failed to get WeChat mini program instance", "error", err)
-		return errors.New("failed to get WeChat mini program instance")
+		return nil, errors.New("failed to get WeChat mini program instance")
 	}
 
 	// 调用微信登录接口获取 session 信息
 	session, err := miniprogram.GetAuth().Code2Session(code)
 	if err != nil {
 		slog.Error(logger.Authorization, "msg", "Failed to exchange WeChat code for session", "error", err)
-		return errors.New("登录参数不合法")
+		return nil, errors.New("登录参数不合法")
 	}
 
 	// 获取用户手机号
 	plainData, err := miniprogram.GetEncryptor().Decrypt(session.SessionKey, encryptedData, iv)
 	if err != nil {
 		slog.Error(logger.Authorization, "msg", "Failed to decrypt WeChat encrypted data", "error", err)
-		return errors.New("参数异常")
+		return nil, errors.New("参数异常")
 	}
 
-	parentInfo.OpenID = session.OpenID
-	parentInfo.Phone = plainData.PhoneNumber
-	parentInfo.Nickname = plainData.NickName
-	parentInfo.Avatar = plainData.AvatarURL
+	userInfo.OpenID = session.OpenID
+	userInfo.Phone = plainData.PhoneNumber
+	userInfo.Nickname = plainData.NickName
+	userInfo.Avatar = plainData.AvatarURL
 
-	return nil
+	return userInfo, nil
 }

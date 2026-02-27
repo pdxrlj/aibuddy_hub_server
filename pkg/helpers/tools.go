@@ -147,7 +147,7 @@ func PP(v any) {
 func GenerateNumber(n int) string {
 	var sb strings.Builder
 	for i := 0; i < n; i++ {
-		sb.WriteString(fmt.Sprintf("%d", randv2.Int32N(10)))
+		fmt.Fprintf(&sb, "%d", randv2.Int32N(10))
 	}
 	return sb.String()
 }

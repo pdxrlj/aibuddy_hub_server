@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // User represents a user in the system.
 type User struct {
@@ -18,4 +21,8 @@ type User struct {
 // TableName returns the table name for User model.
 func (User) TableName() string {
 	return TableName("user")
+}
+
+func (u *User) String() string {
+	return fmt.Sprintf("ID: %d, OpenID: %s, Nickname: %s, Phone: %s, Avatar: %s", u.ID, u.OpenID, u.Nickname, u.Phone, u.Avatar)
 }

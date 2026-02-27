@@ -18,17 +18,14 @@ type DemmoRequest struct {
 
 // RegisterRoutes 注册认证路由
 func RegisterRoutes(base *ahttp.Base) {
-
 	base.Group("/api/v1", nil, func(group *ahttp.Group) {
 		group.Group("/device", nil, func(deviceGroup *ahttp.Group) {
 			device := devicehandler.NewDevice()
 			deviceGroup.GET("/firstonline", device.FirstOnline)
 		})
-
 		group.Group("/user", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(userGroup *ahttp.Group) {
 			h := userhandler.New()
 			userGroup.POST("/login", h.Login)
 		})
 	})
-
 }

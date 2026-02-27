@@ -14,7 +14,9 @@ import (
 )
 
 // Service 用户认证服务
-type Service struct{}
+type Service struct {
+	UserRepo *repository.UserRepo
+}
 
 var tracer = func() trace.Tracer {
 	return otel.Tracer(config.Instance.Tracer.ServiceName)
@@ -22,28 +24,19 @@ var tracer = func() trace.Tracer {
 
 // New 创建用户认证服务实例
 func New() *Service {
-	return &Service{}
+	return &Service{
+		UserRepo: repository.New(),
+	}
 }
 
-// GetUserByUsername 根据用户名获取用户信息
-func (s *Service) GetUserByUsername(ctx context.Context, username string) (string, error) {
-	_, span := tracer().Start(ctx, "GetUserByUsername")
-	defer span.End()
-
-	span.SetAttributes(attribute.String("username", username))
-
-	return "123456", nil
-}
-
-// GetParentByPhone 根据手机号获取用户信息
-func (s *Service) GetParentByPhone(ctx context.Context, phone string) (*model.User, error) {
-	_, span := tracer().Start(ctx, "GetParentByPhone")
+// GetUserByPhone 根据手机号获取用户信息
+func (s *Service) GetUserByPhone(ctx context.Context, phone string) (*model.User, error) {
+	_, span := tracer().Start(ctx, "GetUserByPhone")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("phone", phone))
 
-	userrepo := &repository.UserRepo{}
-	user, err := userrepo.FindUserInfoByPhone(phone)
+	user, err := s.UserRepo.FindUserInfoByPhone(phone)
 	if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 		return nil, err
 	}
@@ -56,8 +49,7 @@ func (s *Service) CreateUser(ctx context.Context, user *model.User) (int64, erro
 	_, span := tracer().Start(ctx, "CreateUser")
 	defer span.End()
 
-	userrepo := &repository.UserRepo{}
-	return userrepo.CreateUser(user)
+	return s.UserRepo.CreateUser(user)
 }
 
 // UpdateUser 更新用户信息
@@ -75,10 +67,17 @@ func (s *Service) UpdateUser(ctx context.Context, uid int64, user *model.User, o
 		user.Avatar = oldUser.Avatar
 	}
 
-	userrepo := &repository.UserRepo{}
-	_, err := userrepo.UpdateUser(uid, user)
+	_, err := s.UserRepo.UpdateUser(uid, user)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+// UpsertUser 插入或更新用户
+func (s *Service) UpsertUser(ctx context.Context, user *model.User) error {
+	ctx, span := tracer().Start(ctx, "UpsertUser")
+	defer span.End()
+
+	return s.UserRepo.Upsert(ctx, user)
 }
