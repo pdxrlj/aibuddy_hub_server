@@ -46,6 +46,9 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 	msgHandler := handler.NewMsgHandler()
 	r.On(":device_id/msg", msgHandler.Handle)
 
+	nfcHandler := handler.NewNFCHandler()
+	r.On(":device_id/nfc", nfcHandler.Handle)
+
 	// 设备状态
 	r.On("device/:id/status", func(ctx *mqtt.Context) {
 		deviceID := ctx.Params["id"]

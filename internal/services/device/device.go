@@ -2,6 +2,7 @@
 package device
 
 import (
+	"aibuddy/internal/services/cache"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/mqtt"
 	"context"
@@ -55,6 +56,8 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID string) (*ConfigInfo
 	span.SetAttributes(attribute.String("client_id", clientID))
 	span.SetAttributes(attribute.String("username", username))
 	span.SetAttributes(attribute.String("password", password))
+
+	_ = cache.Flash().Set("demo", "demo")
 
 	return &ConfigInfo{
 		MQTTURL:      mqttConfig.Mqtt.URL,

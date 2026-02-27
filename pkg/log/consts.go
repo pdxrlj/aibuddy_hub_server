@@ -9,4 +9,10 @@ const (
 
 	// MQTTState 状态上报
 	MQTTState = "[MQTT STATE]"
+
+	// MQTTNFC NFC消息
+	MQTTNFC = "[MQTT NFC]"
+
+	// Redis Connection
+	Redis = "[REDIS]"
 )
