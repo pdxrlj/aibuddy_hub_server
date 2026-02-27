@@ -1,6 +1,8 @@
+// Package middleware 用户认证中间件
 package middleware
 
 import (
+	"aibuddy/internal/services/auth"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 	"errors"
@@ -17,7 +19,7 @@ func UnifiedAuthMiddleware() echo.MiddlewareFunc {
 			// 1.尝试微信验证
 			if token := c.Request().Header.Get("Authorization"); token != "" {
 				token = strings.TrimPrefix(token, "Bearer ")
-				_, err := ValidateToken(token)
+				_, err := auth.ValidateToken(token)
 				if err == nil {
 					// 认证成功，继续处理请求
 					return next(c)
@@ -26,7 +28,7 @@ func UnifiedAuthMiddleware() echo.MiddlewareFunc {
 
 			// 2.其他认证方式（如 Token）可以在这里添加
 			if token := c.Request().Header.Get("Token"); token != "" {
-				if validateSimpleToken(token, cfg.AppSecret) {
+				if auth.ValidateSimpleToken(token, cfg.AppSecret) {
 					return next(c)
 				}
 			}
@@ -34,7 +36,7 @@ func UnifiedAuthMiddleware() echo.MiddlewareFunc {
 			// 3.尝试Bearer Token认证（兼容模式）
 			if token := c.Request().Header.Get("Authorization"); token != "" {
 				token = strings.TrimPrefix(token, "Bearer ")
-				if validateSimpleToken(token, cfg.AppSecret) {
+				if auth.ValidateSimpleToken(token, cfg.AppSecret) {
 					return next(c)
 				}
 			}

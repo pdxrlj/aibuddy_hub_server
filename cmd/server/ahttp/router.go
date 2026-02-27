@@ -4,6 +4,7 @@ package ahttp
 import (
 	devicehandler "aibuddy/cmd/server/ahttp/handler/device"
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
+	"aibuddy/cmd/server/ahttp/middleware"
 	"aibuddy/pkg/ahttp"
 	"time"
 )
@@ -40,5 +41,5 @@ func RegisterRoutes(base *ahttp.Base) {
 		})
 	})
 
-	base.POST("/phone_login", h.PhoneLogin)
+	base.POST("/phone_login", h.PhoneLogin, middleware.UnifiedAuthMiddleware())
 }
