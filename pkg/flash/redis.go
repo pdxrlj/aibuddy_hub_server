@@ -1,8 +1,10 @@
 package flash
 
 import (
+	logger "aibuddy/pkg/log"
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -41,12 +43,14 @@ func WithRedisAddr(addr string) RedisOption {
 }
 
 // WithRedisConfig sets Redis configuration.
-func WithRedisConfig(host string, port int, password string, db int) RedisOption {
+func WithRedisConfig(host string, port int, username, password string, db int) RedisOption {
 	return func(r *Redis) {
+		slog.Info(logger.Redis, "host", host, "port", port, "username", username, "password", password, "db", db)
 		r.client = redis.NewClient(&redis.Options{
 			Addr:     fmt.Sprintf("%s:%d", host, port),
 			Password: password,
 			DB:       db,
+			Username: username,
 		})
 	}
 }

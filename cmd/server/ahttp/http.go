@@ -80,11 +80,11 @@ func UniversalMiddlewares() []echo.MiddlewareFunc {
 			DisableStackAll:     false,
 			DisableErrorHandler: true,
 			LogErrorFunc: func(_ echo.Context, err error, stack []byte) error {
-				fmt.Println(err, string(stack))
+				fmt.Printf("%+v \n %+v\n", err, string(stack))
+
 				return nil
 			},
 		}),
-		middleware.Recover(),
 		middleware.CORS(),
 		middleware.Secure(),
 		middleware.BodyLimit("10M"),
@@ -102,7 +102,7 @@ func SetupRoutes(router *echo.Echo) {
 
 	router.HideBanner = true
 	router.HTTPErrorHandler = func(err error, c echo.Context) {
-		c.Logger().Error(err.Error())
+		slog.Error("HTTP Error", "error", err, "path", c.Request().URL.Path)
 		if err := c.String(500, "Internal Server Error"); err != nil {
 			slog.Error("HTTP Error Handler", "error", err)
 		}

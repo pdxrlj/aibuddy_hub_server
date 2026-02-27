@@ -51,6 +51,7 @@ type DatabaseConfig struct {
 
 // RedisConfig Redis配置
 type RedisConfig struct {
+	Username string `json:"username" mapstructure:"username"`
 	Password string `json:"password" mapstructure:"password"`
 	Host     string `json:"host" mapstructure:"host"`
 	Port     int    `json:"port" mapstructure:"port"`
