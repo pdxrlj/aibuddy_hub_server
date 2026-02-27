@@ -7,8 +7,11 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"strings"
 	"time"
 	"unsafe"
+
+	randv2 "math/rand/v2"
 )
 
 // Retry 带超时的重试函数
@@ -138,4 +141,13 @@ func PP(v any) {
 		return
 	}
 	fmt.Println(string(data))
+}
+
+// GenerateNumber 生成数字随机数
+func GenerateNumber(n int) string {
+	var sb strings.Builder
+	for i := 0; i < n; i++ {
+		sb.WriteString(fmt.Sprintf("%d", randv2.Int32N(10)))
+	}
+	return sb.String()
 }
