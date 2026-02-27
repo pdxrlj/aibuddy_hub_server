@@ -33,20 +33,8 @@ func newUser(db *gorm.DB, opts ...gen.DOOption) user {
 	_user.Nickname = field.NewString(tableName, "nickname")
 	_user.Phone = field.NewString(tableName, "phone")
 	_user.Avatar = field.NewString(tableName, "avatar")
-	_user.ParentID = field.NewInt64(tableName, "parent_id")
-	_user.DeviceID = field.NewString(tableName, "device_id")
 	_user.CreatedAt = field.NewTime(tableName, "created_at")
 	_user.UpdatedAt = field.NewTime(tableName, "updated_at")
-	_user.Device = userHasOneDevice{
-		db: db.Session(&gorm.Session{}),
-
-		RelationField: field.NewRelation("Device", "model.Device"),
-		Agent: struct {
-			field.RelationField
-		}{
-			RelationField: field.NewRelation("Device.Agent", "model.Agent"),
-		},
-	}
 
 	_user.fillFieldMap()
 
@@ -62,11 +50,8 @@ type user struct {
 	Nickname  field.String
 	Phone     field.String
 	Avatar    field.String
-	ParentID  field.Int64 // 推荐人ID
-	DeviceID  field.String
 	CreatedAt field.Time
 	UpdatedAt field.Time
-	Device    userHasOneDevice
 
 	fieldMap map[string]field.Expr
 }
@@ -88,8 +73,6 @@ func (u *user) updateTableName(table string) *user {
 	u.Nickname = field.NewString(table, "nickname")
 	u.Phone = field.NewString(table, "phone")
 	u.Avatar = field.NewString(table, "avatar")
-	u.ParentID = field.NewInt64(table, "parent_id")
-	u.DeviceID = field.NewString(table, "device_id")
 	u.CreatedAt = field.NewTime(table, "created_at")
 	u.UpdatedAt = field.NewTime(table, "updated_at")
 
@@ -108,115 +91,24 @@ func (u *user) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (u *user) fillFieldMap() {
-	u.fieldMap = make(map[string]field.Expr, 10)
+	u.fieldMap = make(map[string]field.Expr, 7)
 	u.fieldMap["id"] = u.ID
 	u.fieldMap["open_id"] = u.OpenID
 	u.fieldMap["nickname"] = u.Nickname
 	u.fieldMap["phone"] = u.Phone
 	u.fieldMap["avatar"] = u.Avatar
-	u.fieldMap["parent_id"] = u.ParentID
-	u.fieldMap["device_id"] = u.DeviceID
 	u.fieldMap["created_at"] = u.CreatedAt
 	u.fieldMap["updated_at"] = u.UpdatedAt
-
 }
 
 func (u user) clone(db *gorm.DB) user {
 	u.userDo.ReplaceConnPool(db.Statement.ConnPool)
-	u.Device.db = db.Session(&gorm.Session{Initialized: true})
-	u.Device.db.Statement.ConnPool = db.Statement.ConnPool
 	return u
 }
 
 func (u user) replaceDB(db *gorm.DB) user {
 	u.userDo.ReplaceDB(db)
-	u.Device.db = db.Session(&gorm.Session{})
 	return u
-}
-
-type userHasOneDevice struct {
-	db *gorm.DB
-
-	field.RelationField
-
-	Agent struct {
-		field.RelationField
-	}
-}
-
-func (a userHasOneDevice) Where(conds ...field.Expr) *userHasOneDevice {
-	if len(conds) == 0 {
-		return &a
-	}
-
-	exprs := make([]clause.Expression, 0, len(conds))
-	for _, cond := range conds {
-		exprs = append(exprs, cond.BeCond().(clause.Expression))
-	}
-	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
-	return &a
-}
-
-func (a userHasOneDevice) WithContext(ctx context.Context) *userHasOneDevice {
-	a.db = a.db.WithContext(ctx)
-	return &a
-}
-
-func (a userHasOneDevice) Session(session *gorm.Session) *userHasOneDevice {
-	a.db = a.db.Session(session)
-	return &a
-}
-
-func (a userHasOneDevice) Model(m *model.User) *userHasOneDeviceTx {
-	return &userHasOneDeviceTx{a.db.Model(m).Association(a.Name())}
-}
-
-func (a userHasOneDevice) Unscoped() *userHasOneDevice {
-	a.db = a.db.Unscoped()
-	return &a
-}
-
-type userHasOneDeviceTx struct{ tx *gorm.Association }
-
-func (a userHasOneDeviceTx) Find() (result *model.Device, err error) {
-	return result, a.tx.Find(&result)
-}
-
-func (a userHasOneDeviceTx) Append(values ...*model.Device) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Append(targetValues...)
-}
-
-func (a userHasOneDeviceTx) Replace(values ...*model.Device) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Replace(targetValues...)
-}
-
-func (a userHasOneDeviceTx) Delete(values ...*model.Device) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Delete(targetValues...)
-}
-
-func (a userHasOneDeviceTx) Clear() error {
-	return a.tx.Clear()
-}
-
-func (a userHasOneDeviceTx) Count() int64 {
-	return a.tx.Count()
-}
-
-func (a userHasOneDeviceTx) Unscoped() *userHasOneDeviceTx {
-	a.tx = a.tx.Unscoped()
-	return &a
 }
 
 type userDo struct{ gen.DO }

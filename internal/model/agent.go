@@ -5,8 +5,8 @@ import "time"
 
 // Agent represents an AI agent in the system.
 type Agent struct {
-	ID int64 `gorm:"primaryKey;autoIncrement;column:id;"`
-
+	ID        int64  `gorm:"primaryKey;autoIncrement;column:id;"`
+	UID       int64  `gorm:"column:uid;index;type:bigint;not null;default:0;comment:绑定用户id;"`
 	AgentName string `gorm:"column:agent_name;type:varchar(255);not null;comment:角色名称;"`
 
 	RoleIntroduction string `gorm:"column:role_introduction;index;type:text;not null;comment:角色介绍;"`

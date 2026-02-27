@@ -30,8 +30,10 @@ func newDevice(db *gorm.DB, opts ...gen.DOOption) device {
 	_device.ALL = field.NewAsterisk(tableName)
 	_device.ID = field.NewInt64(tableName, "id")
 	_device.DeviceID = field.NewString(tableName, "device_id")
+	_device.UID = field.NewInt64(tableName, "uid")
 	_device.LastActiveAt = field.NewTime(tableName, "last_active_at")
 	_device.Status = field.NewString(tableName, "status")
+	_device.IsAdmin = field.NewBool(tableName, "is_admin")
 	_device.AgentID = field.NewInt64(tableName, "agent_id")
 	_device.CreatedAt = field.NewTime(tableName, "created_at")
 	_device.UpdatedAt = field.NewTime(tableName, "updated_at")
@@ -52,8 +54,10 @@ type device struct {
 	ALL          field.Asterisk
 	ID           field.Int64
 	DeviceID     field.String // 设备ID
+	UID          field.Int64  // 绑定用户id
 	LastActiveAt field.Time   // 最后活跃时间
 	Status       field.String // 状态:未知
+	IsAdmin      field.Bool   // 是否管理员设备
 	AgentID      field.Int64  // 角色ID
 	CreatedAt    field.Time   // 创建时间
 	UpdatedAt    field.Time   // 更新时间
@@ -76,8 +80,10 @@ func (d *device) updateTableName(table string) *device {
 	d.ALL = field.NewAsterisk(table)
 	d.ID = field.NewInt64(table, "id")
 	d.DeviceID = field.NewString(table, "device_id")
+	d.UID = field.NewInt64(table, "uid")
 	d.LastActiveAt = field.NewTime(table, "last_active_at")
 	d.Status = field.NewString(table, "status")
+	d.IsAdmin = field.NewBool(table, "is_admin")
 	d.AgentID = field.NewInt64(table, "agent_id")
 	d.CreatedAt = field.NewTime(table, "created_at")
 	d.UpdatedAt = field.NewTime(table, "updated_at")
@@ -97,11 +103,13 @@ func (d *device) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (d *device) fillFieldMap() {
-	d.fieldMap = make(map[string]field.Expr, 8)
+	d.fieldMap = make(map[string]field.Expr, 10)
 	d.fieldMap["id"] = d.ID
 	d.fieldMap["device_id"] = d.DeviceID
+	d.fieldMap["uid"] = d.UID
 	d.fieldMap["last_active_at"] = d.LastActiveAt
 	d.fieldMap["status"] = d.Status
+	d.fieldMap["is_admin"] = d.IsAdmin
 	d.fieldMap["agent_id"] = d.AgentID
 	d.fieldMap["created_at"] = d.CreatedAt
 	d.fieldMap["updated_at"] = d.UpdatedAt

@@ -11,6 +11,7 @@ import (
 	"aibuddy/pkg/config"
 	logger "aibuddy/pkg/log"
 	"aibuddy/pkg/tracer"
+	"aibuddy/pkg/wechatservice"
 	"context"
 	"log/slog"
 	"os"
@@ -69,6 +70,12 @@ func main() {
 			slog.Error("Failed to teardown", "error", err)
 		}
 	}()
+
+	// 实例化微信小程序
+	if err := wechatservice.InitWechatMiniProgram(config.Instance.Wechat.AppID, config.Instance.Wechat.AppSecret); err != nil {
+		slog.Error("Failed to initialize WeChat Mini Program", "error", err)
+		panic(err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go SignalHandler(cancel)
