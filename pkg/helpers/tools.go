@@ -4,9 +4,11 @@ package helpers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
+	"regexp"
 	"strings"
 	"time"
 	"unsafe"
@@ -150,4 +152,14 @@ func GenerateNumber(n int) string {
 		fmt.Fprintf(&sb, "%d", randv2.Int32N(10))
 	}
 	return sb.String()
+}
+
+// ValidateMobile 验证手机号码格式
+func ValidateMobile(phone string) error {
+	mobileRegex := regexp.MustCompile(`^1[3-9]\d{9}$`)
+	if ok := mobileRegex.MatchString(phone); !ok {
+		return errors.New("手机号格式不合法")
+	}
+
+	return nil
 }

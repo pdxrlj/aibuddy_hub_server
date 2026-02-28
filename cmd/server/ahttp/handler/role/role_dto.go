@@ -5,8 +5,8 @@ import "time"
 
 // ListRequest 角色列表请求
 type ListRequest struct {
-	Page int `json:"page" validate:"gte=1" default:"1"`
-	Size int `json:"size" validate:"gte=1" default:"10"`
+	Page int `json:"page" form:"page" param:"page" query:"page" validate:"gte=1" default:"1"`
+	Size int `json:"size" form:"size" param:"size" query:"size" validate:"gte=1" default:"10"`
 }
 
 // ListResponse 列表响应体

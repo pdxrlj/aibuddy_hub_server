@@ -20,7 +20,6 @@ func (a *AgentRepo) GetAgentListByUID(ctx context.Context, uid int64, page, size
 	defer span.End()
 	offset := (page - 1) * size
 	data, count, err := query.Agent.
-		Debug().
 		Where(query.Agent.UID.In(0, uid)).
 		Order(query.Agent.CreatedAt.Desc()).FindByPage(offset, size)
 	if err != nil {

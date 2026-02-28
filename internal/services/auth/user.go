@@ -113,6 +113,9 @@ func (s *Service) UpsertUser(ctx context.Context, user *model.User) error {
 
 // CheckLoginCode 检验验证码
 func (s *Service) CheckLoginCode(phone, code string) error {
+	if err := helpers.ValidateMobile(phone); err != nil {
+		return err
+	}
 	// 测试数据
 	if slices.Contains(testPhoneNumber, phone) && code == testCode {
 		return nil
@@ -169,6 +172,9 @@ func (s *Service) CheckLoginMiniProgram(code, encryptedData, iv string, userInfo
 
 // SendPhoneCode 发送手机验证码
 func (s *Service) SendPhoneCode(phone string) (string, error) {
+	if err := helpers.ValidateMobile(phone); err != nil {
+		return "", err
+	}
 	cr := cache.Flash()
 	maxCount := config.Instance.App.MsgSendCount
 	cacheKey := fmt.Sprintf("sms:%s", phone)
