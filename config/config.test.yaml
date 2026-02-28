@@ -5,13 +5,13 @@ app:
   log_level: "info"
 storage:
   database:
-    # host: ""
+    host: ""
     port: 5432
     name: "aibuddy"
     user: "test"
     password: "test"
   redis:
-    host: "127.0.0.1"
+    host: "112.132.224.74"
     port: 6379
     password: ""
     db: 0

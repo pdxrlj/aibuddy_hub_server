@@ -8,12 +8,18 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 )
+
+// isEchoInternalRoute 检查是否为 Echo 内部路由
+func isEchoInternalRoute(method string) bool {
+	return strings.HasPrefix(method, "echo_")
+}
 
 // StartHTTPServer 启动 HTTP 服务器
 func StartHTTPServer(ctx context.Context) error {
@@ -36,7 +42,8 @@ func StartHTTPServer(ctx context.Context) error {
 	fmt.Println("  Method   │ Path")
 	fmt.Println("  ─────────┼───────────────────")
 	for _, r := range router.Routes() {
-		if r.Path != "/*" {
+		// 过滤掉 Echo 内部路由（以 echo_ 开头的 Method）
+		if r.Path != "/*" && !isEchoInternalRoute(r.Method) {
 			fmt.Printf("  %-8s │ %s\n", r.Method, r.Path)
 		}
 	}

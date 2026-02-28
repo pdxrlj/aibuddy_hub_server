@@ -30,9 +30,9 @@ type JWTConfig struct {
 }
 
 var jwtConfig = &JWTConfig{
-	SecretKey:     "your-secret-key-here", // 应该从配置文件读取
-	TokenExpiry:   24 * time.Hour,         // 24小时过期
-	RefreshExpiry: 7 * 24 * time.Hour,     // 刷新令牌7天过期
+	SecretKey:     "aibuddy",          // 应该从配置文件读取
+	TokenExpiry:   24 * time.Hour,     // 24小时过期
+	RefreshExpiry: 7 * 24 * time.Hour, // 刷新令牌7天过期
 	Issuer:        "wechat-backend",
 }
 

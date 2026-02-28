@@ -25,8 +25,8 @@ func StartAMQTTServer(ctx context.Context) error {
 		KeepAlive:      mqttCfg.KeepAlive,
 		ClientIDPrefix: mqttCfg.ClientIDPrefix,
 		Aliyun: &mqtt.AliyunConfig{
-			AccessKeyID:     cfg.Aliyun.AccessKeyID,
-			AccessKeySecret: cfg.Aliyun.AccessKeySecret,
+			AccessKeyID:     cfg.Aliyun.Ak,
+			AccessKeySecret: cfg.Aliyun.Sk,
 		},
 	}
 

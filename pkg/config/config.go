@@ -105,12 +105,10 @@ type TracerConfig struct {
 
 // AliyunConfig Aliyun配置
 type AliyunConfig struct {
-	Ak              string          `json:"ak" mapstructure:"ak"`
-	Sk              string          `json:"sk" mapstructure:"sk"`
-	AccessKeyID     string          `json:"access_key_id" mapstructure:"access_key_id"`
-	AccessKeySecret string          `json:"access_key_secret" mapstructure:"access_key_secret"`
-	Mqtt            *MqttConfig     `json:"mqtt" mapstructure:"mqtt"`
-	Sms             AliyunSMSConfig `mapstructure:"sms"`
+	Ak   string          `json:"ak" mapstructure:"ak"`
+	Sk   string          `json:"sk" mapstructure:"sk"`
+	Mqtt *MqttConfig     `json:"mqtt" mapstructure:"mqtt"`
+	Sms  AliyunSMSConfig `mapstructure:"sms"`
 }
 
 // AliyunSMSConfig Aliyun短信配置

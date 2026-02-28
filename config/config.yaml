@@ -8,12 +8,17 @@ app:
 storage:
   database:
     host: "8.153.82.116"
-    port: ""
+    port: 5432
     name: "aibuddy"
     user: ""
     password: ""
-  redis:
+  milvus:
     host: "127.0.0.1"
+    port: 19530
+    user: ""
+    password: ""
+  redis:
+    host: "112.132.224.74"
     port: 6379
     password: ""
     db: 0
@@ -39,8 +44,6 @@ aliyun:
   sms:
     sign_name: "合肥绝对派智能科技"
     template_code: "SMS_487395253"
-  access_key_id: ""
-  access_key_secret: ""
   mqtt:
     url: "tcp://post-cn-m414bwfgf03.mqtt.aliyuncs.com:1883"
     instance_id: "post-cn-m414bwfgf03"

@@ -46,7 +46,7 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID string) (*ConfigInfo
 
 	mqttConfig := config.Instance.Aliyun
 	clientID := d.ClientIDPrefix + deviceID
-	username, password, err := mqtt.GenerateAliyunMQTTAuth(clientID, mqttConfig.AccessKeyID, mqttConfig.AccessKeySecret, mqttConfig.Mqtt.InstanceID)
+	username, password, err := mqtt.GenerateAliyunMQTTAuth(clientID, mqttConfig.Ak, mqttConfig.Sk, mqttConfig.Mqtt.InstanceID)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
