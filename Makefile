@@ -1,9 +1,12 @@
 .PHONY: run
 run:
 	@echo "Building the application..."
-	@#go build -gcflags='all=-N -l' -o aibuddy main.go
-	@#./aibuddy
-	@go run main.go
+	@go build -gcflags='all=-N -l' -o aibuddy main.go
+	@trap 'rm -f aibuddy; exit' INT TERM; ./aibuddy; rm -f aibuddy
+
+.PHONY: clean
+clean:
+	@rm -f aibuddy
 
 .PHONY: test_coverage
 test_coverage:
