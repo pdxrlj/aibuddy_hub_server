@@ -1,4 +1,5 @@
-package chat_milvus
+// Package chatmilvus provides Milvus vector database client functionality.
+package chatmilvus
 
 import (
 	"context"
@@ -19,6 +20,7 @@ var tracer = func() trace.Tracer {
 	return tracer
 }()
 
+// Conn represents a Milvus database connection.
 type Conn struct {
 	Host     string
 	Port     int
