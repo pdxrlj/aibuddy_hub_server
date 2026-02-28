@@ -7,12 +7,17 @@ app:
 storage:
   database:
     host: "8.153.82.116"
-    port: ""
+    port: 5432
     name: "aibuddy"
     user: ""
     password: ""
-  redis:
+  milvus:
     host: "127.0.0.1"
+    port: 19530
+    user: ""
+    password: ""
+  redis:
+    host: "112.132.224.74"
     port: 6379
     password: ""
     db: 0

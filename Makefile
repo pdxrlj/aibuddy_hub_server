@@ -20,3 +20,7 @@ lint:
 .PHONY: gen
 gen: 
 	@go run cmd/generate/generate.go
+
+.PHONY: deploy
+deploy:
+	./deploy.sh deploy
