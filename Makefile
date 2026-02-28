@@ -23,4 +23,4 @@ gen:
 
 .PHONY: deploy
 deploy:
-	./deploy.sh deploy
+	bash build.sh deploy
