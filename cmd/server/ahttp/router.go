@@ -27,6 +27,8 @@ func RegisterRoutes(base *ahttp.Base) {
 			h := userhandler.New()
 			userGroup.POST("/send_code", h.SendCode)
 			userGroup.POST("/login", h.Login)
+			userGroup.POST("/refresh_token", h.RefreshToken)
+			userGroup.POST("/logout", h.Logout)
 		})
 	})
 }

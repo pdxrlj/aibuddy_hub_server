@@ -35,14 +35,16 @@ var jwtConfig = &JWTConfig{
 }
 
 // GenerateToken 生成 JWT 令牌
-func GenerateToken(uid int64, phone string, openID string) (string, error) {
+func GenerateToken(uid int64, phone string, openID string) (string, int64, error) {
+	expiresTime := time.Now().Add(jwtConfig.TokenExpiry)
 	claims := &MyClaims{
 		UID:       uid,
 		Phone:     phone,
 		OpenID:    openID,
-		ExpiresAt: time.Now().Add(jwtConfig.TokenExpiry).Unix(),
+		ExpiresAt: expiresTime.Unix(),
+		IssuedAt:  time.Now().Unix(),
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(jwtConfig.TokenExpiry)),
+			ExpiresAt: jwt.NewNumericDate(expiresTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    jwtConfig.Issuer,
@@ -50,7 +52,8 @@ func GenerateToken(uid int64, phone string, openID string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(jwtConfig.SecretKey))
+	result, err := token.SignedString([]byte(jwtConfig.SecretKey))
+	return result, expiresTime.Unix(), err
 }
 
 // ValidateToken 验证JWT令牌
@@ -78,24 +81,24 @@ func ValidateToken(tokenString string) (*MyClaims, error) {
 }
 
 // RefreshToken 刷新令牌
-func RefreshToken(oldTokenString string) (string, error) {
+func RefreshToken(oldTokenString string) (string, int64, error) {
 	// 验证旧令牌（即使过期也要验证签名）
 	token, err := jwt.ParseWithClaims(oldTokenString, &MyClaims{}, func(_ *jwt.Token) (interface{}, error) {
 		return []byte(jwtConfig.SecretKey), nil
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("failed to parse old token: %w", err)
+		return "", 0, fmt.Errorf("failed to parse old token: %w", err)
 	}
 
 	claims, ok := token.Claims.(*MyClaims)
 	if !ok {
-		return "", fmt.Errorf("invalid token claims")
+		return "", 0, fmt.Errorf("invalid token claims")
 	}
 
 	// 检查令牌是否在刷新有效期内
 	if time.Now().Unix() > claims.IssuedAt+int64(jwtConfig.RefreshExpiry.Seconds()) {
-		return "", fmt.Errorf("refresh token has expired")
+		return "", 0, fmt.Errorf("refresh token has expired")
 	}
 
 	// 生成新令牌

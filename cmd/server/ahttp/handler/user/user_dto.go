@@ -21,6 +21,7 @@ type NewLoginRequest struct {
 // LoginResponse 登录响应
 type LoginResponse struct {
 	Token    string `json:"token"`
+	Expires  int64  `json:"expires"`
 	UID      int64  `json:"uid"`
 	OpenID   string `json:"open_id,omitempty"`
 	Nickname string `json:"nickname,omitempty"`
@@ -30,4 +31,15 @@ type LoginResponse struct {
 // SendCodeRequest 验证码请求
 type SendCodeRequest struct {
 	Phone string `json:"phone" validate:"required"`
+}
+
+// TokenRequest 退出登录请求
+type TokenRequest struct {
+	Token string `json:"token" validate:"required"`
+}
+
+// TokenResponse Token请求响应
+type TokenResponse struct {
+	Token   string `json:"token"`
+	Expires int64  `json:"expires"`
 }

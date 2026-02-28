@@ -33,7 +33,7 @@ func New() *Handler {
 
 // Login 手机号码登录
 func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
-	_, span := tracer().Start(state.Ctx.Request().Context(), "wechat_login")
+	_, span := tracer().Start(state.Ctx.Request().Context(), "phone_login")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("wechat_code", req.WechatCode))
@@ -60,7 +60,6 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 		}
 		userInfo = wxUser
 	}
-
 	// 根据手机号获取用户信息
 	user, err := h.AuthServer.GetUserByPhone(state.Context(), userInfo.Phone)
 	if err != nil {
@@ -79,7 +78,7 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 	}
 
 	// 生成token并返回用户信息
-	token, err := auth.GenerateToken(userInfo.ID, userInfo.Phone, userInfo.OpenID)
+	token, expires, err := auth.GenerateToken(userInfo.ID, userInfo.Phone, userInfo.OpenID)
 	if err != nil {
 		slog.Error(logger.Authorization, "msg", "Failed to sign JWT token", "error", err)
 		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
@@ -87,6 +86,7 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 
 	return state.Resposne().SetData(LoginResponse{
 		Token:    token,
+		Expires:  expires,
 		UID:      userInfo.ID,
 		OpenID:   userInfo.OpenID,
 		Nickname: userInfo.Nickname,
@@ -104,5 +104,26 @@ func (h *Handler) SendCode(state *ahttp.State, req *SendCodeRequest) error {
 		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
 	}
 	slog.Info(logger.Authorization, "phone", req.Phone, "code", code)
+	return state.Resposne().Success()
+}
+
+// RefreshToken 刷新token
+func (h *Handler) RefreshToken(state *ahttp.State, req *TokenRequest) error {
+	_, span := tracer().Start(state.Ctx.Request().Context(), "refresh_token")
+	defer span.End()
+
+	token, expires, err := auth.RefreshToken(req.Token)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
+	}
+
+	return state.Resposne().SetData(TokenResponse{
+		Token:   token,
+		Expires: expires,
+	}).Success()
+}
+
+// Logout 用户退出登录
+func (h *Handler) Logout(state *ahttp.State, _ *TokenRequest) error {
 	return state.Resposne().Success()
 }

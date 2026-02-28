@@ -117,16 +117,21 @@ func (s *Service) CheckLoginCode(phone, code string) error {
 	if slices.Contains(testPhoneNumber, phone) && code == testCode {
 		return nil
 	}
-	key := fmt.Sprintf("sms:%s", phone)
-	result, err := cache.Flash().Get(key)
-	if errors.Is(err, redis.Nil) {
-		return errors.New("请先发送验证码")
-	} else if err != nil {
+	cachekey := fmt.Sprintf("sms:%s", phone)
+	result, err := cache.Flash().Get(cachekey)
+
+	if err != nil && err.Error() != redis.Nil.Error() {
 		return err
+	} else if err != nil && err.Error() == redis.Nil.Error() {
+		return errors.New("请先发送验证码")
 	}
-	slog.Info(logger.Authorization, "key", key, "code", result.(string))
+
 	if result.(string) != code {
 		return errors.New("验证码错误")
+	}
+
+	if err := cache.Flash().Delete(cachekey); err != nil {
+		return err
 	}
 	return nil
 }
