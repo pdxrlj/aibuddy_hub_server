@@ -2,11 +2,13 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/labstack/echo/v4"
 )
 
 // MyClaims 用户认证结构体
@@ -57,7 +59,7 @@ func GenerateToken(uid int64, phone string, openID string) (string, int64, error
 }
 
 // ValidateToken 验证JWT令牌
-func ValidateToken(tokenString string) (*MyClaims, error) {
+func ValidateToken(c echo.Context, tokenString string) (*MyClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &MyClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -74,6 +76,7 @@ func ValidateToken(tokenString string) (*MyClaims, error) {
 		if time.Now().Unix() > claims.ExpiresAt {
 			return nil, fmt.Errorf("token has expired")
 		}
+		c.Set("uid", claims.UID)
 		return claims, nil
 	}
 
@@ -108,4 +111,16 @@ func RefreshToken(oldTokenString string) (string, int64, error) {
 // ValidateSimpleToken 简单的令牌验证函数
 func ValidateSimpleToken(token, expectedToken string) bool {
 	return strings.EqualFold(token, expectedToken)
+}
+
+// GetUIDFromContext 通过Context获取用户uid
+func GetUIDFromContext(c echo.Context) (int64, error) {
+	userID := c.Get("uid")
+
+	uid, ok := userID.(int64)
+	if !ok {
+		return 0, errors.New("invalid user ID type")
+	}
+
+	return uid, nil
 }

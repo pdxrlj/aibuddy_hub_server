@@ -3,6 +3,7 @@ package ahttp
 
 import (
 	devicehandler "aibuddy/cmd/server/ahttp/handler/device"
+	rolehandleer "aibuddy/cmd/server/ahttp/handler/role"
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
 	"aibuddy/cmd/server/ahttp/middleware"
 	"aibuddy/pkg/ahttp"
@@ -29,6 +30,10 @@ func RegisterRoutes(base *ahttp.Base) {
 			userGroup.POST("/login", h.Login)
 			userGroup.POST("/refresh_token", h.RefreshToken)
 			userGroup.POST("/logout", h.Logout)
+		})
+		group.Group("/role", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
+			r := rolehandleer.NewRoleHandler()
+			group.GET("/list", r.RoleList)
 		})
 	})
 }

@@ -28,7 +28,7 @@ func UnifiedAuthMiddleware() echo.MiddlewareFunc {
 			// 1.尝试微信验证
 			if token := c.Request().Header.Get("Authorization"); token != "" {
 				token = strings.TrimPrefix(token, "Bearer ")
-				_, err := auth.ValidateToken(token)
+				_, err := auth.ValidateToken(c, token)
 				if err == nil {
 					// 认证成功，继续处理请求
 					return next(c)
