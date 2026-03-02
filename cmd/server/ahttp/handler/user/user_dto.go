@@ -9,10 +9,10 @@ type LoginRequest struct {
 
 // NewLoginRequest 微信登录请求
 type NewLoginRequest struct {
-	Source        string `json:"source" validate:"required"`                        // 登录来源（mini=小程序,phone=手机号）
-	WechatCode    string `json:"wechat_code" validate:"required_if=Source mini"`    // 微信登录临时 code
-	EncryptedData string `json:"encrypted_data" validate:"required_if=Source mini"` // 微信加密数据
-	IV            string `json:"iv" validate:"required_if=Source mini"`             // 微信加密数据的初始向量
+	Source        string `json:"source" validate:"required" msg:"required:选择登录方式"` // 登录来源（mini=小程序,phone=手机号）
+	WechatCode    string `json:"wechat_code" validate:"required_if=Source mini"`   // 微信登录临时 code
+	EncryptedData string `json:"encrypted_data" validate:"c=Source mini"`          // 微信加密数据
+	IV            string `json:"iv" validate:"required_if=Source mini"`            // 微信加密数据的初始向量
 
 	Phone     string `json:"phone" validate:"required_if=Source phone,chmobile"` // 手机号（仅 source=phone 时必填）
 	PhoneCode string `json:"phone_code" validate:"required_if=Source phone"`     // 手机验证码（仅 source=phone 时必填）
@@ -30,7 +30,7 @@ type LoginResponse struct {
 
 // SendCodeRequest 验证码请求
 type SendCodeRequest struct {
-	Phone string `json:"phone" validate:"required,chmobile" msg:"required:用户手机号码不能为空|chmobile:不是有效的手机号码"`
+	Phone string `json:"phone" validate:"required,chmobile" msg:"required:用户手机号码不能为空|chmobile:手机号格式无效"`
 }
 
 // TokenRequest 退出登录请求
