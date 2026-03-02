@@ -30,6 +30,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			userGroup.POST("/login", h.Login)
 			userGroup.POST("/refresh_token", h.RefreshToken)
 			userGroup.POST("/logout", h.Logout)
+			userGroup.POST("/profile", h.CompleteProfile)
 		})
 		group.Group("/role", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
 			r := rolehandleer.NewRoleHandler()

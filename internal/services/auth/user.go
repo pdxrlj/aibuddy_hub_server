@@ -30,8 +30,10 @@ var testCode = "12345"
 
 // Service 用户认证服务
 type Service struct {
-	UserRepo *repository.UserRepo
-	sms      *sms.AliyunSMS
+	UserRepo       *repository.UserRepo
+	DeviceInfoRepo *repository.DeviceInfoRepo
+	DeviceRepo     *repository.DeviceRepo
+	sms            *sms.AliyunSMS
 }
 
 var tracer = func() trace.Tracer {
@@ -53,8 +55,9 @@ func New() *Service {
 	}
 
 	return &Service{
-		UserRepo: repository.New(),
-		sms:      sms,
+		UserRepo:       repository.New(),
+		DeviceInfoRepo: repository.NewDeviceInfoRepo(),
+		sms:            sms,
 	}
 }
 
@@ -186,7 +189,8 @@ func (s *Service) SendPhoneCode(phone string) (string, error) {
 	}
 
 	num := 0
-	code := helpers.GenerateNumber(5)
+	// 生成短信验证码
+	code := helpers.GenerateNumber(6)
 	if !slices.Contains(testPhoneNumber, phone) {
 		val, _ := cr.Get(sendKey)
 		num, _ = strconv.Atoi(val.(string))
@@ -219,4 +223,20 @@ func (s *Service) SendPhoneCode(phone string) (string, error) {
 	}
 
 	return code, nil
+}
+
+// CompleteProfile 完善设备信息
+func (s *Service) CompleteProfile(ctx context.Context, uid int64, d *model.DeviceInfo) error {
+	ctx, span := tracer().Start(ctx, "CompleteProfile")
+	defer span.End()
+
+	if err := s.DeviceInfoRepo.UpsertProfile(ctx, d); err != nil {
+		return err
+	}
+
+	if err := s.DeviceRepo.FirstAddDevice(ctx, d.DeviceID, uid); err != nil {
+		return err
+	}
+
+	return nil
 }

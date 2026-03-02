@@ -7,8 +7,10 @@ import (
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 	logger "aibuddy/pkg/log"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -125,5 +127,41 @@ func (h *Handler) RefreshToken(state *ahttp.State, req *TokenRequest) error {
 
 // Logout 用户退出登录
 func (h *Handler) Logout(state *ahttp.State, _ *TokenRequest) error {
+	return state.Resposne().Success()
+}
+
+// CompleteProfile 完善用户信息
+func (h *Handler) CompleteProfile(state *ahttp.State, req *UserinfoRequest) error {
+	_, span := tracer().Start(state.Ctx.Request().Context(), "complet_profile")
+	defer span.End()
+
+	uid, err := auth.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
+	}
+
+	birthday, err := time.Parse(time.DateOnly, req.Birthday)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
+	}
+
+	if err := h.AuthServer.CompleteProfile(state.Context(), uid, &model.DeviceInfo{
+		ID:          req.ID,
+		DeviceID:    req.DeviceID,
+		NickName:    req.NickName,
+		Avatar:      req.Avatar,
+		Gender:      req.Gender,
+		Birthday:    birthday,
+		Relation:    req.Relation,
+		Hobbies:     []string{req.Hobbies},
+		Values:      []string{req.Values},
+		Skills:      []string{req.Skills},
+		Personality: []string{req.Personality},
+	}); err != nil {
+		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
+	}
+
+	fmt.Printf("%+v\n", req)
+
 	return state.Resposne().Success()
 }
