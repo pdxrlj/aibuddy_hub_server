@@ -4,6 +4,7 @@ package ahttp
 import (
 	"aibuddy/pkg/buddyerror"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -184,10 +185,15 @@ func (b *Base) createHandler(handlerValue reflect.Value, inputNumber int) echo.H
 		instance := reflect.New(requestType).Interface()
 
 		if err := ctx.Bind(instance); err != nil {
+			msg := "参数格式错误"
+			var typeErr *json.UnmarshalTypeError
+			if errors.As(err, &typeErr) {
+				msg = fmt.Sprintf("参数 %s 类型错误，期望 %s 类型", typeErr.Field, typeErr.Type.Name())
+			}
 			return NewResponse(ctx).
 				SetStatus(buddyerror.GetBuddyErrorCode(buddyerror.ErrParamError)).
-				SetMessage(buddyerror.ErrParamError.Error()).
-				Error(err)
+				SetMessage(msg).
+				Error(errors.New(msg))
 		}
 
 		if err := b.RequestValidator(ctx, instance, requestType); err != nil {

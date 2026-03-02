@@ -44,12 +44,11 @@ func getTestRedis(t *testing.T) *Redis {
 	if err != nil {
 		t.Skipf("Redis not available: %v", err)
 	}
-	return r
+	return r.(*Redis)
 }
 
 func TestRedis_UpdateOrInsert(t *testing.T) {
 	r := getTestRedis(t)
-	ctx := t.Context()
 
 	tests := []struct {
 		name     string
@@ -66,8 +65,8 @@ func TestRedis_UpdateOrInsert(t *testing.T) {
 			key:      "new_key_1",
 			value:    "value1",
 			ttl:      0,
-			wantTTL:  -1,
-			checkTTL: true,
+			wantTTL:  0,
+			checkTTL: false,
 		},
 		{
 			name:     "insert new key with TTL",
@@ -86,8 +85,8 @@ func TestRedis_UpdateOrInsert(t *testing.T) {
 			key:      "existing_key_1",
 			value:    "new_value",
 			ttl:      0,
-			wantTTL:  -1,
-			checkTTL: true,
+			wantTTL:  0,
+			checkTTL: false,
 		},
 		{
 			name: "update existing key with TTL - preserve TTL",
@@ -129,13 +128,9 @@ func TestRedis_UpdateOrInsert(t *testing.T) {
 			assert.Equal(t, tt.value, got)
 
 			if tt.checkTTL && tt.wantTTL > 0 {
-				ttl := r.client.TTL(ctx, r.key(key)).Val()
+				ttl, hasTTL := r.TTL(key)
+				assert.True(t, hasTTL)
 				assert.GreaterOrEqual(t, ttl.Seconds(), tt.wantTTL.Seconds()-1)
-			}
-
-			if tt.checkTTL && tt.wantTTL == -1 {
-				ttl := r.client.TTL(ctx, r.key(key)).Val()
-				assert.Equal(t, time.Duration(-1), ttl)
 			}
 
 			_ = r.Delete(key)
@@ -161,8 +156,8 @@ func TestRedis_UpdateOrInsert_PreserveTTL(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "updated_value", got)
 
-	ctx := t.Context()
-	remainingTTL := r.client.TTL(ctx, r.key(key)).Val()
+	remainingTTL, hasTTL := r.TTL(key)
+	assert.True(t, hasTTL)
 	assert.Greater(t, remainingTTL.Seconds(), float64(28), "TTL should be preserved")
 	assert.LessOrEqual(t, remainingTTL.Seconds(), float64(30), "TTL should not exceed original")
 
@@ -203,8 +198,8 @@ func TestRedis_Incr(t *testing.T) {
 		assert.Equal(t, int64(1), count)
 
 		// 验证 TTL 已设置
-		ctx := t.Context()
-		ttl := r.client.TTL(ctx, r.key(key)).Val()
+		ttl, hasTTL := r.TTL(key)
+		assert.True(t, hasTTL)
 		assert.Greater(t, ttl.Seconds(), float64(8))
 
 		_ = r.Delete(key)
@@ -238,11 +233,61 @@ func TestRedis_Incr(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), count)
 
-		// 无 TTL 时应该是 -1（永不过期）
-		ctx := t.Context()
-		ttl := r.client.TTL(ctx, r.key(key)).Val()
-		assert.Equal(t, time.Duration(-1), ttl)
+		// 无 TTL
+		_, hasTTL := r.TTL(key)
+		assert.False(t, hasTTL)
 
 		_ = r.Delete(key)
+	})
+}
+
+func TestRedis_TTL(t *testing.T) {
+	r := getTestRedis(t)
+
+	t.Run("key with TTL", func(t *testing.T) {
+		key := "ttl_with_" + time.Now().Format("20060102150405")
+
+		err := r.Set(key, "value", 30*time.Second)
+		require.NoError(t, err)
+
+		ttl, hasTTL := r.TTL(key)
+		assert.True(t, hasTTL)
+		assert.GreaterOrEqual(t, ttl.Seconds(), float64(28))
+		assert.LessOrEqual(t, ttl.Seconds(), float64(30))
+
+		_ = r.Delete(key)
+	})
+
+	t.Run("key without TTL", func(t *testing.T) {
+		key := "ttl_without_" + time.Now().Format("20060102150405")
+
+		err := r.Set(key, "value")
+		require.NoError(t, err)
+
+		_, hasTTL := r.TTL(key)
+		assert.False(t, hasTTL)
+
+		_ = r.Delete(key)
+	})
+
+	t.Run("non-existent key", func(t *testing.T) {
+		key := "ttl_nonexistent_" + time.Now().Format("20060102150405")
+
+		_, hasTTL := r.TTL(key)
+		assert.False(t, hasTTL)
+	})
+
+	t.Run("key after expiration", func(t *testing.T) {
+		key := "ttl_expired_" + time.Now().Format("20060102150405")
+
+		err := r.Set(key, "value", 1*time.Second)
+		require.NoError(t, err)
+
+		// 等待过期
+		time.Sleep(2 * time.Second)
+
+		_, hasTTL := r.TTL(key)
+		assert.False(t, hasTTL)
+		assert.False(t, r.Exists(key))
 	})
 }
