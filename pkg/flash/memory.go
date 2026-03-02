@@ -2,6 +2,7 @@ package flash
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/dgraph-io/ristretto/v2"
@@ -12,6 +13,7 @@ var _ Flash = (*Memory)(nil)
 // Memory is an in-memory cache implementation using ristretto.
 type Memory struct {
 	store *ristretto.Cache[string, any]
+	mu    sync.Mutex // 用于 Incr 的原子操作
 }
 
 // NewMemory creates a new in-memory cache.
@@ -87,4 +89,33 @@ func (m *Memory) Pop(key string) (any, error) {
 func (m *Memory) Exists(key string) bool {
 	_, ok := m.store.Get(key)
 	return ok
+}
+
+// Incr atomically increments a key. If key doesn't exist, sets to 1 with optional TTL.
+func (m *Memory) Incr(key string, ttl ...time.Duration) (int64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	var count int64
+	if val, ok := m.store.Get(key); ok {
+		if n, ok := val.(int64); ok {
+			count = n
+		}
+	}
+
+	count++
+
+	var d time.Duration
+	if len(ttl) > 0 {
+		d = ttl[0]
+	}
+
+	if !m.store.SetWithTTL(key, count, 1, d) {
+		return 0, fmt.Errorf("%w: %s", ErrSetFailed, key)
+	}
+
+	// 等待异步写入完成
+	m.store.Wait()
+
+	return count, nil
 }

@@ -191,3 +191,58 @@ func TestRedis_BasicOperations(t *testing.T) {
 
 	assert.False(t, r.Exists(key))
 }
+
+func TestRedis_Incr(t *testing.T) {
+	r := getTestRedis(t)
+
+	t.Run("increment new key", func(t *testing.T) {
+		key := "incr_new_" + time.Now().Format("20060102150405")
+
+		count, err := r.Incr(key, 10*time.Second)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), count)
+
+		// 验证 TTL 已设置
+		ctx := t.Context()
+		ttl := r.client.TTL(ctx, r.key(key)).Val()
+		assert.Greater(t, ttl.Seconds(), float64(8))
+
+		_ = r.Delete(key)
+	})
+
+	t.Run("increment existing key", func(t *testing.T) {
+		key := "incr_existing_" + time.Now().Format("20060102150405")
+
+		// 第一次递增
+		count, err := r.Incr(key, 10*time.Second)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), count)
+
+		// 第二次递增
+		count, err = r.Incr(key)
+		require.NoError(t, err)
+		assert.Equal(t, int64(2), count)
+
+		// 第三次递增
+		count, err = r.Incr(key)
+		require.NoError(t, err)
+		assert.Equal(t, int64(3), count)
+
+		_ = r.Delete(key)
+	})
+
+	t.Run("increment without TTL", func(t *testing.T) {
+		key := "incr_no_ttl_" + time.Now().Format("20060102150405")
+
+		count, err := r.Incr(key)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), count)
+
+		// 无 TTL 时应该是 -1（永不过期）
+		ctx := t.Context()
+		ttl := r.client.TTL(ctx, r.key(key)).Val()
+		assert.Equal(t, time.Duration(-1), ttl)
+
+		_ = r.Delete(key)
+	})
+}

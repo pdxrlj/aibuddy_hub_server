@@ -145,3 +145,24 @@ func (r *Redis) Exists(key string) bool {
 	n, _ := r.client.Exists(context.Background(), r.key(key)).Result()
 	return n > 0
 }
+
+// Incr atomically increments a key. If key doesn't exist, sets to 1 with optional TTL.
+func (r *Redis) Incr(key string, ttl ...time.Duration) (int64, error) {
+	ctx := context.Background()
+	fullKey := r.key(key)
+
+	// 原子递增
+	result, err := r.client.Incr(ctx, fullKey).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	// 首次创建时设置过期时间
+	if result == 1 && len(ttl) > 0 && ttl[0] > 0 {
+		if err := r.client.Expire(ctx, fullKey, ttl[0]).Err(); err != nil {
+			return result, err
+		}
+	}
+
+	return result, nil
+}

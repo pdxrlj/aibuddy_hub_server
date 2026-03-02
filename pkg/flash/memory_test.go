@@ -161,3 +161,98 @@ func TestMemory_BasicOperations(t *testing.T) {
 
 	assert.False(t, m.Exists(key))
 }
+
+func TestMemory_Incr(t *testing.T) {
+	m, err := NewMemory()
+	require.NoError(t, err)
+
+	t.Run("increment new key", func(t *testing.T) {
+		key := "incr_new_" + time.Now().Format("20060102150405.000000000")
+
+		count, err := m.Incr(key, 10*time.Second)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), count)
+
+		time.Sleep(10 * time.Millisecond)
+
+		// 验证 TTL 已设置
+		ttl, hasTTL := m.store.GetTTL(key)
+		assert.True(t, hasTTL)
+		assert.Greater(t, ttl.Milliseconds(), int64(8000))
+
+		m.Delete(key)
+	})
+
+	t.Run("increment existing key", func(t *testing.T) {
+		key := "incr_existing_" + time.Now().Format("20060102150405.000000000")
+
+		// 第一次递增
+		count, err := m.Incr(key, 10*time.Second)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), count)
+
+		// 第二次递增
+		count, err = m.Incr(key)
+		require.NoError(t, err)
+		assert.Equal(t, int64(2), count)
+
+		// 第三次递增
+		count, err = m.Incr(key)
+		require.NoError(t, err)
+		assert.Equal(t, int64(3), count)
+
+		time.Sleep(10 * time.Millisecond)
+
+		// 验证值
+		val, ok := m.store.Get(key)
+		require.True(t, ok)
+		assert.Equal(t, int64(3), val)
+
+		m.Delete(key)
+	})
+
+	t.Run("increment without TTL", func(t *testing.T) {
+		key := "incr_no_ttl_" + time.Now().Format("20060102150405.000000000")
+
+		count, err := m.Incr(key)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), count)
+
+		time.Sleep(10 * time.Millisecond)
+
+		// 验证值正确
+		val, ok := m.store.Get(key)
+		require.True(t, ok)
+		assert.Equal(t, int64(1), val)
+
+		m.Delete(key)
+	})
+
+	t.Run("concurrent increment", func(t *testing.T) {
+		key := "incr_concurrent_" + time.Now().Format("20060102150405.000000000")
+		iterations := 100
+
+		// 并发递增
+		done := make(chan bool)
+		for i := 0; i < iterations; i++ {
+			go func() {
+				_, _ = m.Incr(key)
+				done <- true
+			}()
+		}
+
+		// 等待所有 goroutine 完成
+		for i := 0; i < iterations; i++ {
+			<-done
+		}
+
+		time.Sleep(50 * time.Millisecond)
+
+		// 验证最终值
+		val, ok := m.store.Get(key)
+		require.True(t, ok)
+		assert.Equal(t, int64(iterations), val)
+
+		m.Delete(key)
+	})
+}

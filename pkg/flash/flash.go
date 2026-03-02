@@ -21,6 +21,7 @@ type Flash interface {
 	Delete(key string) error
 	Pop(key string) (any, error) // Get and delete
 	Exists(key string) bool
+	Incr(key string, ttl ...time.Duration) (int64, error) // 原子递增，首次设置 TTL
 }
 
 // New creates a new Flash instance.

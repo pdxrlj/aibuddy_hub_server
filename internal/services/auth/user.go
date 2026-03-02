@@ -6,6 +6,7 @@ import (
 	"aibuddy/internal/repository"
 	"aibuddy/internal/services/cache"
 	"aibuddy/pkg/config"
+	"aibuddy/pkg/flash"
 	"aibuddy/pkg/helpers"
 	logger "aibuddy/pkg/log"
 	"aibuddy/pkg/sms"
@@ -15,7 +16,6 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
-	"strconv"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -25,13 +25,19 @@ import (
 	"gorm.io/gorm"
 )
 
-var testPhoneNumber = []string{"18888888888", "18895516550"}
-var testCode = "12345"
+var (
+	testPhoneNumber = []string{"18888888888", "18895516550"}
+	testCode        = "12345"
+
+	smsCacheKey     = "sms:%s"
+	smsSendCountKey = "sms_count:%s"
+)
 
 // Service 用户认证服务
 type Service struct {
 	UserRepo *repository.UserRepo
 	sms      *sms.AliyunSMS
+	cache    flash.Flash
 }
 
 var tracer = func() trace.Tracer {
@@ -55,6 +61,7 @@ func New() *Service {
 	return &Service{
 		UserRepo: repository.New(),
 		sms:      sms,
+		cache:    cache.Flash(),
 	}
 }
 
@@ -113,15 +120,11 @@ func (s *Service) UpsertUser(ctx context.Context, user *model.User) error {
 
 // CheckLoginCode 检验验证码
 func (s *Service) CheckLoginCode(phone, code string) error {
-	if err := helpers.ValidateMobile(phone); err != nil {
-		return err
-	}
-	// 测试数据
 	if slices.Contains(testPhoneNumber, phone) && code == testCode {
 		return nil
 	}
 	cachekey := fmt.Sprintf("sms:%s", phone)
-	result, err := cache.Flash().Get(cachekey)
+	result, err := s.cache.Get(cachekey)
 
 	if err != nil && err.Error() != redis.Nil.Error() {
 		return err
@@ -133,7 +136,7 @@ func (s *Service) CheckLoginCode(phone, code string) error {
 		return errors.New("验证码错误")
 	}
 
-	if err := cache.Flash().Delete(cachekey); err != nil {
+	if err := s.cache.Delete(cachekey); err != nil {
 		return err
 	}
 	return nil
@@ -172,56 +175,50 @@ func (s *Service) CheckLoginMiniProgram(code, encryptedData, iv string, userInfo
 
 // SendPhoneCode 发送手机验证码
 func (s *Service) SendPhoneCode(phone string) (string, error) {
-	if err := helpers.ValidateMobile(phone); err != nil {
-		return "", err
-	}
-
-	cr := cache.Flash()
 	maxCount := config.Instance.App.MsgSendCount
-	cacheKey := fmt.Sprintf("sms:%s", phone)
-	sendKey := fmt.Sprintf("sms_count:%s", phone)
+	cacheKey := fmt.Sprintf(smsCacheKey, phone)
+	sendCountKey := fmt.Sprintf(smsSendCountKey, phone)
 
-	if cr.Exists(cacheKey) {
+	if s.cache.Exists(cacheKey) {
 		return "", errors.New("验证码已发送，请稍后重试")
 	}
 
-	num := 0
-	code := helpers.GenerateNumber(5)
+	code := helpers.GenerateNumber(6)
 	if !slices.Contains(testPhoneNumber, phone) {
-		val, _ := cr.Get(sendKey)
-		num, _ = strconv.Atoi(val.(string))
-
-		slog.Error("info", "send_key", sendKey, "num", num, "max", maxCount)
-		if num >= maxCount {
-			return "", errors.New("发送验证码次数达到最大限制，请稍后重试")
+		// 先检查发送次数
+		if _, err := s.LimitTaskTimes(sendCountKey, maxCount, 24*time.Hour); err != nil {
+			return "", err
 		}
 
-		//  发送验证码
+		// 发送验证码
 		_, err := s.sms.SendSMS(phone, code)
 		if err != nil {
 			return "", err
 		}
-
-		if err := cr.Upsert(sendKey, num+1, 24*time.Hour); err != nil {
-			return "", errors.New("发送验证码失败")
-		}
-
-		// if num == 0 {
-		// 	if err := cr.Set(sendKey, num+1, 24*time.Hour); err != nil {
-		// 		return "", errors.New("发送验证码失败")
-		// 	}
-		// } else {
-		// 	if err := cr.Set(sendKey, num+1); err != nil {
-		// 		return "", errors.New("发送验证码失败")
-		// 	}
-		// }
 	} else {
 		code = testCode
 	}
 
-	if err := cr.Set(cacheKey, code, 5*time.Minute); err != nil {
+	if err := s.cache.Set(cacheKey, code, 5*time.Minute); err != nil {
 		return "", err
 	}
 
 	return code, nil
+}
+
+// LimitTaskTimes 限制规定时间任务次数，返回当前计数
+func (s *Service) LimitTaskTimes(key string, times int, ttl time.Duration) (int, error) {
+	if times < 1 {
+		times = 1
+	}
+	count, err := s.cache.Incr(key, ttl)
+	if err != nil {
+		return 0, err
+	}
+
+	if count > int64(times) {
+		return int(count), errors.New("任务次数达到最大限制")
+	}
+
+	return int(count), nil
 }
