@@ -85,7 +85,7 @@ func ValidateToken(c echo.Context, tokenString string) (*MyClaims, error) {
 }
 
 // RefreshToken 刷新令牌
-func RefreshToken(ctx context.Context, oldTokenString string) (string, int64, error) {
+func RefreshToken(ctx context.Context, oldTokenString string, uid int64) (string, int64, error) {
 	_, span := tracer().Start(ctx, "RefreshToken")
 	defer span.End()
 
@@ -103,6 +103,10 @@ func RefreshToken(ctx context.Context, oldTokenString string) (string, int64, er
 	if !ok {
 		span.RecordError(errors.New("invalid token claims"))
 		return "", 0, fmt.Errorf("invalid token claims")
+	}
+
+	if uid != claims.UID {
+		return "", 0, fmt.Errorf("无刷新Token权限")
 	}
 
 	// 检查令牌是否在刷新有效期内
