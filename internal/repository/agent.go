@@ -4,7 +4,6 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
-	"errors"
 )
 
 // AgentRepo agetn仓库
@@ -29,19 +28,22 @@ func (a *AgentRepo) GetAgentListByUID(ctx context.Context, uid int64, page, size
 	return data, count, err
 }
 
-// GetAgentByID 获取角色信息
-func (a *AgentRepo) GetAgentByID(ctx context.Context, uid, roleID int64) error {
-	_, span := tracer.Start(ctx, "GetAgentById")
+// ChcekAgentByID 验证数据
+func (a *AgentRepo) ChcekAgentByID(ctx context.Context, uid, roleID int64) bool {
+	_, span := tracer.Start(ctx, "ChcekAgentByID")
 	defer span.End()
+
 	count, err := query.Agent.Where(query.Agent.ID.Eq(roleID), query.Agent.UID.In(uid, 0)).Count()
-
-	if err != nil {
-		return err
+	if err != nil || count < 1 {
+		return false
 	}
+	return true
+}
 
-	if count < 1 {
-		return errors.New("角色信息异常")
-	}
-
-	return nil
+// GetAgentByID 查询角色信息
+func (a *AgentRepo) GetAgentByID(ctx context.Context, uid, roleID int64) (*model.Agent, error) {
+	_, span := tracer.Start(ctx, "GetAgentByID")
+	defer span.End()
+	data, err := query.Agent.Where(query.Agent.ID.Eq(roleID), query.Agent.UID.In(uid, 0)).First()
+	return data, err
 }

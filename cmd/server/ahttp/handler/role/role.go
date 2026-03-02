@@ -7,6 +7,7 @@ import (
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 	"net/http"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -88,4 +89,30 @@ func (r *Handler) ChangeRole(state *ahttp.State, req *ChangeRquest) error {
 	}
 
 	return state.Resposne().Success()
+}
+
+// RoleInfo 获取角色信息
+func (r *Handler) RoleInfo(state *ahttp.State, req *InfoRequest) error {
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "change_role")
+	defer span.End()
+	span.SetAttributes(attribute.Int("role_id", int(req.RoleID)))
+
+	uid, err := auth.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+	data, err := r.RoleSerivce.GetRoleByID(ctx, uid, req.RoleID)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().SetData(&InfoResponse{
+		ID:               data.ID,
+		AgentName:        data.AgentName,
+		UID:              data.UID,
+		RoleIntroduction: data.RoleIntroduction,
+		SystemPrompt:     data.SystemPrompt,
+		CreatedAt:        data.CreatedAt.Format(time.DateTime),
+		UpdatedAt:        data.UpdatedAt.Format(time.DateTime),
+	}).Success()
 }
