@@ -28,7 +28,7 @@ func (d *DeviceInfoRepo) UpsertProfile(ctx context.Context, info *model.DeviceIn
 
 	if err := db.DeviceInfo.Clauses(
 		clause.OnConflict{
-			Columns: []clause.Column{{Name: "id"}},
+			Columns: []clause.Column{{Name: query.DeviceInfo.DeviceID.ColumnName().String()}},
 			DoUpdates: clause.Assignments(map[string]any{
 				db.DeviceInfo.NickName.ColumnName().String():    info.NickName,
 				db.DeviceInfo.Avatar.ColumnName().String():      info.Avatar,

@@ -29,3 +29,9 @@ type RolesResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+// ChangeRquest 切换角色请求
+type ChangeRquest struct {
+	DeviceID string `json:"device_id" validate:"required" msg:"required:设备ID不能为空"`
+	RoleID   int64  `json:"role_id"  validate:"required" msg:"required:角色ID不能为空"`
+}
