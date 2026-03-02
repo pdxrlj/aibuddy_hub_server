@@ -36,3 +36,14 @@ func (d *DeviceRepo) FirstAddDevice(ctx context.Context, deviceID string, uid in
 	})
 	return err
 }
+
+// DeviceChangeRole 设备切换角色
+func (d *DeviceRepo) DeviceChangeRole(ctx context.Context, uid int64, deviceID string, roleID int64) error {
+	_, span := tracer.Start(ctx, "DeviceChangeRole")
+	defer span.End()
+	if _, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID), query.Device.UID.Eq(uid), query.Device.IsAdmin.Is(true)).
+		Update(query.Device.AgentID, roleID); err != nil {
+		return err
+	}
+	return nil
+}

@@ -69,3 +69,23 @@ func (r *Handler) RoleList(state *ahttp.State, req *ListRequest) error {
 		Roles: res,
 	}).Success()
 }
+
+// ChangeRole 切换角色信息
+func (r *Handler) ChangeRole(state *ahttp.State, req *ChangeRquest) error {
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "change_role")
+	defer span.End()
+	span.SetAttributes(attribute.String("device_id", req.DeviceID))
+	span.SetAttributes(attribute.Int("role_id", int(req.RoleID)))
+
+	uid, err := auth.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	err = r.RoleSerivce.ChangeRole(ctx, uid, req.DeviceID, req.RoleID)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success()
+}

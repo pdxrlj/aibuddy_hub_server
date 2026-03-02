@@ -42,6 +42,7 @@ func RegisterRoutes(base *ahttp.Base) {
 		group.Group("/role", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
 			r := rolehandleer.NewRoleHandler()
 			group.GET("/list", r.RoleList)
+			group.POST("/change", r.ChangeRole) // 切换角色
 		})
 	})
 }

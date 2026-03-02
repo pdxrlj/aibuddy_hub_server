@@ -6,6 +6,7 @@ import (
 	"aibuddy/internal/repository"
 	"aibuddy/pkg/config"
 	"context"
+	"errors"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -17,7 +18,8 @@ var tracer = func() trace.Tracer {
 
 // Service 角色服务
 type Service struct {
-	AgentRepo *repository.AgentRepo
+	AgentRepo  *repository.AgentRepo
+	DeviceRepo *repository.DeviceRepo
 }
 
 // NewRoleService 实例化服务
@@ -37,4 +39,20 @@ func (r *Service) GetRoleListByUID(ctx context.Context, uid int64, page int, siz
 		return nil, 0, err
 	}
 	return data, count, nil
+}
+
+// ChangeRole 切换设备角色
+func (r *Service) ChangeRole(ctx context.Context, uid int64, deviceID string, roleID int64) error {
+	ctx, span := tracer().Start(ctx, "ChangeRoleById")
+	defer span.End()
+
+	if err := r.AgentRepo.GetAgentByID(ctx, uid, roleID); err != nil {
+		return errors.New("role_id参数异常")
+	}
+
+	if err := r.DeviceRepo.DeviceChangeRole(ctx, uid, deviceID, roleID); err != nil {
+		return errors.New("device_id参数异常")
+	}
+
+	return nil
 }
