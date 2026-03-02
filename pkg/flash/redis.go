@@ -100,8 +100,8 @@ var updateOrInsertScript = redis.NewScript(`
 	end
 `)
 
-// UpdateOrInsert updates a value if it exists, otherwise inserts it.
-func (r *Redis) UpdateOrInsert(key string, value any, ttl ...time.Duration) error {
+// Upsert updates a value if it exists, otherwise inserts it.
+func (r *Redis) Upsert(key string, value any, ttl ...time.Duration) error {
 	ctx := context.Background()
 	fullKey := r.key(key)
 

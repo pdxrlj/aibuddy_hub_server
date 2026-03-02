@@ -121,7 +121,7 @@ func TestRedis_UpdateOrInsert(t *testing.T) {
 				tt.setup(key)
 			}
 
-			err := r.UpdateOrInsert(key, tt.value, tt.ttl)
+			err := r.Upsert(key, tt.value, tt.ttl)
 			require.NoError(t, err)
 
 			got, err := r.Get(key)
@@ -154,7 +154,7 @@ func TestRedis_UpdateOrInsert_PreserveTTL(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	err = r.UpdateOrInsert(key, "updated_value")
+	err = r.Upsert(key, "updated_value")
 	require.NoError(t, err)
 
 	got, err := r.Get(key)

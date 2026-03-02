@@ -39,8 +39,8 @@ func (m *Memory) Set(key string, value any, ttl ...time.Duration) error {
 	return nil
 }
 
-// UpdateOrInsert updates a value if it exists, otherwise inserts it.
-func (m *Memory) UpdateOrInsert(key string, value any, ttl ...time.Duration) error {
+// Upsert updates a value if it exists, otherwise inserts it.
+func (m *Memory) Upsert(key string, value any, ttl ...time.Duration) error {
 	if len(ttl) > 0 && ttl[0] > 0 {
 		return m.Set(key, value, ttl[0])
 	}

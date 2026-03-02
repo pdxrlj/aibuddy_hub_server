@@ -83,7 +83,7 @@ func TestMemory_UpdateOrInsert(t *testing.T) {
 				time.Sleep(10 * time.Millisecond)
 			}
 
-			err := m.UpdateOrInsert(key, tt.value, tt.ttl)
+			err := m.Upsert(key, tt.value, tt.ttl)
 			require.NoError(t, err)
 
 			time.Sleep(10 * time.Millisecond)
@@ -117,7 +117,7 @@ func TestMemory_UpdateOrInsert_PreserveTTL(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond)
 
-	err = m.UpdateOrInsert(key, "updated_value")
+	err = m.Upsert(key, "updated_value")
 	require.NoError(t, err)
 
 	time.Sleep(10 * time.Millisecond)
