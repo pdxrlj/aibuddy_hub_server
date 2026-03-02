@@ -30,7 +30,7 @@ type LoginResponse struct {
 
 // SendCodeRequest 验证码请求
 type SendCodeRequest struct {
-	Phone string `json:"phone" validate:"required,chmobile"`
+	Phone string `json:"phone" validate:"required,chmobile" msg:"required:用户手机号码不能为空|chmobile:不是有效的手机号码"`
 }
 
 // TokenRequest 退出登录请求

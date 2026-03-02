@@ -57,27 +57,32 @@ func StartHTTPServer(ctx context.Context) error {
 func UniversalMiddlewares() []echo.MiddlewareFunc {
 	return []echo.MiddlewareFunc{
 		middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-			LogMethod:  true,
-			LogURI:     true,
-			LogStatus:  true,
-			LogLatency: true,
-			LogError:   true,
-			LogHeaders: []string{"Content-Type", "Authorization"},
+			LogMethod:    true,
+			LogURI:       true,
+			LogStatus:    true,
+			LogLatency:   true,
+			LogError:     true,
+			LogRemoteIP:  true,
+			LogUserAgent: true,
+			LogHeaders:   []string{"Content-Type"},
 			LogValuesFunc: func(_ echo.Context, values middleware.RequestLoggerValues) error {
-				valuesString := fmt.Sprintf("method=%s, uri=%s, status=%d, latency=%s, headers=%s",
-					values.Method,
-					values.URI,
-					values.Status,
-					values.Latency,
-					values.Headers,
-				)
+				// 使用结构化日志
+				args := []any{
+					"method", values.Method,
+					"uri", values.URI,
+					"status", values.Status,
+					"latency", values.Latency,
+					"ip", values.RemoteIP,
+				}
+
 				switch {
 				case values.Status >= 500:
-					slog.Error("HTTP: " + valuesString)
+					slog.Error("HTTP", append(args, "error", values.Error)...)
 				case values.Status >= 400:
-					slog.Warn("HTTP: " + valuesString)
+					slog.Warn("HTTP", args...)
+				case values.Status >= 300:
 				default:
-					slog.Info("HTTP: " + valuesString)
+					slog.Debug("HTTP", args...)
 				}
 				return nil
 			},
@@ -86,8 +91,7 @@ func UniversalMiddlewares() []echo.MiddlewareFunc {
 			DisableStackAll:     false,
 			DisableErrorHandler: true,
 			LogErrorFunc: func(_ echo.Context, err error, stack []byte) error {
-				fmt.Printf("%+v \n %+v\n", err, string(stack))
-
+				slog.Error("Panic recovered", "error", err, "stack", string(stack))
 				return nil
 			},
 		}),

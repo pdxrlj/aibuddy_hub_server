@@ -46,3 +46,17 @@ func (d *Device) FirstOnline(state *ahttp.State, req *FirstOnlineRequest) error 
 		MQTTPassword: configInfo.MQTTPassword,
 	})
 }
+
+// BindDevice 硬件设备发起绑定设备请求
+func (d *Device) BindDevice(state *ahttp.State, _ *BindDeviceRequest) error {
+	// ctx, span := tracer().Start(state.Context(), "Device.BindDevice")
+	// defer span.End()
+
+	// err := d.Service.BindDevice(ctx, req.DeviceID, req.ICCID)
+	// if err != nil {
+	// 	span.RecordError(err)
+	// 	span.SetAttributes(attribute.String("device_id", req.DeviceID))
+	// 	return state.Resposne().Error(err)
+	// }
+	return state.Resposne().Success()
+}

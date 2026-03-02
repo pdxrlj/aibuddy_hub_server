@@ -2,7 +2,7 @@ app:
   name: "aibuddy_hub"
   host: "0.0.0.0"
   port: 9081
-  log_level: "info"
+  log_level: "debug"
 storage:
   database:
     host: ""

@@ -110,10 +110,10 @@ func (h *Handler) SendCode(state *ahttp.State, req *SendCodeRequest) error {
 
 // RefreshToken 刷新token
 func (h *Handler) RefreshToken(state *ahttp.State, req *TokenRequest) error {
-	_, span := tracer().Start(state.Ctx.Request().Context(), "refresh_token")
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "refresh_token")
 	defer span.End()
 
-	token, expires, err := auth.RefreshToken(req.Token)
+	token, expires, err := auth.RefreshToken(ctx, req.Token)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
@@ -131,20 +131,22 @@ func (h *Handler) Logout(state *ahttp.State, _ *TokenRequest) error {
 
 // CompleteProfile 完善用户信息
 func (h *Handler) CompleteProfile(state *ahttp.State, req *UserinfoRequest) error {
-	_, span := tracer().Start(state.Ctx.Request().Context(), "complet_profile")
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "complet_profile")
 	defer span.End()
 
 	uid, err := auth.GetUIDFromContext(state.Ctx)
 	if err != nil {
+		span.RecordError(err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	birthday, err := time.Parse(time.DateOnly, req.Birthday)
 	if err != nil {
+		span.RecordError(err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	if err := h.AuthServer.CompleteProfile(state.Context(), uid, &model.DeviceInfo{
+	if err := h.AuthServer.CompleteProfile(ctx, uid, &model.DeviceInfo{
 		ID:          req.ID,
 		DeviceID:    req.DeviceID,
 		NickName:    req.NickName,
@@ -157,6 +159,7 @@ func (h *Handler) CompleteProfile(state *ahttp.State, req *UserinfoRequest) erro
 		Skills:      []string{req.Skills},
 		Personality: []string{req.Personality},
 	}); err != nil {
+		span.RecordError(err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
