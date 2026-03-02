@@ -60,6 +60,7 @@ func (d *DB) GenerateQuery() {
 		Reminder{},
 
 		DeviceSN{},
+		DeviceInfo{},
 	}
 
 	_ = d.db.AutoMigrate(models...)
