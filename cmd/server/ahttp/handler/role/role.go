@@ -39,12 +39,12 @@ func (r *Handler) RoleList(state *ahttp.State, req *ListRequest) error {
 
 	uid, err := auth.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	data, count, err := r.RoleSerivce.GetRoleListByUID(state.Context(), uid, req.Page, req.Size)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusInternalServerError).Error(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	var res []RolesResponse
