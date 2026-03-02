@@ -80,12 +80,12 @@ func (m MgmtType) String() string {
 // Mgmt 设备管理消息
 type Mgmt struct {
 	Type    MgmtType `json:"type"`
-	Contact string   `json:"contact"`
-	Phone   string   `json:"phone"`
+	Contact string   `json:"contact,omitempty"`
+	Phone   string   `json:"phone,omitempty"`
 
-	User   string `json:"user"`
-	Avatar string `json:"avatar"`
-	Sn     string `json:"sn"`
+	User   string `json:"user,omitempty"`
+	Avatar string `json:"avatar,omitempty"`
+	Sn     string `json:"sn,omitempty"`
 }
 
 // Encode 编码设备管理消息

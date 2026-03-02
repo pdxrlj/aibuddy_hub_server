@@ -2,6 +2,7 @@
 package auth
 
 import (
+	management "aibuddy/aiframe/managemet"
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"aibuddy/internal/repository"
@@ -37,11 +38,13 @@ var (
 
 // Service 用户认证服务
 type Service struct {
-	UserRepo       *repository.UserRepo
-	DeviceInfoRepo *repository.DeviceInfoRepo
-	DeviceRepo     *repository.DeviceRepo
-	sms            *sms.AliyunSMS
-	cache          flash.Flash
+	UserRepo         *repository.UserRepo
+	DeviceInfoRepo   *repository.DeviceInfoRepo
+	DeviceRepo       *repository.DeviceRepo
+	BindDeviceSnRepo *repository.BindDeviceSnRepo
+
+	sms   *sms.AliyunSMS
+	cache flash.Flash
 
 	deviceService *device.Service
 }
@@ -65,11 +68,12 @@ func New() *Service {
 	}
 
 	return &Service{
-		UserRepo:       repository.New(),
-		DeviceInfoRepo: repository.NewDeviceInfoRepo(),
-		sms:            sms,
-		cache:          cache.Flash(),
-		deviceService:  device.NewService(),
+		UserRepo:         repository.New(),
+		DeviceInfoRepo:   repository.NewDeviceInfoRepo(),
+		BindDeviceSnRepo: repository.NewBindDeviceSnRepo(),
+		sms:              sms,
+		cache:            cache.Flash(),
+		deviceService:    device.NewService(),
 	}
 }
 
@@ -233,7 +237,7 @@ func (s *Service) LimitTaskTimes(key string, times int, ttl time.Duration) (int,
 }
 
 // CompleteProfile 完善设备信息
-func (s *Service) CompleteProfile(ctx context.Context, uid int64, d *model.DeviceInfo) error {
+func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType string, d *model.DeviceInfo) error {
 	ctx, span := tracer().Start(ctx, "CompleteProfile")
 	defer span.End()
 
@@ -245,12 +249,34 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, d *model.Devic
 			return err
 		}
 
-		iccid, err := s.deviceService.GetDeviceICCIDInfo(d.DeviceID)
+		iccid, version, err := s.deviceService.FromCacheGetDeviceInfo(d.DeviceID)
 		if err != nil {
 			return err
 		}
 
-		if err := s.DeviceRepo.ChangeDeviceIccid(ctx, d.DeviceID, iccid, tx); err != nil {
+		if err := s.DeviceRepo.ChangeDeviceInfo(ctx, d.DeviceID, iccid, boardType, version, tx); err != nil {
+			return err
+		}
+
+		user, err := s.UserRepo.FindUserByUserID(uid)
+		if err != nil {
+			return err
+		}
+
+		// 如果表里面没有这个Device那可能就是非法的Device
+		sn, err := s.BindDeviceSnRepo.GetDeviceSnByDeviceID(ctx, d.DeviceID)
+		if err != nil {
+			return err
+		}
+
+		mMgmt := management.Mgmt{
+			Type:   management.MgmtTypeBound,
+			User:   user.Nickname,
+			Avatar: user.Avatar,
+			Sn:     sn,
+		}
+
+		if err := mMgmt.SendBoundToDevice(d.DeviceID); err != nil {
 			return err
 		}
 
