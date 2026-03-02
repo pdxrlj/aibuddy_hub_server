@@ -47,7 +47,8 @@ func (d *Device) FirstOnline(state *ahttp.State, req *FirstOnlineRequest) error 
 	})
 }
 
-func (d *Device) BindDevice(state *ahttp.State, req *BindDeviceRequest) error {
+// BindDevice 硬件设备发起绑定设备请求
+func (d *Device) BindDevice(state *ahttp.State, _ *BindDeviceRequest) error {
 	// ctx, span := tracer().Start(state.Context(), "Device.BindDevice")
 	// defer span.End()
 

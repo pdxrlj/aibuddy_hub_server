@@ -14,6 +14,7 @@ type FirstOnlineResponse struct {
 	MQTTPassword string `json:"mqtt_password"`
 }
 
+// BindDeviceRequest 硬件设备发起绑定设备请求
 type BindDeviceRequest struct {
 	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,mac"`
 	ICCID    string `json:"iccid" form:"iccid" param:"iccid" query:"iccid" validate:"required,len=20"`
