@@ -46,13 +46,25 @@ func (r *Service) ChangeRole(ctx context.Context, uid int64, deviceID string, ro
 	ctx, span := tracer().Start(ctx, "ChangeRoleById")
 	defer span.End()
 
-	if err := r.AgentRepo.GetAgentByID(ctx, uid, roleID); err != nil {
+	if !r.AgentRepo.ChcekAgentByID(ctx, uid, roleID) {
 		return errors.New("role_id参数异常")
 	}
-
 	if err := r.DeviceRepo.DeviceChangeRole(ctx, uid, deviceID, roleID); err != nil {
 		return errors.New("device_id参数异常")
 	}
 
 	return nil
+}
+
+// GetRoleByID 查看角色信息
+func (r *Service) GetRoleByID(ctx context.Context, uid int64, roleID int64) (*model.Agent, error) {
+	ctx, span := tracer().Start(ctx, "GetRoleByID")
+	defer span.End()
+
+	data, err := r.AgentRepo.GetAgentByID(ctx, uid, roleID)
+	if err != nil {
+		return nil, errors.New("角色信息为空")
+	}
+
+	return data, nil
 }

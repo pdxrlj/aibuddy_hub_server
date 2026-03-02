@@ -43,6 +43,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			r := rolehandleer.NewRoleHandler()
 			group.GET("/list", r.RoleList)
 			group.POST("/change", r.ChangeRole) // 切换角色
+			group.GET("/info", r.RoleInfo)
 		})
 	})
 }
