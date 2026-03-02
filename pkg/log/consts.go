@@ -15,4 +15,7 @@ const (
 
 	// Redis Connection
 	Redis = "[REDIS]"
+
+	// ValidateRegister Register
+	ValidateRegister = "[VALIDATE REGISTER]"
 )

@@ -39,12 +39,9 @@ func (m *Memory) Set(key string, value any, ttl ...time.Duration) error {
 	return nil
 }
 
-// Upsert updates a value if it exists, otherwise inserts it.
+// Upsert updates a value if it exists (preserving TTL), otherwise inserts it with optional TTL.
 func (m *Memory) Upsert(key string, value any, ttl ...time.Duration) error {
-	if len(ttl) > 0 && ttl[0] > 0 {
-		return m.Set(key, value, ttl[0])
-	}
-
+	// key 存在，更新值并保留原有 TTL
 	if m.Exists(key) {
 		existingTTL, hasTTL := m.store.GetTTL(key)
 		if hasTTL {
@@ -52,7 +49,13 @@ func (m *Memory) Upsert(key string, value any, ttl ...time.Duration) error {
 		}
 		return m.Set(key, value)
 	}
-	return m.Set(key, value, ttl...)
+
+	// key 不存在，插入新值
+	var d time.Duration
+	if len(ttl) > 0 {
+		d = ttl[0]
+	}
+	return m.Set(key, value, d)
 }
 
 // Get retrieves a value by key.

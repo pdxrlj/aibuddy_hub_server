@@ -98,17 +98,17 @@ func TestRedis_UpdateOrInsert(t *testing.T) {
 			value:    "new_value",
 			ttl:      0,
 			wantTTL:  30 * time.Second,
-			checkTTL: false,
+			checkTTL: true,
 		},
 		{
-			name: "update existing key - provide new TTL",
+			name: "update existing key with TTL - ignore new TTL and preserve original",
 			setup: func(key string) {
 				_ = r.Set(key, "old_value", 30*time.Second)
 			},
 			key:      "existing_key_3",
 			value:    "new_value",
 			ttl:      60 * time.Second,
-			wantTTL:  60 * time.Second,
+			wantTTL:  30 * time.Second, // 保留原 TTL，忽略传入的 TTL
 			checkTTL: true,
 		},
 	}

@@ -100,15 +100,21 @@ var updateOrInsertScript = redis.NewScript(`
 	end
 `)
 
-// Upsert updates a value if it exists, otherwise inserts it.
+// Upsert updates a value if it exists (preserving TTL), otherwise inserts it with optional TTL.
 func (r *Redis) Upsert(key string, value any, ttl ...time.Duration) error {
 	ctx := context.Background()
 	fullKey := r.key(key)
 
-	if len(ttl) > 0 {
-		return r.client.Set(ctx, fullKey, value, ttl[0]).Err()
+	// key 不存在，直接插入
+	if !r.Exists(key) {
+		var d time.Duration
+		if len(ttl) > 0 {
+			d = ttl[0]
+		}
+		return r.client.Set(ctx, fullKey, value, d).Err()
 	}
 
+	// key 存在，更新值并保留原有 TTL
 	return updateOrInsertScript.Run(ctx, r.client, []string{fullKey}, value).Err()
 }
 

@@ -201,15 +201,20 @@ func (s *Service) SendPhoneCode(phone string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if num == 0 {
-			if err := cr.Set(sendKey, num+1, 24*time.Hour); err != nil {
-				return "", errors.New("发送验证码失败")
-			}
-		} else {
-			if err := cr.Set(sendKey, num+1); err != nil {
-				return "", errors.New("发送验证码失败")
-			}
+
+		if err := cr.Upsert(sendKey, num+1, 24*time.Hour); err != nil {
+			return "", errors.New("发送验证码失败")
 		}
+
+		// if num == 0 {
+		// 	if err := cr.Set(sendKey, num+1, 24*time.Hour); err != nil {
+		// 		return "", errors.New("发送验证码失败")
+		// 	}
+		// } else {
+		// 	if err := cr.Set(sendKey, num+1); err != nil {
+		// 		return "", errors.New("发送验证码失败")
+		// 	}
+		// }
 	} else {
 		code = testCode
 	}
