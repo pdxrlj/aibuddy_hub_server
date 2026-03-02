@@ -1,7 +1,9 @@
 // Package status 提供设备状态接口定义
 package status
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // DeviceStatus 设备状态
 type DeviceStatus struct {

@@ -14,8 +14,8 @@ type NewLoginRequest struct {
 	EncryptedData string `json:"encrypted_data" validate:"required_if=Source mini"` // 微信加密数据
 	IV            string `json:"iv" validate:"required_if=Source mini"`             // 微信加密数据的初始向量
 
-	Phone     string `json:"phone" validate:"required_if=Source phone"`      // 手机号（仅 source=phone 时必填）
-	PhoneCode string `json:"phone_code" validate:"required_if=Source phone"` // 手机验证码（仅 source=phone 时必填）
+	Phone     string `json:"phone" validate:"required_if=Source phone"`               // 手机号（仅 source=phone 时必填）
+	PhoneCode string `json:"phone_code" validate:"required_if=Source phone,chmobile"` // 手机验证码（仅 source=phone 时必填）
 }
 
 // LoginResponse 登录响应
@@ -30,7 +30,7 @@ type LoginResponse struct {
 
 // SendCodeRequest 验证码请求
 type SendCodeRequest struct {
-	Phone string `json:"phone" validate:"required"`
+	Phone string `json:"phone" validate:"required,chmobile"`
 }
 
 // TokenRequest 退出登录请求

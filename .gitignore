@@ -5,3 +5,5 @@ logs
 aibuddy
 .env
 *.exe
+.codebuddy
+skills

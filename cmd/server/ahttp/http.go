@@ -10,7 +10,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
@@ -114,8 +113,8 @@ func SetupRoutes(router *echo.Echo) {
 			slog.Error("HTTP Error Handler", "error", err)
 		}
 	}
-
+	validator := ahttp.NewValidator()
 	router.Validator = &ahttp.Validator{
-		Validator: validator.New(),
+		Validator: validator,
 	}
 }

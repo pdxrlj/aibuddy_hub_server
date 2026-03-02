@@ -16,11 +16,12 @@ var ErrSetFailed = errors.New("set flash failed")
 // Flash defines the cache interface.
 type Flash interface {
 	Set(key string, value any, ttl ...time.Duration) error
-	UpdateOrInsert(key string, value any, ttl ...time.Duration) error
+	Upsert(key string, value any, ttl ...time.Duration) error
 	Get(key string) (any, error)
 	Delete(key string) error
 	Pop(key string) (any, error) // Get and delete
 	Exists(key string) bool
+	Incr(key string, ttl ...time.Duration) (int64, error) // 原子递增，首次设置 TTL
 }
 
 // New creates a new Flash instance.
