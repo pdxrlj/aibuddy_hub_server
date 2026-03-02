@@ -85,6 +85,7 @@ type Mgmt struct {
 
 	User   string `json:"user"`
 	Avatar string `json:"avatar"`
+	Sn     string `json:"sn"`
 }
 
 // Encode 编码设备管理消息

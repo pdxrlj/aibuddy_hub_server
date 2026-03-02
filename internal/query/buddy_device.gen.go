@@ -30,6 +30,7 @@ func newDevice(db *gorm.DB, opts ...gen.DOOption) device {
 	_device.ALL = field.NewAsterisk(tableName)
 	_device.ID = field.NewInt64(tableName, "id")
 	_device.DeviceID = field.NewString(tableName, "device_id")
+	_device.ICCID = field.NewString(tableName, "iccid")
 	_device.UID = field.NewInt64(tableName, "uid")
 	_device.LastActiveAt = field.NewTime(tableName, "last_active_at")
 	_device.Status = field.NewString(tableName, "status")
@@ -37,6 +38,12 @@ func newDevice(db *gorm.DB, opts ...gen.DOOption) device {
 	_device.AgentID = field.NewInt64(tableName, "agent_id")
 	_device.CreatedAt = field.NewTime(tableName, "created_at")
 	_device.UpdatedAt = field.NewTime(tableName, "updated_at")
+	_device.DeviceInfo = deviceHasOneDeviceInfo{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("DeviceInfo", "model.DeviceInfo"),
+	}
+
 	_device.Agent = deviceBelongsToAgent{
 		db: db.Session(&gorm.Session{}),
 
@@ -54,6 +61,7 @@ type device struct {
 	ALL          field.Asterisk
 	ID           field.Int64
 	DeviceID     field.String // 设备ID
+	ICCID        field.String // 手机卡ICCID
 	UID          field.Int64  // 绑定用户id
 	LastActiveAt field.Time   // 最后活跃时间
 	Status       field.String // 状态:未知
@@ -61,7 +69,9 @@ type device struct {
 	AgentID      field.Int64  // 角色ID
 	CreatedAt    field.Time   // 创建时间
 	UpdatedAt    field.Time   // 更新时间
-	Agent        deviceBelongsToAgent
+	DeviceInfo   deviceHasOneDeviceInfo
+
+	Agent deviceBelongsToAgent
 
 	fieldMap map[string]field.Expr
 }
@@ -80,6 +90,7 @@ func (d *device) updateTableName(table string) *device {
 	d.ALL = field.NewAsterisk(table)
 	d.ID = field.NewInt64(table, "id")
 	d.DeviceID = field.NewString(table, "device_id")
+	d.ICCID = field.NewString(table, "iccid")
 	d.UID = field.NewInt64(table, "uid")
 	d.LastActiveAt = field.NewTime(table, "last_active_at")
 	d.Status = field.NewString(table, "status")
@@ -103,9 +114,10 @@ func (d *device) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (d *device) fillFieldMap() {
-	d.fieldMap = make(map[string]field.Expr, 10)
+	d.fieldMap = make(map[string]field.Expr, 12)
 	d.fieldMap["id"] = d.ID
 	d.fieldMap["device_id"] = d.DeviceID
+	d.fieldMap["iccid"] = d.ICCID
 	d.fieldMap["uid"] = d.UID
 	d.fieldMap["last_active_at"] = d.LastActiveAt
 	d.fieldMap["status"] = d.Status
@@ -118,6 +130,8 @@ func (d *device) fillFieldMap() {
 
 func (d device) clone(db *gorm.DB) device {
 	d.deviceDo.ReplaceConnPool(db.Statement.ConnPool)
+	d.DeviceInfo.db = db.Session(&gorm.Session{Initialized: true})
+	d.DeviceInfo.db.Statement.ConnPool = db.Statement.ConnPool
 	d.Agent.db = db.Session(&gorm.Session{Initialized: true})
 	d.Agent.db.Statement.ConnPool = db.Statement.ConnPool
 	return d
@@ -125,8 +139,90 @@ func (d device) clone(db *gorm.DB) device {
 
 func (d device) replaceDB(db *gorm.DB) device {
 	d.deviceDo.ReplaceDB(db)
+	d.DeviceInfo.db = db.Session(&gorm.Session{})
 	d.Agent.db = db.Session(&gorm.Session{})
 	return d
+}
+
+type deviceHasOneDeviceInfo struct {
+	db *gorm.DB
+
+	field.RelationField
+}
+
+func (a deviceHasOneDeviceInfo) Where(conds ...field.Expr) *deviceHasOneDeviceInfo {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a deviceHasOneDeviceInfo) WithContext(ctx context.Context) *deviceHasOneDeviceInfo {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a deviceHasOneDeviceInfo) Session(session *gorm.Session) *deviceHasOneDeviceInfo {
+	a.db = a.db.Session(session)
+	return &a
+}
+
+func (a deviceHasOneDeviceInfo) Model(m *model.Device) *deviceHasOneDeviceInfoTx {
+	return &deviceHasOneDeviceInfoTx{a.db.Model(m).Association(a.Name())}
+}
+
+func (a deviceHasOneDeviceInfo) Unscoped() *deviceHasOneDeviceInfo {
+	a.db = a.db.Unscoped()
+	return &a
+}
+
+type deviceHasOneDeviceInfoTx struct{ tx *gorm.Association }
+
+func (a deviceHasOneDeviceInfoTx) Find() (result *model.DeviceInfo, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a deviceHasOneDeviceInfoTx) Append(values ...*model.DeviceInfo) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a deviceHasOneDeviceInfoTx) Replace(values ...*model.DeviceInfo) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a deviceHasOneDeviceInfoTx) Delete(values ...*model.DeviceInfo) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a deviceHasOneDeviceInfoTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a deviceHasOneDeviceInfoTx) Count() int64 {
+	return a.tx.Count()
+}
+
+func (a deviceHasOneDeviceInfoTx) Unscoped() *deviceHasOneDeviceInfoTx {
+	a.tx = a.tx.Unscoped()
+	return &a
 }
 
 type deviceBelongsToAgent struct {

@@ -23,7 +23,11 @@ func RegisterRoutes(base *ahttp.Base) {
 		group.Group("/device", nil, func(deviceGroup *ahttp.Group) {
 			device := devicehandler.NewDevice()
 			deviceGroup.GET("/firstonline", device.FirstOnline)
+
+			// 硬件设备发起绑定设备请求
+			deviceGroup.POST("/bind", device.BindDevice)
 		})
+
 		group.Group("/user", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(userGroup *ahttp.Group) {
 			h := userhandler.New()
 			userGroup.POST("/send_code", h.SendCode)
@@ -32,6 +36,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			userGroup.POST("/logout", h.Logout)
 			userGroup.POST("/profile", h.CompleteProfile)
 		})
+
 		group.Group("/role", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
 			r := rolehandleer.NewRoleHandler()
 			group.GET("/list", r.RoleList)

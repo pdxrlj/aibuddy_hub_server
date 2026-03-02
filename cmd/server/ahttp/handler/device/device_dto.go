@@ -13,3 +13,8 @@ type FirstOnlineResponse struct {
 	MQTTUsername string `json:"mqtt_username"`
 	MQTTPassword string `json:"mqtt_password"`
 }
+
+type BindDeviceRequest struct {
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,mac"`
+	ICCID    string `json:"iccid" form:"iccid" param:"iccid" query:"iccid" validate:"required,len=20"`
+}

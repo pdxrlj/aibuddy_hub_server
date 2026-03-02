@@ -29,16 +29,17 @@ func (s DeviceStatus) String() string {
 type Device struct {
 	ID       int64  `gorm:"primaryKey;autoIncrement;column:id;"`
 	DeviceID string `gorm:"column:device_id;index;type:varchar(255);not null;uniqueIndex;comment:设备ID;"`
-	ICCID    string `gorm:"column:iccid;index;type:varchar(20);not null;uniqueIndex;comment:ICCID;"`
+	ICCID    string `gorm:"column:iccid;index;type:varchar(20);not null;uniqueIndex;comment:ICCID;comment:手机卡ICCID;"`
 
 	UID          int64     `gorm:"column:uid;index;type:bigint;not null;default:0;comment:绑定用户id;"`
 	LastActiveAt time.Time `gorm:"column:last_active_at;type:timestamp;comment:最后活跃时间;"`
 
 	Status  DeviceStatus `gorm:"column:status;type:varchar(50);not null;default:未知;comment:状态:未知;"`
-	IsAdmin bool         `gorm:"column:is_admin;type:boolean;not null;default:false;comment:是否管理员设备;"`
+	IsAdmin bool         `gorm:"column:is_admin;type:boolean;not null;default:false;comment:是否管理员设备,首次绑定的用户是管理员;"`
 	AgentID int64        `gorm:"column:agent_id;index;type:bigint;not null;comment:角色ID;"`
 
-	Agent *Agent `gorm:"foreignKey:AgentID;references:ID;"`
+	Agent      *Agent      `gorm:"foreignKey:AgentID;references:ID;"`
+	DeviceInfo *DeviceInfo `gorm:"foreignKey:DeviceID;references:DeviceID;"`
 
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;comment:创建时间;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;comment:更新时间;"`

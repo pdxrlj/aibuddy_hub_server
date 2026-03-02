@@ -40,6 +40,7 @@ func newDeviceInfo(db *gorm.DB, opts ...gen.DOOption) deviceInfo {
 	_deviceInfo.Skills = field.NewField(tableName, "skills")
 	_deviceInfo.Personality = field.NewField(tableName, "personality")
 	_deviceInfo.CreatedAt = field.NewTime(tableName, "created_at")
+	_deviceInfo.UpdatedAt = field.NewTime(tableName, "updated_at")
 
 	_deviceInfo.fillFieldMap()
 
@@ -62,6 +63,7 @@ type deviceInfo struct {
 	Skills      field.Field  // 技能
 	Personality field.Field  // 性格
 	CreatedAt   field.Time   // 创建时间
+	UpdatedAt   field.Time   // 更新时间
 
 	fieldMap map[string]field.Expr
 }
@@ -90,6 +92,7 @@ func (d *deviceInfo) updateTableName(table string) *deviceInfo {
 	d.Skills = field.NewField(table, "skills")
 	d.Personality = field.NewField(table, "personality")
 	d.CreatedAt = field.NewTime(table, "created_at")
+	d.UpdatedAt = field.NewTime(table, "updated_at")
 
 	d.fillFieldMap()
 
@@ -106,7 +109,7 @@ func (d *deviceInfo) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (d *deviceInfo) fillFieldMap() {
-	d.fieldMap = make(map[string]field.Expr, 12)
+	d.fieldMap = make(map[string]field.Expr, 13)
 	d.fieldMap["id"] = d.ID
 	d.fieldMap["device_id"] = d.DeviceID
 	d.fieldMap["nickname"] = d.NickName
@@ -119,6 +122,7 @@ func (d *deviceInfo) fillFieldMap() {
 	d.fieldMap["skills"] = d.Skills
 	d.fieldMap["personality"] = d.Personality
 	d.fieldMap["created_at"] = d.CreatedAt
+	d.fieldMap["updated_at"] = d.UpdatedAt
 }
 
 func (d deviceInfo) clone(db *gorm.DB) deviceInfo {
