@@ -253,6 +253,7 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, d *model.Devic
 		if err := s.DeviceRepo.ChangeDeviceIccid(ctx, d.DeviceID, iccid, tx); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
