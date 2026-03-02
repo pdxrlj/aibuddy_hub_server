@@ -88,19 +88,15 @@ func TestMemory_UpdateOrInsert(t *testing.T) {
 
 			time.Sleep(10 * time.Millisecond)
 
-			got, ok := m.store.Get(key)
-			require.True(t, ok, "key should exist")
+			got, err := m.Get(key)
+			require.NoError(t, err)
 			assert.Equal(t, tt.value, got)
 
-			if tt.checkTTL {
-				remainingTTL, hasTTL := m.store.GetTTL(key)
-				if tt.wantTTL > 0 {
-					assert.True(t, hasTTL, "should have TTL")
-					assert.GreaterOrEqual(t, remainingTTL.Milliseconds(), (tt.wantTTL - time.Second).Milliseconds(), "TTL should be preserved")
-				}
+			if tt.checkTTL && tt.wantTTL > 0 {
+				remainingTTL, hasTTL := m.TTL(key)
+				assert.True(t, hasTTL, "should have TTL")
+				assert.GreaterOrEqual(t, remainingTTL.Milliseconds(), (tt.wantTTL-time.Second).Milliseconds(), "TTL should be preserved")
 			}
-
-			m.Delete(key)
 		})
 	}
 }
@@ -122,11 +118,11 @@ func TestMemory_UpdateOrInsert_PreserveTTL(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	got, ok := m.store.Get(key)
-	require.True(t, ok)
+	got, err := m.Get(key)
+	require.NoError(t, err)
 	assert.Equal(t, "updated_value", got)
 
-	remainingTTL, hasTTL := m.store.GetTTL(key)
+	remainingTTL, hasTTL := m.TTL(key)
 	assert.True(t, hasTTL, "TTL should be preserved")
 	assert.Greater(t, remainingTTL.Milliseconds(), int64(28*1000), "TTL should be around 30 seconds")
 	assert.LessOrEqual(t, remainingTTL.Milliseconds(), int64(30*1000), "TTL should not exceed original")
@@ -176,7 +172,7 @@ func TestMemory_Incr(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 
 		// 验证 TTL 已设置
-		ttl, hasTTL := m.store.GetTTL(key)
+		ttl, hasTTL := m.TTL(key)
 		assert.True(t, hasTTL)
 		assert.Greater(t, ttl.Milliseconds(), int64(8000))
 
@@ -204,9 +200,9 @@ func TestMemory_Incr(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 
 		// 验证值
-		val, ok := m.store.Get(key)
-		require.True(t, ok)
-		assert.Equal(t, int64(3), val)
+		got, err := m.Get(key)
+		require.NoError(t, err)
+		assert.Equal(t, int64(3), got)
 
 		m.Delete(key)
 	})
@@ -221,9 +217,9 @@ func TestMemory_Incr(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 
 		// 验证值正确
-		val, ok := m.store.Get(key)
-		require.True(t, ok)
-		assert.Equal(t, int64(1), val)
+		got, err := m.Get(key)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), got)
 
 		m.Delete(key)
 	})
@@ -249,10 +245,52 @@ func TestMemory_Incr(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 
 		// 验证最终值
-		val, ok := m.store.Get(key)
-		require.True(t, ok)
-		assert.Equal(t, int64(iterations), val)
+		got, err := m.Get(key)
+		require.NoError(t, err)
+		assert.Equal(t, int64(iterations), got)
 
 		m.Delete(key)
+	})
+}
+
+func TestMemory_TTL(t *testing.T) {
+	m, err := NewMemory()
+	require.NoError(t, err)
+
+	t.Run("key with TTL", func(t *testing.T) {
+		key := "ttl_with_" + time.Now().Format("20060102150405.000000000")
+
+		err := m.Set(key, "value", 30*time.Second)
+		require.NoError(t, err)
+
+		time.Sleep(10 * time.Millisecond)
+
+		ttl, hasTTL := m.TTL(key)
+		assert.True(t, hasTTL)
+		assert.GreaterOrEqual(t, ttl.Milliseconds(), int64(28*1000))
+		assert.LessOrEqual(t, ttl.Milliseconds(), int64(30*1000))
+
+		m.Delete(key)
+	})
+
+	t.Run("key without TTL", func(t *testing.T) {
+		key := "ttl_without_" + time.Now().Format("20060102150405.000000000")
+
+		err := m.Set(key, "value")
+		require.NoError(t, err)
+
+		time.Sleep(10 * time.Millisecond)
+
+		_, hasTTL := m.TTL(key)
+		assert.False(t, hasTTL)
+
+		m.Delete(key)
+	})
+
+	t.Run("non-existent key", func(t *testing.T) {
+		key := "ttl_nonexistent_" + time.Now().Format("20060102150405.000000000")
+
+		_, hasTTL := m.TTL(key)
+		assert.False(t, hasTTL)
 	})
 }

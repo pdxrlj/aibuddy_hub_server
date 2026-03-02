@@ -17,7 +17,7 @@ type Memory struct {
 }
 
 // NewMemory creates a new in-memory cache.
-func NewMemory() (*Memory, error) {
+func NewMemory() (Flash, error) {
 	store, err := ristretto.NewCache(&ristretto.Config[string, any]{
 		NumCounters: 1e7,
 		MaxCost:     1 << 30,
@@ -118,4 +118,14 @@ func (m *Memory) Incr(key string, ttl ...time.Duration) (int64, error) {
 	m.store.Wait()
 
 	return count, nil
+}
+
+// TTL returns the remaining TTL of a key.
+// Returns (0, false) if key doesn't exist or has no TTL.
+func (m *Memory) TTL(key string) (time.Duration, bool) {
+	ttl, hasTTL := m.store.GetTTL(key)
+	if !hasTTL || ttl <= 0 {
+		return 0, false
+	}
+	return ttl, true
 }

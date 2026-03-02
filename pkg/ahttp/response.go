@@ -81,7 +81,7 @@ func (r *Response) Error(err error) error {
 	if r.Ctx.Response().Committed {
 		return nil
 	}
-	if r.Status == 0 {
+	if r.Status == http.StatusOK {
 		r.Status = http.StatusInternalServerError
 	}
 	r.Message = err.Error()

@@ -3,8 +3,10 @@ package auth
 
 import (
 	"aibuddy/internal/model"
+	"aibuddy/internal/query"
 	"aibuddy/internal/repository"
 	"aibuddy/internal/services/cache"
+	"aibuddy/internal/services/device"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
 	"aibuddy/pkg/helpers"
@@ -27,7 +29,7 @@ import (
 
 var (
 	testPhoneNumber = []string{"18888888888", "18895516550"}
-	testCode        = "12345"
+	testCode        = "123456"
 
 	smsCacheKey     = "sms:%s"
 	smsSendCountKey = "sms_count:%s"
@@ -40,6 +42,8 @@ type Service struct {
 	DeviceRepo     *repository.DeviceRepo
 	sms            *sms.AliyunSMS
 	cache          flash.Flash
+
+	deviceService *device.Service
 }
 
 var tracer = func() trace.Tracer {
@@ -65,6 +69,7 @@ func New() *Service {
 		DeviceInfoRepo: repository.NewDeviceInfoRepo(),
 		sms:            sms,
 		cache:          cache.Flash(),
+		deviceService:  device.NewService(),
 	}
 }
 
@@ -232,13 +237,22 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, d *model.Devic
 	ctx, span := tracer().Start(ctx, "CompleteProfile")
 	defer span.End()
 
-	if err := s.DeviceInfoRepo.UpsertProfile(ctx, d); err != nil {
-		return err
-	}
+	return query.Q.Transaction(func(tx *query.Query) error {
+		if err := s.DeviceInfoRepo.UpsertProfile(ctx, d, tx); err != nil {
+			return err
+		}
+		if err := s.DeviceRepo.FirstAddDevice(ctx, d.DeviceID, uid, tx); err != nil {
+			return err
+		}
 
-	if err := s.DeviceRepo.FirstAddDevice(ctx, d.DeviceID, uid); err != nil {
-		return err
-	}
+		iccid, err := s.deviceService.GetDeviceICCIDInfo(d.DeviceID)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		if err := s.DeviceRepo.ChangeDeviceIccid(ctx, d.DeviceID, iccid, tx); err != nil {
+			return err
+		}
+		return nil
+	})
 }

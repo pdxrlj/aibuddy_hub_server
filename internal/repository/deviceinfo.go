@@ -18,22 +18,27 @@ func NewDeviceInfoRepo() *DeviceInfoRepo {
 }
 
 // UpsertProfile 更新或者插入信息
-func (d *DeviceInfoRepo) UpsertProfile(ctx context.Context, info *model.DeviceInfo) error {
+func (d *DeviceInfoRepo) UpsertProfile(ctx context.Context, info *model.DeviceInfo, tx ...*query.Query) error {
 	_, span := tracer.Start(ctx, "UpsertProfile")
 	defer span.End()
-	if err := query.DeviceInfo.Clauses(
+	db := query.Q
+	if len(tx) > 0 {
+		db = tx[0]
+	}
+
+	if err := db.DeviceInfo.Clauses(
 		clause.OnConflict{
 			Columns: []clause.Column{{Name: "id"}},
 			DoUpdates: clause.Assignments(map[string]any{
-				query.DeviceInfo.NickName.ColumnName().String():    info.NickName,
-				query.DeviceInfo.Avatar.ColumnName().String():      info.Avatar,
-				query.DeviceInfo.Birthday.ColumnName().String():    info.Birthday,
-				query.DeviceInfo.Gender.ColumnName().String():      info.Gender,
-				query.DeviceInfo.Relation.ColumnName().String():    info.Relation,
-				query.DeviceInfo.Hobbies.ColumnName().String():     info.Hobbies,
-				query.DeviceInfo.Values.ColumnName().String():      info.Values,
-				query.DeviceInfo.Skills.ColumnName().String():      info.Skills,
-				query.DeviceInfo.Personality.ColumnName().String(): info.Personality,
+				db.DeviceInfo.NickName.ColumnName().String():    info.NickName,
+				db.DeviceInfo.Avatar.ColumnName().String():      info.Avatar,
+				db.DeviceInfo.Birthday.ColumnName().String():    info.Birthday,
+				db.DeviceInfo.Gender.ColumnName().String():      info.Gender,
+				db.DeviceInfo.Relation.ColumnName().String():    info.Relation,
+				db.DeviceInfo.Hobbies.ColumnName().String():     info.Hobbies,
+				db.DeviceInfo.Values.ColumnName().String():      info.Values,
+				db.DeviceInfo.Skills.ColumnName().String():      info.Skills,
+				db.DeviceInfo.Personality.ColumnName().String(): info.Personality,
 			}),
 		},
 	).Create(info); err != nil {

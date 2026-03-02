@@ -22,7 +22,7 @@ func RegisterRoutes(base *ahttp.Base) {
 	base.Group("/api/v1", nil, func(group *ahttp.Group) {
 		group.Group("/device", nil, func(deviceGroup *ahttp.Group) {
 			device := devicehandler.NewDevice()
-			deviceGroup.GET("/firstonline", device.FirstOnline)
+			deviceGroup.POST("/firstonline", device.FirstOnline)
 
 			// 硬件设备发起绑定设备请求
 			deviceGroup.POST("/bind", device.BindDevice)

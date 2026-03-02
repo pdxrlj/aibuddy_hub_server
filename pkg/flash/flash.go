@@ -21,6 +21,7 @@ type Flash interface {
 	Delete(key string) error
 	Pop(key string) (any, error) // Get and delete
 	Exists(key string) bool
+	TTL(key string) (time.Duration, bool)                 // 获取 TTL，返回剩余时间和是否存在 TTL
 	Incr(key string, ttl ...time.Duration) (int64, error) // 原子递增，首次设置 TTL
 }
 

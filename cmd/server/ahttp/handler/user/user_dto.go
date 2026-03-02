@@ -14,8 +14,8 @@ type NewLoginRequest struct {
 	EncryptedData string `json:"encrypted_data" validate:"required_if=Source mini"` // 微信加密数据
 	IV            string `json:"iv" validate:"required_if=Source mini"`             // 微信加密数据的初始向量
 
-	Phone     string `json:"phone" validate:"required_if=Source phone"`               // 手机号（仅 source=phone 时必填）
-	PhoneCode string `json:"phone_code" validate:"required_if=Source phone,chmobile"` // 手机验证码（仅 source=phone 时必填）
+	Phone     string `json:"phone" validate:"required_if=Source phone,chmobile"` // 手机号（仅 source=phone 时必填）
+	PhoneCode string `json:"phone_code" validate:"required_if=Source phone"`     // 手机验证码（仅 source=phone 时必填）
 }
 
 // LoginResponse 登录响应
@@ -46,13 +46,14 @@ type TokenResponse struct {
 
 // UserinfoRequest 用户信息请求数据
 type UserinfoRequest struct {
-	ID       int64  `json:"id"`
-	DeviceID string `json:"device_id" validate:"required"`
-	NickName string `json:"nickname" validate:"required"`
-	Avatar   string `json:"avatar"`
-	Gender   int8   `json:"gender" validate:"required,oneof=0 1 2"`
-	Birthday string `json:"birthday" validate:"required"`
-	Relation string `json:"relation"`
+	ID        int64  `json:"id"`
+	BoardType string `json:"board_type" validate:"required" msg:"required:板子类型不能为空"`
+	DeviceID  string `json:"device_id" validate:"required"`
+	NickName  string `json:"nickname" validate:"required"`
+	Avatar    string `json:"avatar"`
+	Gender    int8   `json:"gender" validate:"required,oneof=0 1 2"`
+	Birthday  string `json:"birthday" validate:"required"`
+	Relation  string `json:"relation"`
 
 	Hobbies     string `json:"hobbies"`
 	Values      string `json:"values"`

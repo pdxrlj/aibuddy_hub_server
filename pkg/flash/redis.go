@@ -61,7 +61,7 @@ func WithPrefix(prefix string) RedisOption {
 }
 
 // NewRedis creates a new Redis cache.
-func NewRedis(opts ...RedisOption) (*Redis, error) {
+func NewRedis(opts ...RedisOption) (Flash, error) {
 	r := &Redis{prefix: "flash"}
 	for _, opt := range opts {
 		opt(r)
@@ -165,4 +165,16 @@ func (r *Redis) Incr(key string, ttl ...time.Duration) (int64, error) {
 	}
 
 	return result, nil
+}
+
+// TTL returns the remaining TTL of a key.
+// Returns (0, false) if key doesn't exist or has no TTL.
+func (r *Redis) TTL(key string) (time.Duration, bool) {
+	ctx := context.Background()
+	ttl := r.client.TTL(ctx, r.key(key)).Val()
+	// Redis returns -2 if key doesn't exist, -1 if no expiry
+	if ttl < 0 {
+		return 0, false
+	}
+	return ttl, true
 }

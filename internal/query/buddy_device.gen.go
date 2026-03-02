@@ -31,6 +31,8 @@ func newDevice(db *gorm.DB, opts ...gen.DOOption) device {
 	_device.ID = field.NewInt64(tableName, "id")
 	_device.DeviceID = field.NewString(tableName, "device_id")
 	_device.ICCID = field.NewString(tableName, "iccid")
+	_device.BoardType = field.NewString(tableName, "board_type")
+	_device.Version = field.NewString(tableName, "version")
 	_device.UID = field.NewInt64(tableName, "uid")
 	_device.LastActiveAt = field.NewTime(tableName, "last_active_at")
 	_device.Status = field.NewString(tableName, "status")
@@ -62,10 +64,12 @@ type device struct {
 	ID           field.Int64
 	DeviceID     field.String // 设备ID
 	ICCID        field.String // 手机卡ICCID
+	BoardType    field.String // 板子类型
+	Version      field.String // 板子版本
 	UID          field.Int64  // 绑定用户id
 	LastActiveAt field.Time   // 最后活跃时间
 	Status       field.String // 状态:未知
-	IsAdmin      field.Bool   // 是否管理员设备
+	IsAdmin      field.Bool   // 是否管理员设备,首次绑定的用户是管理员
 	AgentID      field.Int64  // 角色ID
 	CreatedAt    field.Time   // 创建时间
 	UpdatedAt    field.Time   // 更新时间
@@ -91,6 +95,8 @@ func (d *device) updateTableName(table string) *device {
 	d.ID = field.NewInt64(table, "id")
 	d.DeviceID = field.NewString(table, "device_id")
 	d.ICCID = field.NewString(table, "iccid")
+	d.BoardType = field.NewString(table, "board_type")
+	d.Version = field.NewString(table, "version")
 	d.UID = field.NewInt64(table, "uid")
 	d.LastActiveAt = field.NewTime(table, "last_active_at")
 	d.Status = field.NewString(table, "status")
@@ -114,10 +120,12 @@ func (d *device) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (d *device) fillFieldMap() {
-	d.fieldMap = make(map[string]field.Expr, 12)
+	d.fieldMap = make(map[string]field.Expr, 14)
 	d.fieldMap["id"] = d.ID
 	d.fieldMap["device_id"] = d.DeviceID
 	d.fieldMap["iccid"] = d.ICCID
+	d.fieldMap["board_type"] = d.BoardType
+	d.fieldMap["version"] = d.Version
 	d.fieldMap["uid"] = d.UID
 	d.fieldMap["last_active_at"] = d.LastActiveAt
 	d.fieldMap["status"] = d.Status
