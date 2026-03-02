@@ -7,7 +7,6 @@ import (
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 	logger "aibuddy/pkg/log"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -160,8 +159,6 @@ func (h *Handler) CompleteProfile(state *ahttp.State, req *UserinfoRequest) erro
 	}); err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
-
-	fmt.Printf("%+v\n", req)
 
 	return state.Resposne().Success()
 }
