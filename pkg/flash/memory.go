@@ -39,6 +39,22 @@ func (m *Memory) Set(key string, value any, ttl ...time.Duration) error {
 	return nil
 }
 
+// UpdateOrInsert updates a value if it exists, otherwise inserts it.
+func (m *Memory) UpdateOrInsert(key string, value any, ttl ...time.Duration) error {
+	if len(ttl) > 0 && ttl[0] > 0 {
+		return m.Set(key, value, ttl[0])
+	}
+
+	if m.Exists(key) {
+		existingTTL, hasTTL := m.store.GetTTL(key)
+		if hasTTL {
+			return m.Set(key, value, existingTTL)
+		}
+		return m.Set(key, value)
+	}
+	return m.Set(key, value, ttl...)
+}
+
 // Get retrieves a value by key.
 func (m *Memory) Get(key string) (any, error) {
 	val, ok := m.store.Get(key)

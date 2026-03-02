@@ -88,6 +88,30 @@ func (r *Redis) Set(key string, value any, ttl ...time.Duration) error {
 	return r.client.Set(context.Background(), r.key(key), value, d).Err()
 }
 
+var updateOrInsertScript = redis.NewScript(`
+	local currentTTL = redis.call('TTL', KEYS[1])
+	if currentTTL == -2 then
+		currentTTL = -1
+	end
+	if currentTTL == -1 then
+		return redis.call('SET', KEYS[1], ARGV[1])
+	else
+		return redis.call('SET', KEYS[1], ARGV[1], 'EX', currentTTL)
+	end
+`)
+
+// UpdateOrInsert updates a value if it exists, otherwise inserts it.
+func (r *Redis) UpdateOrInsert(key string, value any, ttl ...time.Duration) error {
+	ctx := context.Background()
+	fullKey := r.key(key)
+
+	if len(ttl) > 0 {
+		return r.client.Set(ctx, fullKey, value, ttl[0]).Err()
+	}
+
+	return updateOrInsertScript.Run(ctx, r.client, []string{fullKey}, value).Err()
+}
+
 // Get retrieves a value by key.
 func (r *Redis) Get(key string) (any, error) {
 	return r.client.Get(context.Background(), r.key(key)).Result()

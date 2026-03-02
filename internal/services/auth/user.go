@@ -175,6 +175,7 @@ func (s *Service) SendPhoneCode(phone string) (string, error) {
 	if err := helpers.ValidateMobile(phone); err != nil {
 		return "", err
 	}
+
 	cr := cache.Flash()
 	maxCount := config.Instance.App.MsgSendCount
 	cacheKey := fmt.Sprintf("sms:%s", phone)
