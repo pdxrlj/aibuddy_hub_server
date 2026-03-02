@@ -34,6 +34,8 @@ func RegisterRoutes(base *ahttp.Base) {
 			userGroup.POST("/login", h.Login)
 			userGroup.POST("/refresh_token", h.RefreshToken)
 			userGroup.POST("/logout", h.Logout)
+
+			// 完善用户信息，扫描绑定后完善用户信息
 			userGroup.POST("/profile", h.CompleteProfile)
 		})
 

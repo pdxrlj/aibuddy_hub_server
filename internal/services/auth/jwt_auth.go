@@ -2,6 +2,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -84,23 +85,29 @@ func ValidateToken(c echo.Context, tokenString string) (*MyClaims, error) {
 }
 
 // RefreshToken 刷新令牌
-func RefreshToken(oldTokenString string) (string, int64, error) {
+func RefreshToken(ctx context.Context, oldTokenString string) (string, int64, error) {
+	_, span := tracer().Start(ctx, "RefreshToken")
+	defer span.End()
+
 	// 验证旧令牌（即使过期也要验证签名）
 	token, err := jwt.ParseWithClaims(oldTokenString, &MyClaims{}, func(_ *jwt.Token) (interface{}, error) {
 		return []byte(jwtConfig.SecretKey), nil
 	})
 
 	if err != nil {
+		span.RecordError(err)
 		return "", 0, fmt.Errorf("failed to parse old token: %w", err)
 	}
 
 	claims, ok := token.Claims.(*MyClaims)
 	if !ok {
+		span.RecordError(errors.New("invalid token claims"))
 		return "", 0, fmt.Errorf("invalid token claims")
 	}
 
 	// 检查令牌是否在刷新有效期内
 	if time.Now().Unix() > claims.IssuedAt+int64(jwtConfig.RefreshExpiry.Seconds()) {
+		span.RecordError(errors.New("refresh token has expired"))
 		return "", 0, fmt.Errorf("refresh token has expired")
 	}
 

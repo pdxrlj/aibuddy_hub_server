@@ -4,6 +4,7 @@ package ahttp
 import (
 	"aibuddy/pkg/buddyerror"
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -207,6 +208,15 @@ func (b *Base) RequestValidator(ctx echo.Context, requestType any, request refle
 	if b.Validator != nil {
 		if err := ctx.Validate(requestType); err != nil {
 			if validationErrors, ok := err.(*ValidationErrors); ok {
+				// 优先使用 msg tag 中的自定义消息
+				customMsg := validationErrors.GetFirstErrorMsg()
+				if customMsg != "" {
+					return NewResponse(ctx).SetStatus(buddyerror.GetBuddyErrorCode(buddyerror.ErrParamError)).
+						SetMessage(customMsg).
+						Error(errors.New(customMsg))
+				}
+
+				// 没有 msg tag，使用默认逻辑
 				firstError := validationErrors.Errors[0]
 				fieldType := firstError.StructField()
 				actualTag := firstError.ActualTag()
@@ -258,16 +268,75 @@ type Validator struct {
 
 // ValidationErrors 验证错误
 type ValidationErrors struct {
-	Errors []validator.FieldError `json:"errors"`
+	Errors     []validator.FieldError `json:"errors"`
+	StructType reflect.Type           // 保存结构体类型用于获取 msg tag
 }
 
 // Error 实现 error 接口
 func (v *ValidationErrors) Error() string {
 	errs := make([]string, 0, len(v.Errors))
 	for _, err := range v.Errors {
-		errs = append(errs, err.Error())
+		// 使用翻译器获取中文错误消息
+		if Trans != nil {
+			errs = append(errs, err.Translate(Trans))
+		} else {
+			errs = append(errs, err.Error())
+		}
 	}
 	return strings.Join(errs, ", ")
+}
+
+// GetFirstErrorMsg 获取第一个错误的 msg tag 消息，优先使用自定义消息
+func (v *ValidationErrors) GetFirstErrorMsg() string {
+	if len(v.Errors) == 0 {
+		return ""
+	}
+
+	firstError := v.Errors[0]
+	structField := firstError.StructField()
+	actualTag := firstError.ActualTag()
+
+	// 尝试获取 msg tag
+	if v.StructType != nil {
+		structType := v.StructType
+		if structType.Kind() == reflect.Ptr {
+			structType = structType.Elem()
+		}
+		if structType.Kind() == reflect.Struct {
+			field, ok := structType.FieldByName(structField)
+			if ok {
+				msgTag := field.Tag.Get("msg")
+				if msgTag != "" {
+					// 解析 msg tag: "required:不能为空|chmobile:手机号格式错误"
+					if customMsg := parseMsgTag(msgTag, actualTag); customMsg != "" {
+						return customMsg
+					}
+				}
+			}
+		}
+	}
+
+	// 没有自定义消息，使用翻译
+	if Trans != nil {
+		return firstError.Translate(Trans)
+	}
+	return firstError.Error()
+}
+
+// parseMsgTag 解析 msg tag，格式: "required:不能为空|chmobile:手机号格式错误"
+func parseMsgTag(msgTag, actualTag string) string {
+	rules := strings.Split(msgTag, "|")
+	for _, rule := range rules {
+		parts := strings.SplitN(rule, ":", 2)
+		if len(parts) == 2 && parts[0] == actualTag {
+			return parts[1]
+		}
+	}
+	// 如果没有指定规则，整个 msg 作为消息
+	if len(rules) == 1 && !strings.Contains(msgTag, ":") {
+		return msgTag
+	}
+	return ""
 }
 
 // Validate 验证结构体
@@ -278,7 +347,8 @@ func (v *Validator) Validate(i interface{}) error {
 	}
 	if validatorErrors, ok := err.(validator.ValidationErrors); ok {
 		return &ValidationErrors{
-			Errors: validatorErrors,
+			Errors:     validatorErrors,
+			StructType: reflect.TypeOf(i),
 		}
 	}
 

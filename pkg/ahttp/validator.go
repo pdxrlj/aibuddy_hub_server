@@ -6,21 +6,74 @@ import (
 	"log/slog"
 	"regexp"
 
+	"github.com/go-playground/locales/zh"
+	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+	zh_translations "github.com/go-playground/validator/v10/translations/zh"
 )
+
+// Trans 全局翻译器
+var Trans ut.Translator
 
 // NewValidator 创建验证器
 func NewValidator() *validator.Validate {
-	validator := validator.New()
+	v := validator.New()
 
-	if err := validator.RegisterValidation("chmobile", validateMobile); err != nil {
+	// 初始化中文翻译器
+	zhLocale := zh.New()
+	uni := ut.New(zhLocale, zhLocale)
+	Trans, _ = uni.GetTranslator("zh")
+
+	// 注册默认中文翻译
+	if err := zh_translations.RegisterDefaultTranslations(v, Trans); err != nil {
 		slog.Error(logger.ValidateRegister, "error", err)
 	}
-	if err := validator.RegisterValidation("aimac", validateMAC); err != nil {
+
+	// 注册自定义验证规则
+	if err := v.RegisterValidation("chmobile", validateMobile); err != nil {
+		slog.Error(logger.ValidateRegister, "error", err)
+	}
+	if err := v.RegisterValidation("aimac", validateMAC); err != nil {
 		slog.Error(logger.ValidateRegister, "error", err)
 	}
 
-	return validator
+	// 注册自定义翻译
+	registerCustomTranslations(v)
+
+	return v
+}
+
+// registerCustomTranslations 注册自定义错误消息
+func registerCustomTranslations(v *validator.Validate) {
+	// 自定义 required 消息
+	if err := v.RegisterTranslation("required", Trans, func(ut ut.Translator) error {
+		return ut.Add("required", "{0}不能为空", true)
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T("required", fe.Field())
+		return t
+	}); err != nil {
+		slog.Error(logger.ValidateRegister, "error", err)
+	}
+
+	// 自定义 chmobile 消息
+	if err := v.RegisterTranslation("chmobile", Trans, func(ut ut.Translator) error {
+		return ut.Add("chmobile", "{0}必须是有效的手机号码", true)
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T("chmobile", fe.Field())
+		return t
+	}); err != nil {
+		slog.Error(logger.ValidateRegister, "error", err)
+	}
+
+	// 自定义 aimac 消息
+	if err := v.RegisterTranslation("aimac", Trans, func(ut ut.Translator) error {
+		return ut.Add("aimac", "{0}必须是有效的MAC地址", true)
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T("aimac", fe.Field())
+		return t
+	}); err != nil {
+		slog.Error(logger.ValidateRegister, "error", err)
+	}
 }
 
 // validateMobile 手机号验证
