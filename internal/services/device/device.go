@@ -8,8 +8,8 @@ import (
 	"aibuddy/pkg/mqtt"
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
-	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -46,7 +46,7 @@ type ConfigInfo struct {
 // deviceID: 设备ID
 // 返回：设备的配置信息，如 mqtt 的连接信息
 // 错误：如果生成 MQTT 认证信息失败，则返回错误
-func (d *Service) FirstOnline(ctx context.Context, deviceID, iccid string) (*ConfigInfo, error) {
+func (d *Service) FirstOnline(ctx context.Context, deviceID, iccid, version string) (*ConfigInfo, error) {
 	_, span := tracer().Start(ctx, "DeviceService.FirstOnline")
 	defer span.End()
 
@@ -64,7 +64,7 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, iccid string) (*Con
 	span.SetAttributes(attribute.String("password", password))
 
 	// 为后续的完善用户信息做准备，缓存设备信息
-	if err := d.cacheDeviceInfo(deviceID, iccid); err != nil {
+	if err := d.cacheDeviceInfo(deviceID, iccid, version); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
 		return nil, err
@@ -78,23 +78,24 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, iccid string) (*Con
 	}, nil
 }
 
-func (d *Service) cacheDeviceInfo(deviceID, iccid string) error {
+func (d *Service) cacheDeviceInfo(deviceID, iccid, version string) error {
 	cacheData := map[string]string{
-		"iccid": iccid,
+		"iccid":   iccid,
+		"version": version,
 	}
 	jsonData, err := json.Marshal(cacheData)
 	if err != nil {
 		return err
 	}
 	deviceID = strings.ReplaceAll(deviceID, ":", "-")
-	return d.cache.Set("device_info:"+deviceID, jsonData, 1*time.Hour)
+	return d.cache.Set("device_info:"+deviceID, jsonData)
 }
 
-// GetDeviceICCIDInfo 获取设备 ICCID 信息
-func (d *Service) GetDeviceICCIDInfo(deviceID string) (string, error) {
+// FromCacheGetDeviceInfo 获取设备 ICCID 和版本号信息
+func (d *Service) FromCacheGetDeviceInfo(deviceID string) (iccid, version string, err error) {
 	data, err := d.cache.Get("device_info:" + strings.ReplaceAll(deviceID, ":", "-"))
 	if err != nil {
-		return "", err
+		return "", "", fmt.Errorf("get device info from cache: %w", err)
 	}
 
 	var jsonData []byte
@@ -104,17 +105,23 @@ func (d *Service) GetDeviceICCIDInfo(deviceID string) (string, error) {
 	case string:
 		jsonData = []byte(v)
 	default:
-		return "", flash.ErrKeyNotFound
+		return "", "", fmt.Errorf("get device info from cache: invalid data type")
 	}
 
 	var cacheData map[string]string
 	if err := json.Unmarshal(jsonData, &cacheData); err != nil {
-		return "", err
+		return "", "", err
+	}
+	var ok bool
+
+	iccid, ok = cacheData["iccid"]
+	if !ok {
+		return "", "", fmt.Errorf("get device info from cache: iccid not found")
+	}
+	version, ok = cacheData["version"]
+	if !ok {
+		return "", "", fmt.Errorf("get device info from cache: version not found")
 	}
 
-	iccid, ok := cacheData["iccid"]
-	if !ok {
-		return "", flash.ErrKeyNotFound
-	}
-	return iccid, nil
+	return iccid, version, nil
 }

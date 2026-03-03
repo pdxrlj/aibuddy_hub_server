@@ -48,12 +48,14 @@ type TokenResponse struct {
 type UserinfoRequest struct {
 	ID        int64  `json:"id"`
 	BoardType string `json:"board_type" validate:"required" msg:"required:板子类型不能为空"`
-	DeviceID  string `json:"device_id" validate:"required"`
-	NickName  string `json:"nickname" validate:"required"`
-	Avatar    string `json:"avatar"`
-	Gender    int8   `json:"gender" validate:"required,oneof=0 1 2"`
-	Birthday  string `json:"birthday" validate:"required"`
-	Relation  string `json:"relation"`
+	Version   string `json:"version" validate:"required" msg:"required:版本号不能为空"`
+
+	DeviceID string `json:"device_id" validate:"required"`
+	NickName string `json:"nickname" validate:"required"`
+	Avatar   string `json:"avatar"`
+	Gender   int8   `json:"gender" validate:"required,oneof=0 1 2"`
+	Birthday string `json:"birthday" validate:"required"`
+	Relation string `json:"relation"`
 
 	Hobbies     string `json:"hobbies"`
 	Values      string `json:"values"`

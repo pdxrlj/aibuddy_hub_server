@@ -39,6 +39,11 @@ func (u *UserRepo) FindUserInfoByPhone(phone string) (*model.User, error) {
 	return query.User.Where(query.User.Phone.Eq(phone)).First()
 }
 
+// FindUserByUserID 根据用户 ID 查找用户
+func (u *UserRepo) FindUserByUserID(id int64) (*model.User, error) {
+	return query.User.Where(query.User.ID.Eq(id)).First()
+}
+
 // CreateUser 创建用户
 func (u *UserRepo) CreateUser(user *model.User) (int64, error) {
 	err := query.User.Create(user)

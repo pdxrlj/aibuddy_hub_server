@@ -34,6 +34,7 @@ func (d *DeviceRepo) FirstAddDevice(ctx context.Context, deviceID string, uid in
 	if data != nil {
 		return nil
 	}
+
 	err = db.Device.Create(&model.Device{
 		DeviceID: deviceID,
 		UID:      uid,
@@ -53,8 +54,8 @@ func (d *DeviceRepo) DeviceChangeRole(ctx context.Context, uid int64, deviceID s
 	return nil
 }
 
-// ChangeDeviceIccid 更换设备 ICCID
-func (d *DeviceRepo) ChangeDeviceIccid(ctx context.Context, deviceID string, iccid string, tx ...*query.Query) error {
+// ChangeDeviceInfo 更换设备 ICCID
+func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, iccid string, boardType, version string, tx ...*query.Query) error {
 	_, span := tracer.Start(ctx, "ChangeDeviceIccid")
 	defer span.End()
 
@@ -63,7 +64,12 @@ func (d *DeviceRepo) ChangeDeviceIccid(ctx context.Context, deviceID string, icc
 		db = tx[0]
 	}
 
-	if _, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID)).Update(db.Device.ICCID, iccid); err != nil {
+	if _, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID)).
+		Updates(map[string]interface{}{
+			db.Device.ICCID.ColumnName().String():     iccid,
+			db.Device.BoardType.ColumnName().String(): boardType,
+			db.Device.Version.ColumnName().String():   version,
+		}); err != nil {
 		return err
 	}
 
