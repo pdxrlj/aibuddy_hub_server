@@ -2,6 +2,7 @@
 package device
 
 import (
+	"aibuddy/aiframe/location"
 	"aibuddy/internal/services/cache"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
@@ -124,4 +125,22 @@ func (d *Service) FromCacheGetDeviceInfo(deviceID string) (iccid, version string
 	}
 
 	return iccid, version, nil
+}
+
+// GetLocation 获取设备位置信息
+func (d *Service) GetLocation(ctx context.Context, deviceID string) error {
+	_, span := tracer().Start(ctx, "DeviceService.GetLocation")
+	defer span.End()
+
+	loc := location.Loc{
+		Type: "loc",
+	}
+
+	err := loc.SendToDevice(deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+	return nil
 }

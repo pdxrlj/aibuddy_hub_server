@@ -16,13 +16,15 @@ import (
 )
 
 var (
-	Q          = new(Query)
-	Agent      *agent
-	Device     *device
-	DeviceInfo *deviceInfo
-	DeviceSN   *deviceSN
-	Reminder   *reminder
-	User       *user
+	Q           = new(Query)
+	Agent       *agent
+	Device      *device
+	DeviceInfo  *deviceInfo
+	DeviceOta   *deviceOta
+	DeviceSN    *deviceSN
+	OtaResource *otaResource
+	Reminder    *reminder
+	User        *user
 )
 
 func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
@@ -30,45 +32,53 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	Agent = &Q.Agent
 	Device = &Q.Device
 	DeviceInfo = &Q.DeviceInfo
+	DeviceOta = &Q.DeviceOta
 	DeviceSN = &Q.DeviceSN
+	OtaResource = &Q.OtaResource
 	Reminder = &Q.Reminder
 	User = &Q.User
 }
 
 func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 	return &Query{
-		db:         db,
-		Agent:      newAgent(db, opts...),
-		Device:     newDevice(db, opts...),
-		DeviceInfo: newDeviceInfo(db, opts...),
-		DeviceSN:   newDeviceSN(db, opts...),
-		Reminder:   newReminder(db, opts...),
-		User:       newUser(db, opts...),
+		db:          db,
+		Agent:       newAgent(db, opts...),
+		Device:      newDevice(db, opts...),
+		DeviceInfo:  newDeviceInfo(db, opts...),
+		DeviceOta:   newDeviceOta(db, opts...),
+		DeviceSN:    newDeviceSN(db, opts...),
+		OtaResource: newOtaResource(db, opts...),
+		Reminder:    newReminder(db, opts...),
+		User:        newUser(db, opts...),
 	}
 }
 
 type Query struct {
 	db *gorm.DB
 
-	Agent      agent
-	Device     device
-	DeviceInfo deviceInfo
-	DeviceSN   deviceSN
-	Reminder   reminder
-	User       user
+	Agent       agent
+	Device      device
+	DeviceInfo  deviceInfo
+	DeviceOta   deviceOta
+	DeviceSN    deviceSN
+	OtaResource otaResource
+	Reminder    reminder
+	User        user
 }
 
 func (q *Query) Available() bool { return q.db != nil }
 
 func (q *Query) clone(db *gorm.DB) *Query {
 	return &Query{
-		db:         db,
-		Agent:      q.Agent.clone(db),
-		Device:     q.Device.clone(db),
-		DeviceInfo: q.DeviceInfo.clone(db),
-		DeviceSN:   q.DeviceSN.clone(db),
-		Reminder:   q.Reminder.clone(db),
-		User:       q.User.clone(db),
+		db:          db,
+		Agent:       q.Agent.clone(db),
+		Device:      q.Device.clone(db),
+		DeviceInfo:  q.DeviceInfo.clone(db),
+		DeviceOta:   q.DeviceOta.clone(db),
+		DeviceSN:    q.DeviceSN.clone(db),
+		OtaResource: q.OtaResource.clone(db),
+		Reminder:    q.Reminder.clone(db),
+		User:        q.User.clone(db),
 	}
 }
 
@@ -82,33 +92,39 @@ func (q *Query) WriteDB() *Query {
 
 func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 	return &Query{
-		db:         db,
-		Agent:      q.Agent.replaceDB(db),
-		Device:     q.Device.replaceDB(db),
-		DeviceInfo: q.DeviceInfo.replaceDB(db),
-		DeviceSN:   q.DeviceSN.replaceDB(db),
-		Reminder:   q.Reminder.replaceDB(db),
-		User:       q.User.replaceDB(db),
+		db:          db,
+		Agent:       q.Agent.replaceDB(db),
+		Device:      q.Device.replaceDB(db),
+		DeviceInfo:  q.DeviceInfo.replaceDB(db),
+		DeviceOta:   q.DeviceOta.replaceDB(db),
+		DeviceSN:    q.DeviceSN.replaceDB(db),
+		OtaResource: q.OtaResource.replaceDB(db),
+		Reminder:    q.Reminder.replaceDB(db),
+		User:        q.User.replaceDB(db),
 	}
 }
 
 type queryCtx struct {
-	Agent      IAgentDo
-	Device     IDeviceDo
-	DeviceInfo IDeviceInfoDo
-	DeviceSN   IDeviceSNDo
-	Reminder   IReminderDo
-	User       IUserDo
+	Agent       IAgentDo
+	Device      IDeviceDo
+	DeviceInfo  IDeviceInfoDo
+	DeviceOta   IDeviceOtaDo
+	DeviceSN    IDeviceSNDo
+	OtaResource IOtaResourceDo
+	Reminder    IReminderDo
+	User        IUserDo
 }
 
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
-		Agent:      q.Agent.WithContext(ctx),
-		Device:     q.Device.WithContext(ctx),
-		DeviceInfo: q.DeviceInfo.WithContext(ctx),
-		DeviceSN:   q.DeviceSN.WithContext(ctx),
-		Reminder:   q.Reminder.WithContext(ctx),
-		User:       q.User.WithContext(ctx),
+		Agent:       q.Agent.WithContext(ctx),
+		Device:      q.Device.WithContext(ctx),
+		DeviceInfo:  q.DeviceInfo.WithContext(ctx),
+		DeviceOta:   q.DeviceOta.WithContext(ctx),
+		DeviceSN:    q.DeviceSN.WithContext(ctx),
+		OtaResource: q.OtaResource.WithContext(ctx),
+		Reminder:    q.Reminder.WithContext(ctx),
+		User:        q.User.WithContext(ctx),
 	}
 }
 

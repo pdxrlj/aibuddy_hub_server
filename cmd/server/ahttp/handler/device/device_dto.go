@@ -15,7 +15,7 @@ type FirstOnlineResponse struct {
 	MQTTPassword string `json:"mqtt_password"`
 }
 
-// BindDeviceRequest 硬件设备发起绑定设备请求
-type BindDeviceRequest struct {
-	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,mac"`
+// GetLocationRequest 获取设备位置请求
+type GetLocationRequest struct {
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac"`
 }

@@ -1,7 +1,11 @@
 // Package location 提供位置信息接口定义
 package location
 
-import "encoding/json"
+import (
+	"aibuddy/aiframe"
+	"aibuddy/pkg/mqtt"
+	"encoding/json"
+)
 
 // {
 //     "type": "bs",
@@ -19,33 +23,34 @@ import "encoding/json"
 //     ]
 // }
 
-// LocType 位置类型
-type LocType string
+// SourceType 位置类型
+type SourceType string
 
-// LocTypeBS 基站位置类型
-const LocTypeBS LocType = "bs"
+// SourceTypeBS 基站位置类型
+const SourceTypeBS SourceType = "bs"
 
-// LocTypeWifi WiFi位置类型
-const LocTypeWifi LocType = "wifi"
+// SourceTypeWifi WiFi位置类型
+const SourceTypeWifi SourceType = "wifi"
 
-// IsValid 验证位置类型是否有效
-func (l LocType) IsValid() bool {
-	return l == LocTypeBS || l == LocTypeWifi
+// IsValid 验证来源类型是否有效
+func (l SourceType) IsValid() bool {
+	return l == SourceTypeBS || l == SourceTypeWifi
 }
 
-// String 转换为字符串
-func (l LocType) String() string {
+// String 转换为来源类型字符串
+func (l SourceType) String() string {
 	return string(l)
 }
 
 // Loc 位置信息
 type Loc struct {
-	Type       LocType  `json:"type,omitempty"`
-	Data       []string `json:"data,omitempty"`
-	Latitude   float64  `json:"lat,omitempty"`
-	Longitude  float64  `json:"lon,omitempty"`
-	LocationID int      `json:"lac,omitempty"`
-	ContentID  int      `json:"cid,omitempty"`
+	Type       string     `json:"type,omitempty"`
+	Source     SourceType `json:"source,omitempty"`
+	Data       []string   `json:"data,omitempty"`
+	Latitude   float64    `json:"lat,omitempty"`
+	Longitude  float64    `json:"lon,omitempty"`
+	LocationID int        `json:"lac,omitempty"`
+	ContentID  int        `json:"cid,omitempty"`
 }
 
 // Encode 编码位置信息
@@ -56,4 +61,13 @@ func (l *Loc) Encode() ([]byte, error) {
 // Decode 解码位置信息
 func (l *Loc) Decode(data []byte) error {
 	return json.Unmarshal(data, l)
+}
+
+// SendToDevice 发送位置信息到设备
+func (l *Loc) SendToDevice(deviceID string) error {
+	payload, err := l.Encode()
+	if err != nil {
+		return err
+	}
+	return mqtt.Instance.Publish(aiframe.MQTTLocationTopic(deviceID), 1, false, payload)
 }

@@ -3,6 +3,7 @@ package ahttp
 
 import (
 	devicehandler "aibuddy/cmd/server/ahttp/handler/device"
+	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
 	rolehandleer "aibuddy/cmd/server/ahttp/handler/role"
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
 	"aibuddy/cmd/server/ahttp/middleware"
@@ -24,8 +25,13 @@ func RegisterRoutes(base *ahttp.Base) {
 			device := devicehandler.NewDevice()
 			deviceGroup.POST("/firstonline", device.FirstOnline)
 
-			// 硬件设备发起绑定设备请求
-			deviceGroup.POST("/bind", device.BindDevice)
+			// 获取设备的位置信息
+			deviceGroup.GET("/location", device.GetLocation)
+		})
+
+		group.Group("/ota", nil, func(otaGroup *ahttp.Group) {
+			ota := otahandler.NewOta()
+			otaGroup.POST("/send_to_device", ota.SendToDevice)
 		})
 
 		group.Group("/user", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(userGroup *ahttp.Group) {

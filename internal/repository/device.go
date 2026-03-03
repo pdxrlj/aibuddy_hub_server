@@ -5,6 +5,7 @@ import (
 	"aibuddy/internal/query"
 	"context"
 
+	"gorm.io/gen"
 	"gorm.io/gorm"
 )
 
@@ -12,8 +13,8 @@ import (
 type DeviceRepo struct{}
 
 // NewDeviceRepo 实例化设备信息仓库
-func NewDeviceRepo() *DeviceInfoRepo {
-	return &DeviceInfoRepo{}
+func NewDeviceRepo() *DeviceRepo {
+	return &DeviceRepo{}
 }
 
 // FirstAddDevice 第一次绑定设备
@@ -73,5 +74,22 @@ func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, icci
 		return err
 	}
 
+	return nil
+}
+
+// BatchHandlerDeviceList 批量处理设备列表
+func (d *DeviceRepo) BatchHandlerDeviceList(ctx context.Context, handeler func(devices []*model.Device)) error {
+	_, span := tracer.Start(ctx, "GetDeviceList")
+	defer span.End()
+
+	var devices []*model.Device
+	err := query.Device.FindInBatches(&devices, 100, func(_ gen.Dao, _ int) error {
+		handeler(devices)
+		return nil
+	})
+	if err != nil {
+		span.RecordError(err)
+		return err
+	}
 	return nil
 }

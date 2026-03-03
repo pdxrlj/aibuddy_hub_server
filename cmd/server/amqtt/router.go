@@ -35,6 +35,8 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 	// 基站定位
 	r.On(":device_id/loc", locHandler.Location)
 
+	// ================================ 待验证 ================================
+
 	statusHandler := handler.NewStateHandler()
 	// 状态上报
 	r.On(":device_id/status", statusHandler.Report)
