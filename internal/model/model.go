@@ -61,6 +61,10 @@ func (d *DB) GenerateQuery() {
 
 		DeviceSN{},
 		DeviceInfo{},
+
+		// OTA
+		DeviceOta{},
+		OtaResource{},
 	}
 
 	_ = d.db.AutoMigrate(models...)

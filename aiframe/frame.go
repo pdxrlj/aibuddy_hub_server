@@ -18,6 +18,16 @@ var (
 	MQTTBoundTopic = func(deviceID string) string {
 		return GetTopic(fmt.Sprintf("%s/cmd/mgmt", deviceID))
 	}
+
+	// MQTTLocationTopic 位置主题
+	MQTTLocationTopic = func(deviceID string) string {
+		return GetTopic(fmt.Sprintf("%s/loc", deviceID))
+	}
+
+	// OTATopic OTA 主题
+	OTATopic = func(deviceID string) string {
+		return GetTopic(fmt.Sprintf("%s/ota", deviceID))
+	}
 )
 
 // GetTopic 获取 MQTT 主题

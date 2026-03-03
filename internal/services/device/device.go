@@ -2,12 +2,14 @@
 package device
 
 import (
+	"aibuddy/aiframe/location"
 	"aibuddy/internal/services/cache"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
 	"aibuddy/pkg/mqtt"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -95,7 +97,7 @@ func (d *Service) cacheDeviceInfo(deviceID, iccid, version string) error {
 func (d *Service) FromCacheGetDeviceInfo(deviceID string) (iccid, version string, err error) {
 	data, err := d.cache.Get("device_info:" + strings.ReplaceAll(deviceID, ":", "-"))
 	if err != nil {
-		return "", "", fmt.Errorf("get device info from cache: %w", err)
+		return "", "", fmt.Errorf("无法从缓存信息获取设备的 SN: %w", err)
 	}
 
 	var jsonData []byte
@@ -105,23 +107,41 @@ func (d *Service) FromCacheGetDeviceInfo(deviceID string) (iccid, version string
 	case string:
 		jsonData = []byte(v)
 	default:
-		return "", "", fmt.Errorf("get device info from cache: invalid data type")
+		return "", "", fmt.Errorf("无法从缓存信息获取设备的 SN: 数据类型错误")
 	}
 
 	var cacheData map[string]string
 	if err := json.Unmarshal(jsonData, &cacheData); err != nil {
-		return "", "", err
+		return "", "", errors.New("无法从缓存信息获取设备的 SN: 数据类型错误")
 	}
 	var ok bool
 
 	iccid, ok = cacheData["iccid"]
 	if !ok {
-		return "", "", fmt.Errorf("get device info from cache: iccid not found")
+		return "", "", errors.New("无法从缓存信息获取设备的SN: iccid not found")
 	}
 	version, ok = cacheData["version"]
 	if !ok {
-		return "", "", fmt.Errorf("get device info from cache: version not found")
+		return "", "", errors.New("无法从缓存信息获取设备的SN: version not found")
 	}
 
 	return iccid, version, nil
+}
+
+// GetLocation 获取设备位置信息
+func (d *Service) GetLocation(ctx context.Context, deviceID string) error {
+	_, span := tracer().Start(ctx, "DeviceService.GetLocation")
+	defer span.End()
+
+	loc := location.Loc{
+		Type: "loc",
+	}
+
+	err := loc.SendToDevice(deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+	return nil
 }

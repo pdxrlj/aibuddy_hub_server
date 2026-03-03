@@ -15,6 +15,12 @@ import (
 // Trans 全局翻译器
 var Trans ut.Translator
 
+// 预编译正则表达式
+var (
+	mobileRegex = regexp.MustCompile(`^1[3-9]\d{9}$`)
+	macRegex    = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$`)
+)
+
 // NewValidator 创建验证器
 func NewValidator() *validator.Validate {
 	v := validator.New()
@@ -79,13 +85,25 @@ func registerCustomTranslations(v *validator.Validate) {
 // validateMobile 手机号验证
 func validateMobile(fl validator.FieldLevel) bool {
 	mobile := fl.Field().String()
-	matched, _ := regexp.MatchString(`^1[3-9]\d{9}$`, mobile)
-	return matched
+	return mobileRegex.MatchString(mobile)
 }
 
-// validateMAC MAC地址验证
+// validateMAC MAC地址验证（支持字符串和字符串切片）
 func validateMAC(fl validator.FieldLevel) bool {
-	mac := fl.Field().String()
-	matched, _ := regexp.MatchString(`^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$`, mac)
-	return matched
+	field := fl.Field()
+
+	// 处理字符串切片
+	if field.Kind().String() == "slice" {
+		for i := 0; i < field.Len(); i++ {
+			mac := field.Index(i).String()
+			if !macRegex.MatchString(mac) {
+				return false
+			}
+		}
+		return true
+	}
+
+	// 处理单个字符串
+	mac := field.String()
+	return macRegex.MatchString(mac)
 }

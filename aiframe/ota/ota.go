@@ -2,7 +2,10 @@
 package ota
 
 import (
+	"aibuddy/aiframe"
+	"aibuddy/pkg/mqtt"
 	"encoding/json"
+	"fmt"
 )
 
 // 	   "type": "ota_version",
@@ -16,14 +19,13 @@ import (
 
 // Ota OTA 固件升级信息
 type Ota struct {
-	Type             string `json:"type"`
-	OtaURL           string `json:"ota_url"`
-	ModelURL         string `json:"model_url"`
-	OtaVersion       string `json:"ota_version"`
-	ForceUpdate      int    `json:"force_update"`
-	ForceUpdateModel int    `json:"force_update_model"`
-	UpdateContent    string `json:"update_content"`
-	DeviceID         string `json:"device_id"`
+	Type    string `json:"type"`
+	Version string `json:"ver"`
+
+	OtaURL      string `json:"ota_url"`
+	ModelURL    string `json:"model_url"`
+	ResourceURL string `json:"resource_url"`
+	ForceUpdate bool   `json:""`
 }
 
 // Encode 将 OTA 信息序列化为 JSON
@@ -34,4 +36,21 @@ func (o *Ota) Encode() ([]byte, error) {
 // Decode 从 JSON 数据反序列化到 OTA 结构
 func (o *Ota) Decode(data []byte) error {
 	return json.Unmarshal(data, o)
+}
+
+// String 将 OTA 信息转换为字符串
+func (o *Ota) String() string {
+	return fmt.Sprintf("Type: %s, Version: %s, OtaURL: %s, ModelURL: %s, ResourceURL: %s, ForceUpdate: %t", o.Type, o.Version, o.OtaURL, o.ModelURL, o.ResourceURL, o.ForceUpdate)
+}
+
+// SendToDevice 发送 OTA 信息到设备
+func (o *Ota) SendToDevice(deviceID string) error {
+	o.Type = "ota"
+	topic := aiframe.OTATopic(deviceID)
+	payload, err := o.Encode()
+	if err != nil {
+		return err
+	}
+
+	return mqtt.Instance.Publish(topic, 1, false, payload)
 }
