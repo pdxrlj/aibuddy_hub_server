@@ -47,6 +47,7 @@ func (r *Service) ChangeRole(ctx context.Context, uid int64, deviceID string, ro
 	defer span.End()
 
 	if !r.AgentRepo.ChcekAgentByID(ctx, uid, roleID) {
+		span.RecordError(errors.New("role_id参数异常"))
 		return errors.New("role_id参数异常")
 	}
 
@@ -64,6 +65,7 @@ func (r *Service) GetRoleByID(ctx context.Context, uid int64, roleID int64) (*mo
 
 	data, err := r.AgentRepo.GetAgentByID(ctx, uid, roleID)
 	if err != nil {
+		span.RecordError(errors.New("角色信息为空"))
 		return nil, errors.New("角色信息为空")
 	}
 
