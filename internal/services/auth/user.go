@@ -186,12 +186,16 @@ func (s *Service) CheckLoginMiniProgram(code, encryptedData, iv string, userInfo
 }
 
 // SendPhoneCode 发送手机验证码
-func (s *Service) SendPhoneCode(phone string) (string, error) {
+func (s *Service) SendPhoneCode(ctx context.Context, phone string) (string, error) {
+	_, span := tracer().Start(ctx, "SendPhoneCode")
+	defer span.End()
+
 	maxCount := config.Instance.App.MsgSendCount
 	cacheKey := fmt.Sprintf(smsCacheKey, phone)
 	sendCountKey := fmt.Sprintf(smsSendCountKey, phone)
 
 	if s.cache.Exists(cacheKey) {
+		span.RecordError(errors.New("验证码已发送，请稍后重试"))
 		return "", errors.New("验证码已发送，请稍后重试")
 	}
 
@@ -200,12 +204,14 @@ func (s *Service) SendPhoneCode(phone string) (string, error) {
 	if !slices.Contains(testPhoneNumber, phone) {
 		// 先检查发送次数
 		if _, err := s.LimitTaskTimes(sendCountKey, maxCount, 24*time.Hour); err != nil {
+			span.RecordError(err)
 			return "", err
 		}
 
 		// 发送验证码
 		_, err := s.sms.SendSMS(phone, code)
 		if err != nil {
+			span.RecordError(err)
 			return "", err
 		}
 	} else {
@@ -213,6 +219,7 @@ func (s *Service) SendPhoneCode(phone string) (string, error) {
 	}
 
 	if err := s.cache.Set(cacheKey, code, 5*time.Minute); err != nil {
+		span.RecordError(err)
 		return "", err
 	}
 

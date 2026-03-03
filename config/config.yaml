@@ -43,7 +43,7 @@ aliyun:
   sk: ""
   sms:
     sign_name: "合肥绝对派智能科技"
-    template_code: "SMS_487395253"
+    template_code: "SMS_501870393"
   mqtt:
     url: "tcp://post-cn-m414bwfgf03.mqtt.aliyuncs.com:1883"
     instance_id: "post-cn-m414bwfgf03"
