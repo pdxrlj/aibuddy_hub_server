@@ -50,7 +50,7 @@ func (r *Service) ChangeRole(ctx context.Context, uid int64, deviceID string, ro
 		return errors.New("role_id参数异常")
 	}
 
-	if err := r.DeviceRepo.DeviceChangeRole(ctx, uid, deviceID, roleID); err != nil {
+	if err := r.DeviceRepo.ChangeDeviceRole(ctx, uid, deviceID, roleID); err != nil {
 		return errors.New("device_id参数异常")
 	}
 
