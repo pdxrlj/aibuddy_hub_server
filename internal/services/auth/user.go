@@ -141,7 +141,7 @@ func (s *Service) CheckLoginCode(phone, code string) error {
 	if err != nil && err.Error() != redis.Nil.Error() {
 		return err
 	} else if err != nil && err.Error() == redis.Nil.Error() {
-		return errors.New("请先发送验证码")
+		return errors.New("验证码不存在或已过期，请重新获取")
 	}
 
 	if result.(string) != code {
