@@ -5,7 +5,7 @@ import (
 	"aibuddy/cmd/server"
 	"aibuddy/cmd/server/ahttp"
 	"aibuddy/cmd/server/amqtt"
-	"aibuddy/cmd/server/schedule"
+	"aibuddy/cmd/server/task"
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"aibuddy/pkg/config"
@@ -79,7 +79,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go SignalHandler(cancel)
-	err := server.StartServer(ctx, ahttp.StartHTTPServer, schedule.StartSchedule, amqtt.StartAMQTTServer)
+	err := server.StartServer(ctx, ahttp.StartHTTPServer, task.StartTaskServer, amqtt.StartAMQTTServer)
 	if err != nil {
 		slog.Error("Failed to start server", "error", err)
 	}

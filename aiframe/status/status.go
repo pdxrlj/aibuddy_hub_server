@@ -7,13 +7,9 @@ import (
 
 // DeviceStatus 设备状态
 type DeviceStatus struct {
-	Type          string `json:"type"`
-	Battery       int    `json:"bat"`          // 电池电量
-	Charging      bool   `json:"charging"`     // 是否充电
-	SignalQuality int    `json:"csq"`          // 信号质量
-	StorageFree   int64  `json:"storage_free"` // 存储剩余空间
-	MemFree       int64  `json:"mem_free"`     // 内存剩余空间
-	Iccid         string `json:"iccid"`        // SIM卡ICCID
+	Type    string `json:"type"`
+	Battery int    `json:"bat"`      // 电池电量
+	NetType string `json:"net_type"` // 网络类型 4g/wifi
 }
 
 // IsValid 验证设备状态是否有效

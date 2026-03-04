@@ -29,13 +29,13 @@ func newReminder(db *gorm.DB, opts ...gen.DOOption) reminder {
 	tableName := _reminder.reminderDo.TableName()
 	_reminder.ALL = field.NewAsterisk(tableName)
 	_reminder.ID = field.NewInt64(tableName, "id")
-	_reminder.ReminderType = field.NewString(tableName, "reminder_type")
-	_reminder.ReminderTime = field.NewTime(tableName, "reminder_time")
+	_reminder.RepeatType = field.NewString(tableName, "repeat_type")
+	_reminder.ReminderTitle = field.NewString(tableName, "reminder_title")
 	_reminder.ReminderContent = field.NewString(tableName, "reminder_content")
-	_reminder.DeviceID = field.NewString(tableName, "device_id")
-	_reminder.CronExpression = field.NewString(tableName, "cron_expression")
+	_reminder.ReminderTime = field.NewTime(tableName, "reminder_time")
+	_reminder.NextReminderTime = field.NewTime(tableName, "next_reminder_time")
 	_reminder.Status = field.NewString(tableName, "status")
-	_reminder.ReminderDeviceID = field.NewInt64(tableName, "reminder_device_id")
+	_reminder.DeviceID = field.NewString(tableName, "device_id")
 	_reminder.CreatedAt = field.NewTime(tableName, "created_at")
 	_reminder.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_reminder.Device = reminderHasOneDevice{
@@ -64,15 +64,15 @@ type reminder struct {
 
 	ALL              field.Asterisk
 	ID               field.Int64
-	ReminderType     field.String // 提醒类型
-	ReminderTime     field.Time   // 提醒时间
+	RepeatType       field.String // 重复类型
+	ReminderTitle    field.String // 提醒标题
 	ReminderContent  field.String // 提醒内容
-	DeviceID         field.String // 设备ID
-	CronExpression   field.String // cron表达式
+	ReminderTime     field.Time   // 首次提醒时间
+	NextReminderTime field.Time   // 下一次提醒时间
 	Status           field.String
-	ReminderDeviceID field.Int64 // 提醒设备ID
-	CreatedAt        field.Time  // 创建时间
-	UpdatedAt        field.Time  // 更新时间
+	DeviceID         field.String // 设备ID
+	CreatedAt        field.Time   // 创建时间
+	UpdatedAt        field.Time   // 更新时间
 	Device           reminderHasOneDevice
 
 	fieldMap map[string]field.Expr
@@ -91,13 +91,13 @@ func (r reminder) As(alias string) *reminder {
 func (r *reminder) updateTableName(table string) *reminder {
 	r.ALL = field.NewAsterisk(table)
 	r.ID = field.NewInt64(table, "id")
-	r.ReminderType = field.NewString(table, "reminder_type")
-	r.ReminderTime = field.NewTime(table, "reminder_time")
+	r.RepeatType = field.NewString(table, "repeat_type")
+	r.ReminderTitle = field.NewString(table, "reminder_title")
 	r.ReminderContent = field.NewString(table, "reminder_content")
-	r.DeviceID = field.NewString(table, "device_id")
-	r.CronExpression = field.NewString(table, "cron_expression")
+	r.ReminderTime = field.NewTime(table, "reminder_time")
+	r.NextReminderTime = field.NewTime(table, "next_reminder_time")
 	r.Status = field.NewString(table, "status")
-	r.ReminderDeviceID = field.NewInt64(table, "reminder_device_id")
+	r.DeviceID = field.NewString(table, "device_id")
 	r.CreatedAt = field.NewTime(table, "created_at")
 	r.UpdatedAt = field.NewTime(table, "updated_at")
 
@@ -118,13 +118,13 @@ func (r *reminder) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 func (r *reminder) fillFieldMap() {
 	r.fieldMap = make(map[string]field.Expr, 11)
 	r.fieldMap["id"] = r.ID
-	r.fieldMap["reminder_type"] = r.ReminderType
-	r.fieldMap["reminder_time"] = r.ReminderTime
+	r.fieldMap["repeat_type"] = r.RepeatType
+	r.fieldMap["reminder_title"] = r.ReminderTitle
 	r.fieldMap["reminder_content"] = r.ReminderContent
-	r.fieldMap["device_id"] = r.DeviceID
-	r.fieldMap["cron_expression"] = r.CronExpression
+	r.fieldMap["reminder_time"] = r.ReminderTime
+	r.fieldMap["next_reminder_time"] = r.NextReminderTime
 	r.fieldMap["status"] = r.Status
-	r.fieldMap["reminder_device_id"] = r.ReminderDeviceID
+	r.fieldMap["device_id"] = r.DeviceID
 	r.fieldMap["created_at"] = r.CreatedAt
 	r.fieldMap["updated_at"] = r.UpdatedAt
 

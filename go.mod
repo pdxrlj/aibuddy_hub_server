@@ -13,16 +13,22 @@ require (
 	github.com/alibabacloud-go/dysmsapi-20170525/v5 v5.5.0
 	github.com/alibabacloud-go/tea v1.4.0
 	github.com/alibabacloud-go/tea-utils/v2 v2.0.9
+	github.com/alicebob/miniredis/v2 v2.37.0
 	github.com/aliyun/credentials-go v1.4.11
 	github.com/dgraph-io/ristretto/v2 v2.4.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
+	github.com/go-playground/locales v0.14.1
+	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/go-resty/resty/v2 v2.17.2
 	github.com/golang-jwt/jwt/v4 v4.5.2
+	github.com/hibiken/asynq v0.26.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.15.0
 	github.com/milvus-io/milvus/client/v2 v2.6.2
-	github.com/redis/go-redis/v9 v9.12.1
+	github.com/redis/go-redis/v9 v9.14.1
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/silenceper/wechat/v2 v2.1.12
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
@@ -32,6 +38,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.40.0
 	go.opentelemetry.io/otel/trace v1.40.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	gorm.io/datatypes v1.2.4
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gen v0.3.27
 	gorm.io/gorm v1.31.1
@@ -84,8 +91,6 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/go-playground/locales v0.14.1 // indirect
-	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-redsync/redsync/v4 v4.8.1 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
@@ -143,7 +148,6 @@ require (
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
 	github.com/samber/lo v1.27.0 // indirect
@@ -174,6 +178,7 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
+	github.com/yuin/gopher-lua v1.1.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.etcd.io/bbolt v1.4.3 // indirect
 	go.etcd.io/etcd/api/v3 v3.6.8 // indirect
@@ -215,7 +220,6 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/datatypes v1.2.4 // indirect
 	gorm.io/driver/mysql v1.5.7 // indirect
 	gorm.io/hints v1.1.0 // indirect
 	k8s.io/apimachinery v0.32.3 // indirect

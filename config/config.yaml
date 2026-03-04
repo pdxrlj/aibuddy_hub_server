@@ -53,6 +53,10 @@ aliyun:
     keep_alive: 60s
     reconnect:
       delay: 1000ms
+baidu:
+  ak: ""
+  sk: ""
+  app_id: ""
 tracer:
   service_name: "aibuddy_hub"
   endpoint: "112.132.224.74:4317"

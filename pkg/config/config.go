@@ -23,6 +23,7 @@ type Config struct {
 	Agent   *AgentConfig   `json:"agent" mapstructure:"agent"`
 	Tracer  *TracerConfig  `json:"tracer" mapstructure:"tracer"`
 	Aliyun  *AliyunConfig  `json:"aliyun" mapstructure:"aliyun"`
+	Baidu   *BaiduConfig   `json:"baidu" mapstructure:"baidu"`
 	Wechat  *WechatConfig  `json:"wechat" mapstructure:"wechat"`
 }
 
@@ -132,6 +133,13 @@ type MqttConfig struct {
 // ReconnectConfig 重连配置
 type ReconnectConfig struct {
 	Delay time.Duration `json:"delay" mapstructure:"delay"`
+}
+
+// BaiduConfig 百度云配置
+type BaiduConfig struct {
+	Ak    string `json:"ak" mapstructure:"ak"`
+	Sk    string `json:"sk" mapstructure:"sk"`
+	AppID string `json:"app_id" mapstructure:"app_id"`
 }
 
 // Setup 初始化配置

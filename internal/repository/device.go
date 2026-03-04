@@ -93,3 +93,25 @@ func (d *DeviceRepo) BatchHandlerDeviceList(ctx context.Context, handeler func(d
 	}
 	return nil
 }
+
+// UpdateDeviceHardwareInfo 更新设备硬件信息
+func (d *DeviceRepo) UpdateDeviceHardwareInfo(deviceID string, hardwareInfo []byte) error {
+	if _, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).
+		Updates(map[string]any{
+			query.Device.HardwareInfo.ColumnName().String(): hardwareInfo,
+		}); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetDeviceStatus 设置设备状态
+func (d *DeviceRepo) SetDeviceStatus(deviceID string, state model.DeviceStatus) error {
+	if _, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).
+		Updates(map[string]any{
+			query.Device.Status.ColumnName().String(): state,
+		}); err != nil {
+		return err
+	}
+	return nil
+}
