@@ -63,3 +63,21 @@ type Reminder struct {
 func (r Reminder) TableName() string {
 	return TableName("reminder")
 }
+
+// ComputedNextReminderTime 计算下一次提醒时间
+func (r *Reminder) ComputedNextReminderTime() {
+	switch r.RepeatType {
+	case RepeatTypeNone:
+		r.NextReminderTime = r.ReminderTime
+	case RepeatTypeDaily:
+		r.NextReminderTime = r.ReminderTime.AddDate(0, 0, 1)
+	case RepeatTypeWeekly:
+		r.NextReminderTime = r.ReminderTime.AddDate(0, 0, 7)
+	case RepeatTypeMonthly:
+		r.NextReminderTime = r.ReminderTime.AddDate(0, 1, 0)
+	case RepeatTypeYearly:
+		r.NextReminderTime = r.ReminderTime.AddDate(1, 0, 0)
+	default:
+		r.NextReminderTime = r.ReminderTime
+	}
+}

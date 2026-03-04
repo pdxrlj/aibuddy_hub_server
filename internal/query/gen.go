@@ -19,9 +19,11 @@ var (
 	Q                   = new(Query)
 	Agent               *agent
 	AnniversaryReminder *anniversaryReminder
+	ChatDialogue        *chatDialogue
 	Device              *device
 	DeviceInfo          *deviceInfo
 	DeviceOta           *deviceOta
+	DeviceRelationship  *deviceRelationship
 	DeviceSN            *deviceSN
 	OtaResource         *otaResource
 	Reminder            *reminder
@@ -32,9 +34,11 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	*Q = *Use(db, opts...)
 	Agent = &Q.Agent
 	AnniversaryReminder = &Q.AnniversaryReminder
+	ChatDialogue = &Q.ChatDialogue
 	Device = &Q.Device
 	DeviceInfo = &Q.DeviceInfo
 	DeviceOta = &Q.DeviceOta
+	DeviceRelationship = &Q.DeviceRelationship
 	DeviceSN = &Q.DeviceSN
 	OtaResource = &Q.OtaResource
 	Reminder = &Q.Reminder
@@ -46,9 +50,11 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		db:                  db,
 		Agent:               newAgent(db, opts...),
 		AnniversaryReminder: newAnniversaryReminder(db, opts...),
+		ChatDialogue:        newChatDialogue(db, opts...),
 		Device:              newDevice(db, opts...),
 		DeviceInfo:          newDeviceInfo(db, opts...),
 		DeviceOta:           newDeviceOta(db, opts...),
+		DeviceRelationship:  newDeviceRelationship(db, opts...),
 		DeviceSN:            newDeviceSN(db, opts...),
 		OtaResource:         newOtaResource(db, opts...),
 		Reminder:            newReminder(db, opts...),
@@ -61,9 +67,11 @@ type Query struct {
 
 	Agent               agent
 	AnniversaryReminder anniversaryReminder
+	ChatDialogue        chatDialogue
 	Device              device
 	DeviceInfo          deviceInfo
 	DeviceOta           deviceOta
+	DeviceRelationship  deviceRelationship
 	DeviceSN            deviceSN
 	OtaResource         otaResource
 	Reminder            reminder
@@ -77,9 +85,11 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		db:                  db,
 		Agent:               q.Agent.clone(db),
 		AnniversaryReminder: q.AnniversaryReminder.clone(db),
+		ChatDialogue:        q.ChatDialogue.clone(db),
 		Device:              q.Device.clone(db),
 		DeviceInfo:          q.DeviceInfo.clone(db),
 		DeviceOta:           q.DeviceOta.clone(db),
+		DeviceRelationship:  q.DeviceRelationship.clone(db),
 		DeviceSN:            q.DeviceSN.clone(db),
 		OtaResource:         q.OtaResource.clone(db),
 		Reminder:            q.Reminder.clone(db),
@@ -100,9 +110,11 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		db:                  db,
 		Agent:               q.Agent.replaceDB(db),
 		AnniversaryReminder: q.AnniversaryReminder.replaceDB(db),
+		ChatDialogue:        q.ChatDialogue.replaceDB(db),
 		Device:              q.Device.replaceDB(db),
 		DeviceInfo:          q.DeviceInfo.replaceDB(db),
 		DeviceOta:           q.DeviceOta.replaceDB(db),
+		DeviceRelationship:  q.DeviceRelationship.replaceDB(db),
 		DeviceSN:            q.DeviceSN.replaceDB(db),
 		OtaResource:         q.OtaResource.replaceDB(db),
 		Reminder:            q.Reminder.replaceDB(db),
@@ -113,9 +125,11 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 type queryCtx struct {
 	Agent               IAgentDo
 	AnniversaryReminder IAnniversaryReminderDo
+	ChatDialogue        IChatDialogueDo
 	Device              IDeviceDo
 	DeviceInfo          IDeviceInfoDo
 	DeviceOta           IDeviceOtaDo
+	DeviceRelationship  IDeviceRelationshipDo
 	DeviceSN            IDeviceSNDo
 	OtaResource         IOtaResourceDo
 	Reminder            IReminderDo
@@ -126,9 +140,11 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
 		Agent:               q.Agent.WithContext(ctx),
 		AnniversaryReminder: q.AnniversaryReminder.WithContext(ctx),
+		ChatDialogue:        q.ChatDialogue.WithContext(ctx),
 		Device:              q.Device.WithContext(ctx),
 		DeviceInfo:          q.DeviceInfo.WithContext(ctx),
 		DeviceOta:           q.DeviceOta.WithContext(ctx),
+		DeviceRelationship:  q.DeviceRelationship.WithContext(ctx),
 		DeviceSN:            q.DeviceSN.WithContext(ctx),
 		OtaResource:         q.OtaResource.WithContext(ctx),
 		Reminder:            q.Reminder.WithContext(ctx),

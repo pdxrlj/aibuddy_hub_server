@@ -66,6 +66,10 @@ func (d *DB) GenerateQuery() {
 		// OTA
 		DeviceOta{},
 		OtaResource{},
+
+		ChatDialogue{},
+
+		DeviceRelationship{},
 	}
 
 	_ = d.db.AutoMigrate(models...)
