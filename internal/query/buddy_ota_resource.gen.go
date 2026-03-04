@@ -29,9 +29,9 @@ func newOtaResource(db *gorm.DB, opts ...gen.DOOption) otaResource {
 	tableName := _otaResource.otaResourceDo.TableName()
 	_otaResource.ALL = field.NewAsterisk(tableName)
 	_otaResource.ID = field.NewInt(tableName, "id")
-	_otaResource.OtaUrl = field.NewString(tableName, "ota_url")
-	_otaResource.ModelUrl = field.NewString(tableName, "model_url")
-	_otaResource.ResourceUrl = field.NewString(tableName, "resource_url")
+	_otaResource.OtaURL = field.NewString(tableName, "ota_url")
+	_otaResource.ModelURL = field.NewString(tableName, "model_url")
+	_otaResource.ResourceURL = field.NewString(tableName, "resource_url")
 	_otaResource.ForceUpdate = field.NewBool(tableName, "force_update")
 	_otaResource.CreatedAt = field.NewTime(tableName, "created_at")
 	_otaResource.UpdatedAt = field.NewTime(tableName, "updated_at")
@@ -46,9 +46,9 @@ type otaResource struct {
 
 	ALL         field.Asterisk
 	ID          field.Int
-	OtaUrl      field.String
-	ModelUrl    field.String
-	ResourceUrl field.String
+	OtaURL      field.String
+	ModelURL    field.String
+	ResourceURL field.String
 	ForceUpdate field.Bool
 	CreatedAt   field.Time
 	UpdatedAt   field.Time
@@ -69,9 +69,9 @@ func (o otaResource) As(alias string) *otaResource {
 func (o *otaResource) updateTableName(table string) *otaResource {
 	o.ALL = field.NewAsterisk(table)
 	o.ID = field.NewInt(table, "id")
-	o.OtaUrl = field.NewString(table, "ota_url")
-	o.ModelUrl = field.NewString(table, "model_url")
-	o.ResourceUrl = field.NewString(table, "resource_url")
+	o.OtaURL = field.NewString(table, "ota_url")
+	o.ModelURL = field.NewString(table, "model_url")
+	o.ResourceURL = field.NewString(table, "resource_url")
 	o.ForceUpdate = field.NewBool(table, "force_update")
 	o.CreatedAt = field.NewTime(table, "created_at")
 	o.UpdatedAt = field.NewTime(table, "updated_at")
@@ -93,9 +93,9 @@ func (o *otaResource) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 func (o *otaResource) fillFieldMap() {
 	o.fieldMap = make(map[string]field.Expr, 7)
 	o.fieldMap["id"] = o.ID
-	o.fieldMap["ota_url"] = o.OtaUrl
-	o.fieldMap["model_url"] = o.ModelUrl
-	o.fieldMap["resource_url"] = o.ResourceUrl
+	o.fieldMap["ota_url"] = o.OtaURL
+	o.fieldMap["model_url"] = o.ModelURL
+	o.fieldMap["resource_url"] = o.ResourceURL
 	o.fieldMap["force_update"] = o.ForceUpdate
 	o.fieldMap["created_at"] = o.CreatedAt
 	o.fieldMap["updated_at"] = o.UpdatedAt

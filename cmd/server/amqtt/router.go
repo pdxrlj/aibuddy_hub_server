@@ -35,15 +35,15 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 	// 基站定位
 	r.On(":device_id/loc", locHandler.Location)
 
-	// ================================ 待验证 ================================
-
-	statusHandler := handler.NewStateHandler()
-	// 状态上报
-	r.On(":device_id/status", statusHandler.Report)
+	hbHandler := handler.NewHbHandler()
+	// 心跳上报
+	r.On(":device_id/hb", hbHandler.Handle)
 
 	// AI 对话
 	aiChatHandler := handler.NewAiChatHandler()
 	r.On(":device_id/ai", aiChatHandler.Chat)
+
+	// ================================ 待验证 ================================
 
 	msgHandler := handler.NewMsgHandler()
 	r.On(":device_id/msg", msgHandler.Handle)

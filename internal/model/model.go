@@ -53,11 +53,12 @@ func (d *DB) GenerateQuery() {
 		Mode:    gen.WithoutContext | gen.WithDefaultQuery | gen.WithQueryInterface,
 	})
 
-	models := []interface{}{
+	models := []any{
 		User{},
 		Agent{},
 		Device{},
 		Reminder{},
+		AnniversaryReminder{},
 
 		DeviceSN{},
 		DeviceInfo{},

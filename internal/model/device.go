@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/datatypes"
+)
 
 // DeviceStatus represents the status of a device.
 type DeviceStatus string
@@ -32,6 +36,16 @@ type Device struct {
 	ICCID     string `gorm:"column:iccid;index;type:varchar(20);not null;uniqueIndex;comment:ICCID;comment:手机卡ICCID;"`
 	BoardType string `gorm:"column:board_type;type:varchar(255);not null;comment:板子类型;"`
 	Version   string `gorm:"column:version;type:varchar(255);not null;comment:板子版本;"`
+
+	// 经度
+	Longitude string `gorm:"column:longitude;type:varchar(255);comment:经度;"`
+	// 纬度
+	Latitude string `gorm:"column:latitude;type:varchar(255);comment:纬度;"`
+	// 位置
+	Location string `gorm:"column:location;type:varchar(255);comment:位置;"`
+
+	// 设备的硬件信息JSON
+	HardwareInfo datatypes.JSON `gorm:"column:hardware_info;type:json;comment:硬件信息;"`
 
 	UID          int64     `gorm:"column:uid;index;type:bigint;not null;default:0;comment:绑定用户id;"`
 	LastActiveAt time.Time `gorm:"column:last_active_at;type:timestamp;comment:最后活跃时间;"`
