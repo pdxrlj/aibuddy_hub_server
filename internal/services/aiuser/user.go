@@ -1,5 +1,5 @@
-// Package auth provides user authentication services.
-package auth
+// Package aiuser provides user authentication services.
+package aiuser
 
 import (
 	management "aibuddy/aiframe/managemet"
@@ -293,4 +293,59 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType stri
 
 		return nil
 	})
+}
+
+// Lost 挂失设备
+func (s *Service) Lost(ctx context.Context, uid int64, deviceID string) error {
+	_, span := tracer().Start(ctx, "Lost")
+	defer span.End()
+
+	user, err := s.UserRepo.FindUserByUserID(uid)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("user_id", uid))
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+
+	contact := user.Nickname
+	if contact == "" {
+		contact = "家长"
+	}
+
+	if err := management.SendLost(deviceID, contact, user.Phone); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+
+	return nil
+}
+
+// Unlost 解除挂失设备
+func (s *Service) Unlost(ctx context.Context, deviceID string) error {
+	_, span := tracer().Start(ctx, "Unlost")
+	defer span.End()
+
+	if err := management.SendUnlost(deviceID); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+
+	return nil
+}
+
+// Unbind 解绑设备
+func (s *Service) Unbind(ctx context.Context, deviceID string) error {
+	_, span := tracer().Start(ctx, "Unbind")
+	defer span.End()
+
+	if err := management.SendUnboundToDevice(deviceID); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+
+	return nil
 }

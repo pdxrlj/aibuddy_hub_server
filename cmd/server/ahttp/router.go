@@ -44,6 +44,18 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 完善用户信息，扫描绑定后完善用户信息
 			userGroup.POST("/profile", h.CompleteProfile)
+
+			// ===============================================
+			// 设备操作 挂失 解除挂失 解绑
+
+			// 发送挂失消息给设备
+			userGroup.POST("/lost", h.Lost)
+
+			// 发送解除挂失消息给设备
+			userGroup.POST("/unlost", h.Unlost)
+
+			// 发送解绑消息给设备
+			userGroup.POST("/unbind", h.Unbind)
 		})
 
 		group.Group("/role", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {

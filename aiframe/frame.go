@@ -28,6 +28,21 @@ var (
 	OTATopic = func(deviceID string) string {
 		return GetTopic(fmt.Sprintf("%s/ota", deviceID))
 	}
+
+	// MQTTUnbindTopic 发送解除绑定请求
+	MQTTUnbindTopic = func(deviceID string) string {
+		return GetTopic(fmt.Sprintf("%s/mgmt", deviceID))
+	}
+
+	// MQTTLostTopic 发送挂失请求
+	MQTTLostTopic = func(deviceID string) string {
+		return GetTopic(fmt.Sprintf("%s/mgmt", deviceID))
+	}
+
+	// MQTTUnLostTopic 发送解除挂失请求
+	MQTTUnLostTopic = func(deviceID string) string {
+		return GetTopic(fmt.Sprintf("%s/mgmt", deviceID))
+	}
 )
 
 // GetTopic 获取 MQTT 主题

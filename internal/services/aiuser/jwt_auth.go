@@ -1,5 +1,5 @@
-// Package auth 用户认证
-package auth
+// Package aiuser 用户认证
+package aiuser
 
 import (
 	"context"

@@ -59,8 +59,8 @@ const (
 	MgmtTypeQryStat MgmtType = "qry_stat"
 	// MgmtTypeLost 挂失
 	MgmtTypeLost MgmtType = "lost"
-	// MgmtTypeRecover 解除挂失
-	MgmtTypeRecover MgmtType = "recover"
+	// MgmtTypeUnlost 解除挂失
+	MgmtTypeUnlost MgmtType = "unlost"
 	// MgmtTypeBound 绑定
 	MgmtTypeBound MgmtType = "bound"
 	// MgmtTypeUnbind 解绑
@@ -69,7 +69,7 @@ const (
 
 // IsValid 验证设备管理类型是否有效
 func (m MgmtType) IsValid() bool {
-	return m == MgmtTypeQryStat || m == MgmtTypeLost || m == MgmtTypeRecover || m == MgmtTypeBound || m == MgmtTypeUnbind
+	return m == MgmtTypeQryStat || m == MgmtTypeLost || m == MgmtTypeUnlost || m == MgmtTypeBound || m == MgmtTypeUnbind
 }
 
 // String 转换为字符串

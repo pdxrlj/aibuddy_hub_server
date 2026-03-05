@@ -339,8 +339,23 @@ func TestManager_RegisterPeriodicTask(t *testing.T) {
 	taskID := uniqueTaskID("periodic")
 	task := asynq.NewTask(TaskTypeDailyReport, nil)
 
-	err := tm.RegisterPeriodicTask("* * * * *", task, asynq.TaskID(taskID))
+	entryID, err := tm.RegisterPeriodicTask("* * * * *", task, asynq.TaskID(taskID))
 	require.NoError(t, err)
+	require.NotEmpty(t, entryID)
+
+	// 等待任务执行
+	assert.Eventually(t, func() bool {
+		return atomic.LoadInt64(&taskCounter) >= 1
+	}, 5*time.Second, 100*time.Millisecond, "任务应该被执行")
+
+	// 取消任务
+	err = tm.UnregisterPeriodicTask(entryID)
+	require.NoError(t, err)
+
+	// 验证任务没有被执行
+	assert.Eventually(t, func() bool {
+		return atomic.LoadInt64(&taskCounter) == 0
+	}, 5*time.Second, 100*time.Millisecond, "任务应该没有被执行")
 }
 
 func TestManager_Client(t *testing.T) {

@@ -17,6 +17,7 @@ type Manager struct {
 	client    *asynq.Client
 	scheduler *asynq.Scheduler
 	server    *asynq.Server
+	inspector *asynq.Inspector
 	redisOpt  asynq.RedisClientOpt
 }
 
@@ -43,9 +44,12 @@ func NewManager() *Manager {
 		},
 	})
 
+	inspector := asynq.NewInspector(redisOpt)
+
 	return &Manager{
 		client:    client,
 		scheduler: scheduler,
+		inspector: inspector,
 		redisOpt:  redisOpt,
 	}
 }
@@ -81,9 +85,20 @@ func (m *Manager) EnqueueAt(task *asynq.Task, t time.Time, opts ...asynq.Option)
 }
 
 // RegisterPeriodicTask registers a periodic task with cron spec
-func (m *Manager) RegisterPeriodicTask(cronSpec string, task *asynq.Task, opts ...asynq.Option) error {
-	_, err := m.scheduler.Register(cronSpec, task, opts...)
-	return err
+// Returns entryID for later unregistration
+func (m *Manager) RegisterPeriodicTask(cronSpec string, task *asynq.Task, opts ...asynq.Option) (string, error) {
+	entryID, err := m.scheduler.Register(cronSpec, task, opts...)
+	return entryID, err
+}
+
+// UnregisterPeriodicTask cancels a periodic task by entryID
+func (m *Manager) UnregisterPeriodicTask(entryID string) error {
+	return m.scheduler.Unregister(entryID)
+}
+
+// CancelTask deletes a pending task from the queue
+func (m *Manager) CancelTask(queue, taskID string) error {
+	return m.inspector.DeleteTask(queue, taskID)
 }
 
 // Start starts the scheduler
@@ -96,6 +111,9 @@ func (m *Manager) Shutdown() error {
 	m.scheduler.Shutdown()
 	if m.server != nil {
 		m.server.Shutdown()
+	}
+	if m.inspector != nil {
+		_ = m.inspector.Close()
 	}
 	return m.client.Close()
 }

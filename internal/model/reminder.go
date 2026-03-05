@@ -42,6 +42,8 @@ type Reminder struct {
 	// ReminderType int        `gorm:"column:reminder_type;type:int;not null;comment:提醒类型;"`
 	RepeatType RepeatType `gorm:"column:repeat_type;type:varchar(50);not null;comment:重复类型;"`
 
+	EntryID string `gorm:"column:entry_id;type:varchar(255);comment:任务ID;"`
+
 	ReminderTitle   string `gorm:"column:reminder_title;type:varchar(255);not null;comment:提醒标题;"`
 	ReminderContent string `gorm:"column:reminder_content;type:text;not null;comment:提醒内容;"`
 

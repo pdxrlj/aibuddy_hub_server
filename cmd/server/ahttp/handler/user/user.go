@@ -3,7 +3,7 @@ package userhandler
 
 import (
 	"aibuddy/internal/model"
-	"aibuddy/internal/services/auth"
+	aiuserService "aibuddy/internal/services/aiuser"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 	logger "aibuddy/pkg/log"
@@ -22,13 +22,13 @@ var tracer = func() trace.Tracer {
 
 // Handler 用户相关处理器
 type Handler struct {
-	AuthServer *auth.Service
+	UserServer *aiuserService.Service
 }
 
 // New 创建用户处理器实例
 func New() *Handler {
 	return &Handler{
-		AuthServer: auth.New(),
+		UserServer: aiuserService.New(),
 	}
 }
 
@@ -45,19 +45,19 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 
 	if req.Source == "phone" {
 		// 验证码登陆
-		if err := h.AuthServer.CheckLoginCode(req.Phone, req.PhoneCode); err != nil {
+		if err := h.UserServer.CheckLoginCode(req.Phone, req.PhoneCode); err != nil {
 			return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 		}
 	} else {
 		// 微信小程序登录
-		wxUser, err := h.AuthServer.CheckLoginMiniProgram(req.WechatCode, req.EncryptedData, req.IV, userInfo)
+		wxUser, err := h.UserServer.CheckLoginMiniProgram(req.WechatCode, req.EncryptedData, req.IV, userInfo)
 		if err != nil || wxUser == nil {
 			return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 		}
 		userInfo = wxUser
 	}
 	// 根据手机号获取用户信息
-	user, err := h.AuthServer.GetUserByPhone(state.Context(), userInfo.Phone)
+	user, err := h.UserServer.GetUserByPhone(state.Context(), userInfo.Phone)
 	if err != nil {
 		slog.Error(logger.Authorization, "msg", "Failed to get parent by phone", "error", err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
@@ -65,8 +65,7 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 	if user != nil {
 		userInfo.ID = user.ID
 	}
-
-	if err := h.AuthServer.UpsertUser(state.Context(), userInfo, req.Source); err != nil {
+	if err := h.UserServer.UpsertUser(state.Context(), userInfo); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("error", err.Error()))
 		span.SetAttributes(attribute.String("userinfo", userInfo.String()))
@@ -74,7 +73,7 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 	}
 
 	// 生成token并返回用户信息
-	token, expires, err := auth.GenerateToken(userInfo.ID, userInfo.Phone, userInfo.OpenID)
+	token, expires, err := aiuserService.GenerateToken(userInfo.ID, userInfo.Phone, userInfo.OpenID)
 	if err != nil {
 		slog.Error(logger.Authorization, "msg", "Failed to sign JWT token", "error", err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
@@ -95,7 +94,7 @@ func (h *Handler) SendCode(state *ahttp.State, req *SendCodeRequest) error {
 	ctx, span := tracer().Start(state.Ctx.Request().Context(), "send_code")
 	defer span.End()
 
-	code, err := h.AuthServer.SendPhoneCode(ctx, req.Phone)
+	code, err := h.UserServer.SendPhoneCode(ctx, req.Phone)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
@@ -107,11 +106,11 @@ func (h *Handler) SendCode(state *ahttp.State, req *SendCodeRequest) error {
 func (h *Handler) RefreshToken(state *ahttp.State, req *TokenRequest) error {
 	ctx, span := tracer().Start(state.Ctx.Request().Context(), "refresh_token")
 	defer span.End()
-	uid, err := auth.GetUIDFromContext(state.Ctx)
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
-	token, expires, err := auth.RefreshToken(ctx, req.Token, uid)
+	token, expires, err := aiuserService.RefreshToken(ctx, req.Token, uid)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
@@ -132,7 +131,7 @@ func (h *Handler) CompleteProfile(state *ahttp.State, req *UserinfoRequest) erro
 	ctx, span := tracer().Start(state.Ctx.Request().Context(), "complet_profile")
 	defer span.End()
 
-	uid, err := auth.GetUIDFromContext(state.Ctx)
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
@@ -144,7 +143,7 @@ func (h *Handler) CompleteProfile(state *ahttp.State, req *UserinfoRequest) erro
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	if err := h.AuthServer.CompleteProfile(ctx, uid, req.BoardType, &model.DeviceInfo{
+	if err := h.UserServer.CompleteProfile(ctx, uid, req.BoardType, &model.DeviceInfo{
 		ID:          req.ID,
 		DeviceID:    req.DeviceID,
 		NickName:    req.NickName,
@@ -161,5 +160,53 @@ func (h *Handler) CompleteProfile(state *ahttp.State, req *UserinfoRequest) erro
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
+	return state.Resposne().Success()
+}
+
+// Lost 发送挂失消息给设备
+func (h *Handler) Lost(state *ahttp.State, req *LostRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.Lost")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	err = h.UserServer.Lost(ctx, uid, req.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		return state.Resposne().Error(err)
+	}
+	return state.Resposne().Success()
+}
+
+// Unlost 发送解除挂失消息给设备
+func (h *Handler) Unlost(state *ahttp.State, req *UnlostRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.Unlost")
+	defer span.End()
+
+	err := h.UserServer.Unlost(ctx, req.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		return state.Resposne().Error(err)
+	}
+	return state.Resposne().Success()
+}
+
+// Unbind 发送解绑消息给设备
+func (h *Handler) Unbind(state *ahttp.State, req *UnbindRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.Unbind")
+	defer span.End()
+
+	err := h.UserServer.Unbind(ctx, req.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		return state.Resposne().Error(err)
+	}
 	return state.Resposne().Success()
 }

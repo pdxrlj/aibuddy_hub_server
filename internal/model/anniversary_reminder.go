@@ -49,6 +49,7 @@ func (r ReminderWay) String() string {
 type AnniversaryReminder struct {
 	ID int64 `gorm:"primaryKey;autoIncrement;column:id;"`
 
+	EntryID         string          `gorm:"column:entry_id;type:varchar(255);not null;comment:任务ID;"`
 	AnniversaryType AnniversaryType `gorm:"column:anniversary_type;type:varchar(50);not null;comment:纪念日类型;"`
 
 	ReminderUsername string    `gorm:"column:reminder_username;type:varchar(50);not null;comment:提醒人用户名;"`
