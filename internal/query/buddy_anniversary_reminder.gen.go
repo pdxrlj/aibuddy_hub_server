@@ -31,6 +31,7 @@ func newAnniversaryReminder(db *gorm.DB, opts ...gen.DOOption) anniversaryRemind
 	_anniversaryReminder.ID = field.NewInt64(tableName, "id")
 	_anniversaryReminder.EntryID = field.NewString(tableName, "entry_id")
 	_anniversaryReminder.AnniversaryType = field.NewString(tableName, "anniversary_type")
+	_anniversaryReminder.DeviceID = field.NewString(tableName, "device_id")
 	_anniversaryReminder.ReminderUsername = field.NewString(tableName, "reminder_username")
 	_anniversaryReminder.ReminderUserSex = field.NewString(tableName, "reminder_user_sex")
 	_anniversaryReminder.AnniversaryTime = field.NewTime(tableName, "anniversary_time")
@@ -51,6 +52,7 @@ type anniversaryReminder struct {
 	ID               field.Int64
 	EntryID          field.String // 任务ID
 	AnniversaryType  field.String // 纪念日类型
+	DeviceID         field.String // 设备ID
 	ReminderUsername field.String // 提醒人用户名
 	ReminderUserSex  field.String // 提醒人性别
 	AnniversaryTime  field.Time   // 纪念日时间
@@ -77,6 +79,7 @@ func (a *anniversaryReminder) updateTableName(table string) *anniversaryReminder
 	a.ID = field.NewInt64(table, "id")
 	a.EntryID = field.NewString(table, "entry_id")
 	a.AnniversaryType = field.NewString(table, "anniversary_type")
+	a.DeviceID = field.NewString(table, "device_id")
 	a.ReminderUsername = field.NewString(table, "reminder_username")
 	a.ReminderUserSex = field.NewString(table, "reminder_user_sex")
 	a.AnniversaryTime = field.NewTime(table, "anniversary_time")
@@ -100,10 +103,11 @@ func (a *anniversaryReminder) GetFieldByName(fieldName string) (field.OrderExpr,
 }
 
 func (a *anniversaryReminder) fillFieldMap() {
-	a.fieldMap = make(map[string]field.Expr, 10)
+	a.fieldMap = make(map[string]field.Expr, 11)
 	a.fieldMap["id"] = a.ID
 	a.fieldMap["entry_id"] = a.EntryID
 	a.fieldMap["anniversary_type"] = a.AnniversaryType
+	a.fieldMap["device_id"] = a.DeviceID
 	a.fieldMap["reminder_username"] = a.ReminderUsername
 	a.fieldMap["reminder_user_sex"] = a.ReminderUserSex
 	a.fieldMap["anniversary_time"] = a.AnniversaryTime

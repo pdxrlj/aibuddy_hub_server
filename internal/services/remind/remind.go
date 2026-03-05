@@ -49,7 +49,15 @@ func (r *Service) SubmitRemind(ctx context.Context, uid int64, data *model.Remin
 	}
 
 	// 事件提醒-定时任务处理
-	taskID := fmt.Sprintf("remind-%d", data.ID)
+	taskID := fmt.Sprintf("remind_%d", data.ID)
+	info, _ := r.TaskClient.GetTaskInfoByID("default", taskID)
+	if info != nil {
+		err := r.TaskClient.CancelTask("default", taskID)
+		if err != nil {
+			span.RecordError(err)
+			return errors.New("添加提醒任务失败:%s" + err.Error())
+		}
+	}
 	if data.Status != model.ReminderStatusCancelled {
 		scheduled := true
 		if data.RepeatType == model.RepeatTypeNone {

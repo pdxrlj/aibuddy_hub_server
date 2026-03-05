@@ -49,12 +49,12 @@ func (r ReminderWay) String() string {
 type AnniversaryReminder struct {
 	ID int64 `gorm:"primaryKey;autoIncrement;column:id;"`
 
-	EntryID         string          `gorm:"column:entry_id;type:varchar(255);not null;comment:任务ID;"`
-	AnniversaryType AnniversaryType `gorm:"column:anniversary_type;type:varchar(50);not null;comment:纪念日类型;"`
-
-	ReminderUsername string    `gorm:"column:reminder_username;type:varchar(50);not null;comment:提醒人用户名;"`
-	ReminderUserSex  string    `gorm:"column:reminder_user_sex;type:varchar(50);not null;comment:提醒人性别;男/女;"`
-	AnniversaryTime  time.Time `gorm:"column:anniversary_time;type:timestamp;not null;comment:纪念日时间;"`
+	EntryID          string          `gorm:"column:entry_id;type:varchar(255);not null;comment:任务ID;"`
+	AnniversaryType  AnniversaryType `gorm:"column:anniversary_type;type:varchar(50);not null;comment:纪念日类型;"`
+	DeviceID         string          `gorm:"column:device_id;type:varchar(50);not null;comment:设备ID;"`
+	ReminderUsername string          `gorm:"column:reminder_username;type:varchar(50);not null;comment:提醒人用户名;"`
+	ReminderUserSex  string          `gorm:"column:reminder_user_sex;type:varchar(50);not null;comment:提醒人性别;男/女;"`
+	AnniversaryTime  time.Time       `gorm:"column:anniversary_time;type:timestamp;not null;comment:纪念日时间;"`
 
 	// 提醒方式
 	ReminderWay ReminderWay `gorm:"column:reminder_way;type:varchar(50);not null;comment:提醒方式;"`

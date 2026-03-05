@@ -2,6 +2,7 @@
 package ahttp
 
 import (
+	anniversaryhandler "aibuddy/cmd/server/ahttp/handler/anniversary"
 	devicehandler "aibuddy/cmd/server/ahttp/handler/device"
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
 	remindhandler "aibuddy/cmd/server/ahttp/handler/remind"
@@ -73,6 +74,14 @@ func RegisterRoutes(base *ahttp.Base) {
 			group.POST("/update", m.UpdateRemind) // 更新提醒事件
 			group.POST("/delete", m.DeleteRemind) // 删除提醒事件
 			group.GET("/list", m.ListRemind)      // 提醒事件列表
+		})
+
+		group.Group("/anniversary", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
+			m := anniversaryhandler.NewAnniversaryHandler()
+			group.POST("/create", m.CreateAnniversary)  // 添加纪念日
+			group.POST("/update", m.UpdateAnniversary)  // 更新纪念日
+			group.POST("/delete", m.DeleateAnniversary) // 删除纪念日
+			group.GET("/list", m.ListAnniversary)       // 纪念日列表
 		})
 	})
 }
