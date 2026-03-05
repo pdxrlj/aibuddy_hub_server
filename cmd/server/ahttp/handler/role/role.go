@@ -31,12 +31,9 @@ func NewRoleHandler() *Handler {
 }
 
 // RoleList 角色列表
-func (r *Handler) RoleList(state *ahttp.State, req *ListRequest) error {
+func (r *Handler) RoleList(state *ahttp.State) error {
 	ctx, span := tracer().Start(state.Ctx.Request().Context(), "role_list")
 	defer span.End()
-
-	span.SetAttributes(attribute.Int("page", req.Page))
-	span.SetAttributes(attribute.Int("size", req.Size))
 
 	data, err := r.RoleSerivce.GetRoleListByAPI(ctx)
 	if err != nil {
