@@ -5,7 +5,6 @@ import "aibuddy/internal/model"
 // AddRemindRequest 添加提醒事件数据
 type AddRemindRequest struct {
 	ID              int64  `json:"id"`
-	ReminderType    int    `json:"reminder_type"`
 	ReminderTitle   string `json:"reminder_title" validate:"required"`
 	ReminderContent string `json:"reminder_content" validate:"required"`
 	ReminderTime    string `json:"reminder_time"`
