@@ -9,10 +9,23 @@ type FirstOnlineRequest struct {
 
 // FirstOnlineResponse 设备第一次上线响应
 type FirstOnlineResponse struct {
+	MQTTConfig *MQTTConfig `json:"mqtt_config"`
+
+	DeviceInfo *DeviceInfo `json:"device_info"`
+}
+
+// MQTTConfig MQTT配置
+type MQTTConfig struct {
 	MQTTURL      string `json:"mqtt_url"`
 	InstanceID   string `json:"instance_id"`
 	MQTTUsername string `json:"mqtt_username"`
 	MQTTPassword string `json:"mqtt_password"`
+}
+
+// DeviceInfo 设备信息
+type DeviceInfo struct {
+	UserID     string `json:"user_id"`
+	InstanceID uint64 `json:"instance_id"`
 }
 
 // GetLocationRequest 获取设备位置请求

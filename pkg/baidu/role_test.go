@@ -17,8 +17,8 @@ func TestRoleList(t *testing.T) {
 
 	t.Logf("Role count: %d", len(resp.LLM.Roles))
 	for i, r := range resp.LLM.Roles {
-		t.Logf("Role %d: ID=%d, Name=%s, Model=%s, DefaultUsage=%v",
-			i+1, r.ID, r.Name, r.Model, r.DefaultUsage)
+		t.Logf("Role %d: ID=%d, Name=%s, Model=%s, DefaultUsage=%v, Description=%s",
+			i+1, r.ID, r.Name, r.Model, r.DefaultUsage, r.Description)
 	}
 }
 

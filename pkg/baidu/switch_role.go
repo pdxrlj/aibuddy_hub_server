@@ -20,11 +20,11 @@ func NewSwitchRole() *SwitchRole {
 
 // SwitchRoleRequest 切换角色请求
 type SwitchRoleRequest struct {
-	AppID              string // 大模型互动应用ID
-	AiAgentInstanceID int64  `json:"ai_agent_instance_id"` // 大模型互动实例ID
-	SceneRole         string `json:"scene_role"`          // 角色名称（需已在控制台创建）
-	TTS               string `json:"tts,omitempty"`       // TTS配置，取值等价于创建实例接口的tts_url
-	TTSSayHi          string `json:"tts_sayhi,omitempty"` // 切换音色后的招呼语
+	AppID             string // 大模型互动应用ID
+	AiAgentInstanceID uint64 `json:"ai_agent_instance_id"` // 大模型互动实例ID
+	SceneRole         string `json:"scene_role"`           // 角色名称（需已在控制台创建）
+	TTS               string `json:"tts,omitempty"`        // TTS配置，取值等价于创建实例接口的tts_url
+	TTSSayHi          string `json:"tts_sayhi,omitempty"`  // 切换音色后的招呼语
 }
 
 // SwitchSceneRole 切换大模型互动实例的角色（音色）
