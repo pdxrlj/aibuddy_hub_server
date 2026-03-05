@@ -41,7 +41,7 @@ func (h *AiChatHandler) Chat(ctx *mqtt.Context) {
 	}
 
 	// 角色切换
-	if msg.Type == ai.ChatTypeRole {
+	if msg.Type == ai.ChatTypeSwitchRole {
 		slog.Error("[MQTT] Invalid chat type", "type", msg.Type)
 		instanceID := xxhash.Sum64String(deviceID)
 		if err := baidu.NewSwitchRole().SwitchSceneRole(&baidu.SwitchRoleRequest{
@@ -51,6 +51,13 @@ func (h *AiChatHandler) Chat(ctx *mqtt.Context) {
 			slog.Error("[MQTT] Switch role failed", "error", err)
 			return
 		}
+
+		_, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).Update(query.Device.AgentName, msg.Role)
+		if err != nil {
+			slog.Error("[MQTT] Update device agent name failed", "error", err)
+			return
+		}
+
 		return
 	}
 

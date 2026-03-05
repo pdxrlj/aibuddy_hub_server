@@ -41,11 +41,6 @@ func newDeviceOta(db *gorm.DB, opts ...gen.DOOption) deviceOta {
 		db: db.Session(&gorm.Session{}),
 
 		RelationField: field.NewRelation("Device", "model.Device"),
-		Agent: struct {
-			field.RelationField
-		}{
-			RelationField: field.NewRelation("Device.Agent", "model.Agent"),
-		},
 		DeviceInfo: struct {
 			field.RelationField
 		}{
@@ -144,9 +139,6 @@ type deviceOtaHasOneDevice struct {
 
 	field.RelationField
 
-	Agent struct {
-		field.RelationField
-	}
 	DeviceInfo struct {
 		field.RelationField
 	}

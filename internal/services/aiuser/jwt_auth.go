@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -63,24 +64,27 @@ func GenerateToken(uid int64, phone string, openID string) (string, int64, error
 func ValidateToken(c echo.Context, tokenString string) (*MyClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &MyClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			slog.Error("[ValidateToken] unexpected signing method", "alg", token.Header["alg"])
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(jwtConfig.SecretKey), nil
 	})
 
 	if err != nil {
+		slog.Error("[ValidateToken] failed to parse token", "error", err)
 		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 
 	if claims, ok := token.Claims.(*MyClaims); ok && token.Valid {
 		// 检查令牌是否过期
 		if time.Now().Unix() > claims.ExpiresAt {
+			slog.Info("[ValidateToken] token has expired", "token", tokenString)
 			return nil, fmt.Errorf("token has expired")
 		}
 		c.Set("uid", claims.UID)
 		return claims, nil
 	}
-
+	slog.Error("[ValidateToken] invalid token", "token", tokenString)
 	return nil, fmt.Errorf("invalid token")
 }
 
@@ -121,6 +125,7 @@ func RefreshToken(ctx context.Context, oldTokenString string, uid int64) (string
 
 // ValidateSimpleToken 简单的令牌验证函数
 func ValidateSimpleToken(token, expectedToken string) bool {
+	slog.Info("[ValidateSimpleToken] validating token", "token", token, "expectedToken", expectedToken)
 	return strings.EqualFold(token, expectedToken)
 }
 
@@ -130,6 +135,7 @@ func GetUIDFromContext(c echo.Context) (int64, error) {
 
 	uid, ok := userID.(int64)
 	if !ok {
+		slog.Error("[GetUIDFromContext] invalid user ID type", "userID", userID)
 		return 0, errors.New("invalid user ID type")
 	}
 

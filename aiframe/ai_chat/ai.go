@@ -36,13 +36,13 @@ const (
 	ChatTypeStart ChatType = "start"
 	// ChatTypeEnd 对话结束
 	ChatTypeEnd ChatType = "end"
-	// ChatTypeRole 角色切换
-	ChatTypeRole ChatType = "role"
+	// ChatTypeSwitchRole 角色切换
+	ChatTypeSwitchRole ChatType = "switch_role"
 )
 
 // IsValid 验证 AI 对话类型是否有效
 func (t ChatType) IsValid() bool {
-	return t == ChatTypeStart || t == ChatTypeEnd || t == ChatTypeRole
+	return t == ChatTypeStart || t == ChatTypeEnd || t == ChatTypeSwitchRole
 }
 
 // Chat AI 对话
