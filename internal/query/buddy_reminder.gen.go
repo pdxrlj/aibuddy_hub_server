@@ -29,8 +29,8 @@ func newReminder(db *gorm.DB, opts ...gen.DOOption) reminder {
 	tableName := _reminder.reminderDo.TableName()
 	_reminder.ALL = field.NewAsterisk(tableName)
 	_reminder.ID = field.NewInt64(tableName, "id")
-	_reminder.ReminderType = field.NewInt(tableName, "reminder_type")
 	_reminder.RepeatType = field.NewString(tableName, "repeat_type")
+	_reminder.EntryID = field.NewString(tableName, "entry_id")
 	_reminder.ReminderTitle = field.NewString(tableName, "reminder_title")
 	_reminder.ReminderContent = field.NewString(tableName, "reminder_content")
 	_reminder.ReminderTime = field.NewTime(tableName, "reminder_time")
@@ -65,8 +65,8 @@ type reminder struct {
 
 	ALL              field.Asterisk
 	ID               field.Int64
-	ReminderType     field.Int    // 提醒类型
 	RepeatType       field.String // 重复类型
+	EntryID          field.String // 任务ID
 	ReminderTitle    field.String // 提醒标题
 	ReminderContent  field.String // 提醒内容
 	ReminderTime     field.Time   // 首次提醒时间
@@ -93,8 +93,8 @@ func (r reminder) As(alias string) *reminder {
 func (r *reminder) updateTableName(table string) *reminder {
 	r.ALL = field.NewAsterisk(table)
 	r.ID = field.NewInt64(table, "id")
-	r.ReminderType = field.NewInt(table, "reminder_type")
 	r.RepeatType = field.NewString(table, "repeat_type")
+	r.EntryID = field.NewString(table, "entry_id")
 	r.ReminderTitle = field.NewString(table, "reminder_title")
 	r.ReminderContent = field.NewString(table, "reminder_content")
 	r.ReminderTime = field.NewTime(table, "reminder_time")
@@ -121,8 +121,8 @@ func (r *reminder) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 func (r *reminder) fillFieldMap() {
 	r.fieldMap = make(map[string]field.Expr, 12)
 	r.fieldMap["id"] = r.ID
-	r.fieldMap["reminder_type"] = r.ReminderType
 	r.fieldMap["repeat_type"] = r.RepeatType
+	r.fieldMap["entry_id"] = r.EntryID
 	r.fieldMap["reminder_title"] = r.ReminderTitle
 	r.fieldMap["reminder_content"] = r.ReminderContent
 	r.fieldMap["reminder_time"] = r.ReminderTime
