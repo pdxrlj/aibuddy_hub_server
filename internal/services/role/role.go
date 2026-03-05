@@ -57,6 +57,9 @@ func (r *Service) ChangeRoleName(ctx context.Context, uid int64, deviceID string
 		return errors.New("无设置该设备的权限")
 	}
 
+	if err := r.DeviceRepo.ChangeDeviceRole(ctx, uid, deviceID, roleName); err != nil {
+		return errors.New("切换角色失败")
+	}
 	instanceID := xxhash.Sum64String(deviceID)
 	if err := r.SwitchRole.SwitchSceneRole(&baidu.SwitchRoleRequest{
 		AiAgentInstanceID: instanceID, // 需要替换为有效的实例ID
