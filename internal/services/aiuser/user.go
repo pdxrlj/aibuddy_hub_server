@@ -300,6 +300,12 @@ func (s *Service) Lost(ctx context.Context, uid int64, deviceID string) error {
 	_, span := tracer().Start(ctx, "Lost")
 	defer span.End()
 
+	if !s.DeviceRepo.IsValidDevice(ctx, deviceID) {
+		span.RecordError(errors.New("设备不存在"))
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return errors.New("设备不存在")
+	}
+
 	user, err := s.UserRepo.FindUserByUserID(uid)
 	if err != nil {
 		span.RecordError(err)
@@ -327,6 +333,12 @@ func (s *Service) Unlost(ctx context.Context, deviceID string) error {
 	_, span := tracer().Start(ctx, "Unlost")
 	defer span.End()
 
+	if !s.DeviceRepo.IsValidDevice(ctx, deviceID) {
+		span.RecordError(errors.New("设备不存在"))
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return errors.New("设备不存在")
+	}
+
 	if err := management.SendUnlost(deviceID); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
@@ -340,6 +352,12 @@ func (s *Service) Unlost(ctx context.Context, deviceID string) error {
 func (s *Service) Unbind(ctx context.Context, deviceID string) error {
 	_, span := tracer().Start(ctx, "Unbind")
 	defer span.End()
+
+	if !s.DeviceRepo.IsValidDevice(ctx, deviceID) {
+		span.RecordError(errors.New("设备不存在"))
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return errors.New("设备不存在")
+	}
 
 	if err := management.SendUnboundToDevice(deviceID); err != nil {
 		span.RecordError(err)

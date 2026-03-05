@@ -133,3 +133,21 @@ func (d *DeviceRepo) CheckDeviceAuth(ctx context.Context, uid int64, deviceID st
 
 	return false
 }
+
+// IsValidDevice 判断设备是否是有效的设备
+func (d *DeviceRepo) IsValidDevice(ctx context.Context, deviceID string) bool {
+	_, span := tracer.Start(ctx, "IsValidDevice")
+	defer span.End()
+
+	num, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).Count()
+	if err != nil {
+		span.RecordError(err)
+		return false
+	}
+
+	if num > 0 {
+		return true
+	}
+
+	return false
+}
