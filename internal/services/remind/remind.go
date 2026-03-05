@@ -63,7 +63,9 @@ func (r *Service) SubmitRemind(ctx context.Context, uid int64, data *model.Remin
 			return errors.New("添加提醒任务失败:%s" + err.Error())
 		}
 
-		fmt.Printf("%+v\n", info)
+		if _, err := r.RemindRepo.UpdateEntryID(data.ID, info.ID); err != nil {
+			return errors.New("添加提醒任务失败:%s" + err.Error())
+		}
 	} else {
 		info, _ := r.TaskClient.GetTaskInfoByID("default", taskID)
 		if info != nil {

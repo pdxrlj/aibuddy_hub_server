@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"go.opentelemetry.io/otel/attribute"
+	"gorm.io/gen"
 	"gorm.io/gorm/clause"
 )
 
@@ -79,4 +80,9 @@ func (r *RemindRepo) GetListByDeviceID(ctx context.Context, deviceID string, pag
 	defer span.End()
 	offset := (page - 1) * size
 	return query.Reminder.Where(query.Reminder.DeviceID.Eq(deviceID)).FindByPage(int(offset), int(size))
+}
+
+// UpdateEntryID 更新定时任务ID
+func (r *RemindRepo) UpdateEntryID(id int64, entryID string) (gen.ResultInfo, error) {
+	return query.Reminder.Where(query.Reminder.ID.Eq(id)).Update(query.Reminder.EntryID, entryID)
 }
