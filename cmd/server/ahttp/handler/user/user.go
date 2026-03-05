@@ -146,7 +146,7 @@ func (h *Handler) CompleteProfile(state *ahttp.State, req *UserinfoRequest) erro
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	if err := h.UserServer.CompleteProfile(ctx, uid, req.BoardType, &model.DeviceInfo{
+	if err := h.UserServer.CompleteProfile(ctx, uid, req.BoardType, req.Relation, &model.DeviceInfo{
 		ID:          req.ID,
 		DeviceID:    req.DeviceID,
 		NickName:    req.NickName,

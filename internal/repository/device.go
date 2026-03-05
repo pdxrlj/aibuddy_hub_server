@@ -58,7 +58,7 @@ func (d *DeviceRepo) ChangeDeviceRole(ctx context.Context, uid int64, deviceID s
 }
 
 // ChangeDeviceInfo 更换设备 ICCID
-func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, iccid string, boardType, version string, tx ...*query.Query) error {
+func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, iccid string, boardType, version string, relation string, tx ...*query.Query) error {
 	_, span := tracer.Start(ctx, "ChangeDeviceIccid")
 	defer span.End()
 
@@ -72,6 +72,7 @@ func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, icci
 			db.Device.ICCID.ColumnName().String():     iccid,
 			db.Device.BoardType.ColumnName().String(): boardType,
 			db.Device.Version.ColumnName().String():   version,
+			db.Device.Relation.ColumnName().String():  relation,
 		}); err != nil {
 		return err
 	}

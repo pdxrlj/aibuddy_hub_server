@@ -248,7 +248,7 @@ func (s *Service) LimitTaskTimes(key string, times int, ttl time.Duration) (int,
 }
 
 // CompleteProfile 完善设备信息
-func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType string, d *model.DeviceInfo) error {
+func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType string, relation string, d *model.DeviceInfo) error {
 	ctx, span := tracer().Start(ctx, "CompleteProfile")
 	defer span.End()
 
@@ -265,7 +265,7 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType stri
 			return err
 		}
 
-		if err := s.DeviceRepo.ChangeDeviceInfo(ctx, d.DeviceID, iccid, boardType, version, tx); err != nil {
+		if err := s.DeviceRepo.ChangeDeviceInfo(ctx, d.DeviceID, iccid, boardType, version, relation, tx); err != nil {
 			return err
 		}
 
