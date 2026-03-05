@@ -45,11 +45,11 @@ func (d *DeviceRepo) FirstAddDevice(ctx context.Context, deviceID string, uid in
 }
 
 // ChangeDeviceRole 设备切换角色
-func (d *DeviceRepo) ChangeDeviceRole(ctx context.Context, uid int64, deviceID string, roleID int64) error {
+func (d *DeviceRepo) ChangeDeviceRole(ctx context.Context, uid int64, deviceID string, roleName string) error {
 	_, span := tracer.Start(ctx, "ChangeDeviceRole")
 	defer span.End()
 	if _, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID), query.Device.UID.Eq(uid), query.Device.IsAdmin.Is(true)).
-		Update(query.Device.AgentID, roleID); err != nil {
+		Update(query.Device.AgentName, roleName); err != nil {
 		return err
 	}
 	return nil
@@ -122,6 +122,24 @@ func (d *DeviceRepo) CheckDeviceAuth(ctx context.Context, uid int64, deviceID st
 	defer span.End()
 
 	num, err := query.Device.Where(query.Device.UID.Eq(uid), query.Device.DeviceID.Eq(deviceID)).Count()
+	if err != nil {
+		span.RecordError(err)
+		return false
+	}
+
+	if num > 0 {
+		return true
+	}
+
+	return false
+}
+
+// IsValidDevice 判断设备是否是有效的设备
+func (d *DeviceRepo) IsValidDevice(ctx context.Context, deviceID string) bool {
+	_, span := tracer.Start(ctx, "IsValidDevice")
+	defer span.End()
+
+	num, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).Count()
 	if err != nil {
 		span.RecordError(err)
 		return false

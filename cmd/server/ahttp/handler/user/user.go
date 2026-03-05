@@ -209,7 +209,7 @@ func (h *Handler) Unbind(state *ahttp.State, req *UnbindRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	return state.Resposne().Success()
 }
