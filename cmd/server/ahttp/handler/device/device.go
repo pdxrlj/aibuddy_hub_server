@@ -6,6 +6,7 @@ import (
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 
+	"github.com/cespare/xxhash/v2"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -39,11 +40,19 @@ func (d *Device) FirstOnline(state *ahttp.State, req *FirstOnlineRequest) error 
 		return state.Resposne().Error(err)
 	}
 
+	instanceID := xxhash.Sum64String(req.DeviceID)
+
 	return state.Resposne().Success(&FirstOnlineResponse{
-		MQTTURL:      configInfo.MQTTURL,
-		InstanceID:   configInfo.InstanceID,
-		MQTTUsername: configInfo.MQTTUsername,
-		MQTTPassword: configInfo.MQTTPassword,
+		MQTTConfig: &MQTTConfig{
+			MQTTURL:      configInfo.MQTTURL,
+			InstanceID:   configInfo.InstanceID,
+			MQTTUsername: configInfo.MQTTUsername,
+			MQTTPassword: configInfo.MQTTPassword,
+		},
+		DeviceInfo: &DeviceInfo{
+			UserID:     req.DeviceID,
+			InstanceID: instanceID,
+		},
 	})
 }
 
