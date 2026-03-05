@@ -42,9 +42,12 @@ func (m *Remind) CreateRemind(state *ahttp.State, req *AddRemindRequest) error {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	reminderTime, err := time.Parse(time.DateTime, req.ReminderTime)
-	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(errors.New("时间格式错误"))
+	reminderTime := time.Now().Add(10 * time.Second)
+	if req.ReminderType == 1 {
+		reminderTime, err = time.Parse(time.DateTime, req.ReminderTime)
+		if err != nil {
+			return state.Resposne().SetStatus(http.StatusBadRequest).Error(errors.New("时间格式错误"))
+		}
 	}
 
 	if err := m.RemindService.SubmitRemind(ctx, uid, &model.Reminder{
@@ -76,6 +79,7 @@ func (m *Remind) UpdateRemind(state *ahttp.State, req *AddRemindRequest) error {
 	}
 	if err := m.RemindService.SubmitRemind(ctx, uid, &model.Reminder{
 		ID:              req.ID,
+		ReminderType:    req.ReminderType,
 		RepeatType:      model.RepeatType(req.RepeatType),
 		ReminderTitle:   req.ReminderTitle,
 		ReminderContent: req.ReminderContent,
@@ -127,6 +131,7 @@ func (m *Remind) ListRemind(state *ahttp.State, req *ListReqeust) error {
 	for _, v := range data {
 		result.Data = append(result.Data, &model.Reminder{
 			ID:              v.ID,
+			ReminderType:    v.ReminderType,
 			RepeatType:      v.RepeatType,
 			ReminderContent: v.ReminderContent,
 			CreatedAt:       v.CreatedAt,

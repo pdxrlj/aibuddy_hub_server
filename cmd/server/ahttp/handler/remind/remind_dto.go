@@ -8,7 +8,7 @@ type AddRemindRequest struct {
 	ReminderType    int    `json:"reminder_type"`
 	ReminderTitle   string `json:"reminder_title" validate:"required"`
 	ReminderContent string `json:"reminder_content" validate:"required"`
-	ReminderTime    string `json:"reminder_time" validate:"required"`
+	ReminderTime    string `json:"reminder_time"`
 	DeviceID        string `json:"device_id" validate:"required"`
 	RepeatType      string `json:"repeat_type" validate:"required"`
 	Status          string `json:"status" validate:"required"`

@@ -29,6 +29,7 @@ func newReminder(db *gorm.DB, opts ...gen.DOOption) reminder {
 	tableName := _reminder.reminderDo.TableName()
 	_reminder.ALL = field.NewAsterisk(tableName)
 	_reminder.ID = field.NewInt64(tableName, "id")
+	_reminder.ReminderType = field.NewInt(tableName, "reminder_type")
 	_reminder.RepeatType = field.NewString(tableName, "repeat_type")
 	_reminder.ReminderTitle = field.NewString(tableName, "reminder_title")
 	_reminder.ReminderContent = field.NewString(tableName, "reminder_content")
@@ -64,6 +65,7 @@ type reminder struct {
 
 	ALL              field.Asterisk
 	ID               field.Int64
+	ReminderType     field.Int    // 提醒类型
 	RepeatType       field.String // 重复类型
 	ReminderTitle    field.String // 提醒标题
 	ReminderContent  field.String // 提醒内容
@@ -91,6 +93,7 @@ func (r reminder) As(alias string) *reminder {
 func (r *reminder) updateTableName(table string) *reminder {
 	r.ALL = field.NewAsterisk(table)
 	r.ID = field.NewInt64(table, "id")
+	r.ReminderType = field.NewInt(table, "reminder_type")
 	r.RepeatType = field.NewString(table, "repeat_type")
 	r.ReminderTitle = field.NewString(table, "reminder_title")
 	r.ReminderContent = field.NewString(table, "reminder_content")
@@ -116,8 +119,9 @@ func (r *reminder) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (r *reminder) fillFieldMap() {
-	r.fieldMap = make(map[string]field.Expr, 11)
+	r.fieldMap = make(map[string]field.Expr, 12)
 	r.fieldMap["id"] = r.ID
+	r.fieldMap["reminder_type"] = r.ReminderType
 	r.fieldMap["repeat_type"] = r.RepeatType
 	r.fieldMap["reminder_title"] = r.ReminderTitle
 	r.fieldMap["reminder_content"] = r.ReminderContent

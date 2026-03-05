@@ -38,9 +38,9 @@ const (
 
 // Reminder represents a reminder in the system.
 type Reminder struct {
-	ID int64 `gorm:"primaryKey;autoIncrement;column:id;"`
-	// ReminderType ReminderType `gorm:"column:reminder_type;type:varchar(50);not null;comment:提醒类型;"`
-	RepeatType RepeatType `gorm:"column:repeat_type;type:varchar(50);not null;comment:重复类型;"`
+	ID           int64      `gorm:"primaryKey;autoIncrement;column:id;"`
+	ReminderType int        `gorm:"column:reminder_type;type:int;not null;comment:提醒类型;"`
+	RepeatType   RepeatType `gorm:"column:repeat_type;type:varchar(50);not null;comment:重复类型;"`
 
 	ReminderTitle   string `gorm:"column:reminder_title;type:varchar(255);not null;comment:提醒标题;"`
 	ReminderContent string `gorm:"column:reminder_content;type:text;not null;comment:提醒内容;"`
