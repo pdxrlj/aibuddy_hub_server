@@ -40,6 +40,9 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 	span.SetAttributes(attribute.String("wechat_code", req.WechatCode))
 	span.SetAttributes(attribute.String("encrypted_data", req.EncryptedData))
 	span.SetAttributes(attribute.String("iv", req.IV))
+	span.SetAttributes(attribute.String("phone", req.Phone))
+	span.SetAttributes(attribute.String("phone_code", req.PhoneCode))
+	span.SetAttributes(attribute.String("source", req.Source))
 
 	userInfo := &model.User{OpenID: "", Nickname: "", Phone: req.Phone, Avatar: ""}
 

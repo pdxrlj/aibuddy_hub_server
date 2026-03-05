@@ -65,15 +65,15 @@ type UserinfoRequest struct {
 
 // LostRequest 挂失请求
 type LostRequest struct {
-	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,mac"`
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac"`
 }
 
 // UnlostRequest 解除挂失请求
 type UnlostRequest struct {
-	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,mac"`
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac"`
 }
 
 // UnbindRequest 解绑请求
 type UnbindRequest struct {
-	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,mac"`
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac"`
 }

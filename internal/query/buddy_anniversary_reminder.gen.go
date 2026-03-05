@@ -29,6 +29,7 @@ func newAnniversaryReminder(db *gorm.DB, opts ...gen.DOOption) anniversaryRemind
 	tableName := _anniversaryReminder.anniversaryReminderDo.TableName()
 	_anniversaryReminder.ALL = field.NewAsterisk(tableName)
 	_anniversaryReminder.ID = field.NewInt64(tableName, "id")
+	_anniversaryReminder.EntryID = field.NewString(tableName, "entry_id")
 	_anniversaryReminder.AnniversaryType = field.NewString(tableName, "anniversary_type")
 	_anniversaryReminder.ReminderUsername = field.NewString(tableName, "reminder_username")
 	_anniversaryReminder.ReminderUserSex = field.NewString(tableName, "reminder_user_sex")
@@ -48,6 +49,7 @@ type anniversaryReminder struct {
 
 	ALL              field.Asterisk
 	ID               field.Int64
+	EntryID          field.String // 任务ID
 	AnniversaryType  field.String // 纪念日类型
 	ReminderUsername field.String // 提醒人用户名
 	ReminderUserSex  field.String // 提醒人性别
@@ -73,6 +75,7 @@ func (a anniversaryReminder) As(alias string) *anniversaryReminder {
 func (a *anniversaryReminder) updateTableName(table string) *anniversaryReminder {
 	a.ALL = field.NewAsterisk(table)
 	a.ID = field.NewInt64(table, "id")
+	a.EntryID = field.NewString(table, "entry_id")
 	a.AnniversaryType = field.NewString(table, "anniversary_type")
 	a.ReminderUsername = field.NewString(table, "reminder_username")
 	a.ReminderUserSex = field.NewString(table, "reminder_user_sex")
@@ -97,8 +100,9 @@ func (a *anniversaryReminder) GetFieldByName(fieldName string) (field.OrderExpr,
 }
 
 func (a *anniversaryReminder) fillFieldMap() {
-	a.fieldMap = make(map[string]field.Expr, 9)
+	a.fieldMap = make(map[string]field.Expr, 10)
 	a.fieldMap["id"] = a.ID
+	a.fieldMap["entry_id"] = a.EntryID
 	a.fieldMap["anniversary_type"] = a.AnniversaryType
 	a.fieldMap["reminder_username"] = a.ReminderUsername
 	a.fieldMap["reminder_user_sex"] = a.ReminderUserSex
