@@ -65,7 +65,7 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 	if user != nil {
 		userInfo.ID = user.ID
 	}
-	if err := h.UserServer.UpsertUser(state.Context(), userInfo); err != nil {
+	if err := h.UserServer.UpsertUser(state.Context(), userInfo, req.Source); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("error", err.Error()))
 		span.SetAttributes(attribute.String("userinfo", userInfo.String()))

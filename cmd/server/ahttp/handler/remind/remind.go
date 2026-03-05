@@ -3,7 +3,7 @@ package remindhandler
 
 import (
 	"aibuddy/internal/model"
-	"aibuddy/internal/services/auth"
+	aiuserService "aibuddy/internal/services/aiuser"
 	"aibuddy/internal/services/remind"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
@@ -37,7 +37,7 @@ func (m *Remind) CreateRemind(state *ahttp.State, req *AddRemindRequest) error {
 	ctx, span := tracer().Start(state.Context(), "CreateRemind")
 	defer span.End()
 
-	uid, err := auth.GetUIDFromContext(state.Ctx)
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
@@ -65,7 +65,7 @@ func (m *Remind) CreateRemind(state *ahttp.State, req *AddRemindRequest) error {
 func (m *Remind) UpdateRemind(state *ahttp.State, req *AddRemindRequest) error {
 	ctx, span := tracer().Start(state.Context(), "UpdateRemind")
 	defer span.End()
-	uid, err := auth.GetUIDFromContext(state.Ctx)
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
@@ -93,7 +93,7 @@ func (m *Remind) DeleteRemind(state *ahttp.State, req *RemindRequest) error {
 	ctx, span := tracer().Start(state.Context(), "DeleteRemind")
 	defer span.End()
 
-	uid, err := auth.GetUIDFromContext(state.Ctx)
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
@@ -112,7 +112,7 @@ func (m *Remind) ListRemind(state *ahttp.State, req *ListReqeust) error {
 	span.SetAttributes(attribute.Int("page", int(req.Page)))
 	span.SetAttributes(attribute.Int("size", int(req.Size)))
 
-	uid, err := auth.GetUIDFromContext(state.Ctx)
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
