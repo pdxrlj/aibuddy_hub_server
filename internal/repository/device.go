@@ -115,3 +115,21 @@ func (d *DeviceRepo) SetDeviceStatus(deviceID string, state model.DeviceStatus) 
 	}
 	return nil
 }
+
+// CheckDeviceAuth 是否拥有操作设备权限
+func (d *DeviceRepo) CheckDeviceAuth(ctx context.Context, uid int64, deviceID string) bool {
+	_, span := tracer.Start(ctx, "CheckDeviceAuth")
+	defer span.End()
+
+	num, err := query.Device.Where(query.Device.UID.Eq(uid), query.Device.DeviceID.Eq(deviceID)).Count()
+	if err != nil {
+		span.RecordError(err)
+		return false
+	}
+
+	if num > 0 {
+		return true
+	}
+
+	return false
+}

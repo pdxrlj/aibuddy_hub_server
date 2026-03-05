@@ -41,12 +41,7 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 	span.SetAttributes(attribute.String("encrypted_data", req.EncryptedData))
 	span.SetAttributes(attribute.String("iv", req.IV))
 
-	userInfo := &model.User{
-		OpenID:   "",
-		Nickname: "",
-		Phone:    req.Phone,
-		Avatar:   "",
-	}
+	userInfo := &model.User{OpenID: "", Nickname: "", Phone: req.Phone, Avatar: ""}
 
 	if req.Source == "phone" {
 		// 验证码登陆
@@ -67,11 +62,11 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 		slog.Error(logger.Authorization, "msg", "Failed to get parent by phone", "error", err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
-
 	if user != nil {
 		userInfo.ID = user.ID
 	}
-	if err := h.AuthServer.UpsertUser(state.Context(), userInfo); err != nil {
+
+	if err := h.AuthServer.UpsertUser(state.Context(), userInfo, req.Source); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("error", err.Error()))
 		span.SetAttributes(attribute.String("userinfo", userInfo.String()))

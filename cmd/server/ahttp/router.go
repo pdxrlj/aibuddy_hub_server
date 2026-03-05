@@ -4,6 +4,7 @@ package ahttp
 import (
 	devicehandler "aibuddy/cmd/server/ahttp/handler/device"
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
+	remindhandler "aibuddy/cmd/server/ahttp/handler/remind"
 	rolehandleer "aibuddy/cmd/server/ahttp/handler/role"
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
 	"aibuddy/cmd/server/ahttp/middleware"
@@ -49,7 +50,14 @@ func RegisterRoutes(base *ahttp.Base) {
 			r := rolehandleer.NewRoleHandler()
 			group.GET("/list", r.RoleList)
 			group.POST("/change", r.ChangeRole) // 切换角色
-			group.GET("/info", r.RoleInfo)
+		})
+
+		group.Group("/remind", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
+			m := remindhandler.NewRemindHandler()
+			group.POST("/create", m.CreateRemind) // 添加提醒事件
+			group.POST("/update", m.UpdateRemind) // 更新提醒事件
+			group.POST("/delete", m.DeleteRemind) // 删除提醒事件
+			group.GET("/list", m.ListRemind)      // 提醒事件列表
 		})
 	})
 }

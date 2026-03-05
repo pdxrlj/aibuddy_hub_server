@@ -123,9 +123,13 @@ func (s *Service) UpdateUser(ctx context.Context, uid int64, user *model.User, o
 }
 
 // UpsertUser 插入或更新用户
-func (s *Service) UpsertUser(ctx context.Context, user *model.User) error {
+func (s *Service) UpsertUser(ctx context.Context, user *model.User, source string) error {
 	ctx, span := tracer().Start(ctx, "UpsertUser")
 	defer span.End()
+
+	if user.Nickname == "" && source == "phone" {
+		user.Nickname = "默认用户"
+	}
 
 	return s.UserRepo.Upsert(ctx, user)
 }
