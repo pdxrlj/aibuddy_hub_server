@@ -34,7 +34,6 @@ func (d *DeviceInfoRepo) UpsertProfile(ctx context.Context, info *model.DeviceIn
 				db.DeviceInfo.Avatar.ColumnName().String():      info.Avatar,
 				db.DeviceInfo.Birthday.ColumnName().String():    info.Birthday,
 				db.DeviceInfo.Gender.ColumnName().String():      info.Gender,
-				db.DeviceInfo.Relation.ColumnName().String():    info.Relation,
 				db.DeviceInfo.Hobbies.ColumnName().String():     info.Hobbies,
 				db.DeviceInfo.Values.ColumnName().String():      info.Values,
 				db.DeviceInfo.Skills.ColumnName().String():      info.Skills,

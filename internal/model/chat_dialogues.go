@@ -12,6 +12,8 @@ type ChatDialogue struct {
 	Answer       string    `gorm:"column:answer;type:text;not null;comment:回答内容;"`
 	AnswerTime   time.Time `gorm:"column:answer_time;type:timestamp;not null;comment:回答时间;"`
 
+	AgentName string `gorm:"column:agent_name;type:varchar(255);comment:角色名称;"`
+
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;comment:创建时间;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;comment:更新时间;"`
 }

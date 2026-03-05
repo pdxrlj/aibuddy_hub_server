@@ -28,6 +28,9 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 获取设备的位置信息
 			deviceGroup.GET("/location", device.GetLocation)
+
+			// 获取好友列表
+			deviceGroup.GET("/:device_id/friends", device.GetFriends)
 		})
 
 		group.Group("/ota", nil, func(otaGroup *ahttp.Group) {

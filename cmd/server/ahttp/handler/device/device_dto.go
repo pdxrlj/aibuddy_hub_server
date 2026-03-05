@@ -32,3 +32,26 @@ type DeviceInfo struct {
 type GetLocationRequest struct {
 	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac"`
 }
+
+// GetFriendsRequest 获取好友列表请求
+type GetFriendsRequest struct {
+	DeviceID string `json:"device_id" param:"device_id" validate:"required,aimac"`
+	Page     int    `json:"page" query:"page" validate:"required,min=1"`
+	Size     int    `json:"size" query:"size" validate:"required,min=1,max=100"`
+}
+
+// GetFriendsResponse 获取好友列表响应
+type GetFriendsResponse struct {
+	Total   int64                     `json:"total"`
+	Page    int                       `json:"page"`
+	Size    int                       `json:"size"`
+	Friends []*GetFriendsResponseItem `json:"friends"`
+}
+
+// GetFriendsResponseItem 获取好友列表响应项
+type GetFriendsResponseItem struct {
+	DeviceID   string `json:"device_id"`
+	DeviceName string `json:"device_name"`
+	Avatar     string `json:"avatar"`
+	Relation   string `json:"relation"`
+}

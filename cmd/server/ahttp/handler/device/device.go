@@ -2,11 +2,13 @@
 package devicehandler
 
 import (
+	"aibuddy/internal/repository"
 	"aibuddy/internal/services/device"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 
 	"github.com/cespare/xxhash/v2"
+	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -18,13 +20,15 @@ var tracer = func() trace.Tracer {
 
 // Device is a device handler.
 type Device struct {
-	Service *device.Service
+	Service  *device.Service
+	UserRepo *repository.UserRepo
 }
 
 // NewDevice creates a new device handler.
 func NewDevice() *Device {
 	return &Device{
-		Service: device.NewService(),
+		Service:  device.NewService(),
+		UserRepo: repository.NewUserRepo(),
 	}
 }
 
@@ -68,4 +72,55 @@ func (d *Device) GetLocation(state *ahttp.State, req *GetLocationRequest) error 
 		return state.Resposne().Error(err)
 	}
 	return state.Resposne().Success()
+}
+
+// GetFriends 获取好友列表
+func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.GetFriends")
+	defer span.End()
+
+	friends, total, err := d.Service.GetFriends(ctx, req.DeviceID, req.Page, req.Size)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		return state.Resposne().Error(err)
+	}
+
+	// 把妈妈信息也添加上
+	user, err := d.Service.FindUserInfoByDeviceID(ctx, req.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		return state.Resposne().Error(err)
+	}
+
+	friendsResponse := make([]*GetFriendsResponseItem, len(friends)+1)
+	friendsResponse[0] = &GetFriendsResponseItem{
+		DeviceID:   cast.ToString(user.ID),
+		DeviceName: user.Nickname,
+		Avatar:     user.Avatar,
+		Relation:   user.Relation,
+	}
+
+	for i, friend := range friends {
+		var deviceName, avatar string
+		if friend.TargetDevice.DeviceInfo != nil {
+			deviceName = friend.TargetDevice.DeviceInfo.NickName
+			avatar = friend.TargetDevice.DeviceInfo.Avatar
+		}
+
+		friendsResponse[i+1] = &GetFriendsResponseItem{
+			DeviceID:   friend.TargetDeviceID,
+			DeviceName: deviceName,
+			Avatar:     avatar,
+			Relation:   "朋友",
+		}
+	}
+
+	return state.Resposne().Success(&GetFriendsResponse{
+		Total:   total,
+		Page:    req.Page,
+		Size:    req.Size,
+		Friends: friendsResponse,
+	})
 }

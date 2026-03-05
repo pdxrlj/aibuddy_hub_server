@@ -17,6 +17,15 @@ const (
 	RelationshipStatusBlocked RelationshipStatus = "已拉黑" // 已拉黑
 )
 
+func (s RelationshipStatus) String() string {
+	return string(s)
+}
+
+// IsValid 是否是有效的状态
+func (s RelationshipStatus) IsValid() bool {
+	return s == RelationshipStatusPending || s == RelationshipStatusAccepted || s == RelationshipStatusRejected || s == RelationshipStatusBlocked
+}
+
 // DeviceRelationship 设备关系表（好友关系）
 type DeviceRelationship struct {
 	ID int64 `gorm:"primaryKey;autoIncrement;column:id;"`
@@ -28,6 +37,9 @@ type DeviceRelationship struct {
 
 	// 关系状态
 	Status RelationshipStatus `gorm:"column:status;type:varchar(16);not null;default:pending;comment:关系状态;"`
+
+	Device       *Device `gorm:"foreignKey:DeviceID;references:DeviceID;"`
+	TargetDevice *Device `gorm:"foreignKey:TargetDeviceID;references:DeviceID;"`
 
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;comment:创建时间;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;comment:更新时间;"`

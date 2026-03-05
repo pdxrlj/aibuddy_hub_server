@@ -34,7 +34,6 @@ func newDeviceInfo(db *gorm.DB, opts ...gen.DOOption) deviceInfo {
 	_deviceInfo.Avatar = field.NewString(tableName, "avatar")
 	_deviceInfo.Gender = field.NewInt8(tableName, "gender")
 	_deviceInfo.Birthday = field.NewTime(tableName, "birthday")
-	_deviceInfo.Relation = field.NewString(tableName, "relation")
 	_deviceInfo.Hobbies = field.NewField(tableName, "hobbies")
 	_deviceInfo.Values = field.NewField(tableName, "values")
 	_deviceInfo.Skills = field.NewField(tableName, "skills")
@@ -57,7 +56,6 @@ type deviceInfo struct {
 	Avatar      field.String // 头像
 	Gender      field.Int8   // 性别
 	Birthday    field.Time   // 生日
-	Relation    field.String // 关系
 	Hobbies     field.Field  // 兴趣
 	Values      field.Field  // 价值观
 	Skills      field.Field  // 技能
@@ -86,7 +84,6 @@ func (d *deviceInfo) updateTableName(table string) *deviceInfo {
 	d.Avatar = field.NewString(table, "avatar")
 	d.Gender = field.NewInt8(table, "gender")
 	d.Birthday = field.NewTime(table, "birthday")
-	d.Relation = field.NewString(table, "relation")
 	d.Hobbies = field.NewField(table, "hobbies")
 	d.Values = field.NewField(table, "values")
 	d.Skills = field.NewField(table, "skills")
@@ -109,14 +106,13 @@ func (d *deviceInfo) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (d *deviceInfo) fillFieldMap() {
-	d.fieldMap = make(map[string]field.Expr, 13)
+	d.fieldMap = make(map[string]field.Expr, 12)
 	d.fieldMap["id"] = d.ID
 	d.fieldMap["device_id"] = d.DeviceID
 	d.fieldMap["nickname"] = d.NickName
 	d.fieldMap["avatar"] = d.Avatar
 	d.fieldMap["gender"] = d.Gender
 	d.fieldMap["birthday"] = d.Birthday
-	d.fieldMap["relation"] = d.Relation
 	d.fieldMap["hobbies"] = d.Hobbies
 	d.fieldMap["values"] = d.Values
 	d.fieldMap["skills"] = d.Skills

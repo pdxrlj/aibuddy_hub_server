@@ -4,6 +4,7 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
+	"errors"
 
 	"gorm.io/gen"
 	"gorm.io/gorm"
@@ -150,4 +151,45 @@ func (d *DeviceRepo) IsValidDevice(ctx context.Context, deviceID string) bool {
 	}
 
 	return false
+}
+
+// EraseDevice 擦除设备记录-device表，device_info表，device_relationship表
+func (d *DeviceRepo) EraseDevice(ctx context.Context, deviceID string) error {
+	_, span := tracer.Start(ctx, "EraseDevice")
+	defer span.End()
+
+	return query.Q.Transaction(func(tx *query.Query) error {
+		_, err := tx.Device.Where(tx.Device.DeviceID.Eq(deviceID)).Delete()
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.DeviceInfo.Where(tx.DeviceInfo.DeviceID.Eq(deviceID)).Delete()
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.DeviceRelationship.Where(tx.DeviceRelationship.DeviceID.Eq(deviceID)).
+			Or(query.DeviceRelationship.TargetDeviceID.Eq(deviceID)).
+			Delete()
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+// FindUserInfoByDeviceID 根据设备ID查询用户信息
+func (d *DeviceRepo) FindUserInfoByDeviceID(deviceID string) (*model.User, error) {
+	user, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).
+		Preload(query.Device.User).
+		First()
+	if err != nil {
+		return nil, err
+	}
+	if user == nil || user.User == nil {
+		return nil, errors.New("设备未绑定用户")
+	}
+
+	return user.User, nil
 }

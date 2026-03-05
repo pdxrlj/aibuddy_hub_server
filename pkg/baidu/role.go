@@ -62,9 +62,12 @@ func (r *Role) GetSystemRoles() (*SystemRolesResponse, error) {
 }
 
 // RoleList 获取角色列表
-func (r *Role) RoleList(appID string) (*AppDetailResponse, error) {
-	if appID == "" {
+func (r *Role) RoleList(appIDs ...string) (*AppDetailResponse, error) {
+	var appID string
+	if len(appIDs) == 0 || appIDs[0] == "" {
 		appID = config.Instance.Baidu.AppID
+	} else {
+		appID = appIDs[0]
 	}
 
 	path := fmt.Sprintf("/api/v1/apps/%s", appID)

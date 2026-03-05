@@ -24,14 +24,9 @@ var tracer = func() trace.Tracer {
 type UserRepo struct {
 }
 
-// New 创建用户仓库实例
-func New() *UserRepo {
+// NewUserRepo 创建用户仓库实例
+func NewUserRepo() *UserRepo {
 	return &UserRepo{}
-}
-
-// FindUserInfoByUserID 根据用户ID查询用户信息
-func (u *UserRepo) FindUserInfoByUserID() {
-
 }
 
 // FindUserInfoByPhone 根据手机号查询用户信息

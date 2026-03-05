@@ -43,6 +43,11 @@ func newReminder(db *gorm.DB, opts ...gen.DOOption) reminder {
 		db: db.Session(&gorm.Session{}),
 
 		RelationField: field.NewRelation("Device", "model.Device"),
+		User: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("Device.User", "model.User"),
+		},
 		DeviceInfo: struct {
 			field.RelationField
 		}{
@@ -147,6 +152,9 @@ type reminderHasOneDevice struct {
 
 	field.RelationField
 
+	User struct {
+		field.RelationField
+	}
 	DeviceInfo struct {
 		field.RelationField
 	}

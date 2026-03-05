@@ -41,7 +41,6 @@ type DeviceInfo struct {
 	Avatar   string    `gorm:"column:avatar;type:varchar(255);comment:头像;"`
 	Gender   int8      `gorm:"column:gender;type:int;default:0;oneof=0 1 2;comment:性别;"`
 	Birthday time.Time `gorm:"column:birthday;type:date;not null;comment:生日;"`
-	Relation string    `gorm:"column:relation;type:varchar(8);not null;comment:关系;"`
 
 	Hobbies     JSONArray `gorm:"column:hobbies;type:json;not null;comment:兴趣;"`
 	Values      JSONArray `gorm:"column:values;type:json;not null;comment:价值观;"`

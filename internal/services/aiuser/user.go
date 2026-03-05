@@ -68,7 +68,7 @@ func New() *Service {
 	}
 
 	return &Service{
-		UserRepo:         repository.New(),
+		UserRepo:         repository.NewUserRepo(),
 		DeviceInfoRepo:   repository.NewDeviceInfoRepo(),
 		BindDeviceSnRepo: repository.NewBindDeviceSnRepo(),
 		sms:              sms,
@@ -325,6 +325,12 @@ func (s *Service) Lost(ctx context.Context, uid int64, deviceID string) error {
 		return err
 	}
 
+	if err := s.DeviceRepo.SetDeviceStatus(deviceID, model.DeviceStatusLost); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+
 	return nil
 }
 
@@ -345,6 +351,12 @@ func (s *Service) Unlost(ctx context.Context, deviceID string) error {
 		return err
 	}
 
+	if err := s.DeviceRepo.SetDeviceStatus(deviceID, model.DeviceStatusUnknown); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+
 	return nil
 }
 
@@ -360,6 +372,12 @@ func (s *Service) Unbind(ctx context.Context, deviceID string) error {
 	}
 
 	if err := management.SendUnboundToDevice(deviceID); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+
+	if err := s.DeviceRepo.EraseDevice(ctx, deviceID); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
 		return err

@@ -22,6 +22,8 @@ const (
 	DeviceStatusAbnormal DeviceStatus = "异常"
 	// DeviceStatusFault represents a faulty device.
 	DeviceStatusFault DeviceStatus = "故障"
+	// DeviceStatusLost 已挂失
+	DeviceStatusLost DeviceStatus = "挂失"
 )
 
 // String returns the string representation of DeviceStatus.
@@ -56,6 +58,8 @@ type Device struct {
 
 	// Agent      *Agent      `gorm:"foreignKey:AgentID;references:ID;"`
 	DeviceInfo *DeviceInfo `gorm:"foreignKey:DeviceID;references:DeviceID;"`
+
+	User *User `gorm:"foreignKey:UID;references:ID;"`
 
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;comment:创建时间;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;comment:更新时间;"`

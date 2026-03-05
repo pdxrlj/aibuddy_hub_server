@@ -3,6 +3,8 @@ package device
 
 import (
 	"aibuddy/aiframe/location"
+	"aibuddy/internal/model"
+	"aibuddy/internal/repository"
 	"aibuddy/internal/services/cache"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
@@ -24,15 +26,21 @@ var tracer = func() trace.Tracer {
 
 // Service 设备服务
 type Service struct {
-	ClientIDPrefix string
-	cache          flash.Flash
+	ClientIDPrefix         string
+	cache                  flash.Flash
+	DeviceRepo             *repository.DeviceRepo
+	UserRepo               *repository.UserRepo
+	DeviceRelationshipRepo *repository.DeviceRelationshipRepo
 }
 
 // NewService 创建设备服务实例
 func NewService() *Service {
 	return &Service{
-		ClientIDPrefix: "GID_AIBuddy@@@",
-		cache:          cache.Flash(),
+		ClientIDPrefix:         "GID_AIBuddy@@@",
+		cache:                  cache.Flash(),
+		DeviceRepo:             repository.NewDeviceRepo(),
+		DeviceRelationshipRepo: repository.NewDeviceRelationshipRepo(),
+		UserRepo:               repository.NewUserRepo(),
 	}
 }
 
@@ -144,4 +152,33 @@ func (d *Service) GetLocation(ctx context.Context, deviceID string) error {
 		return err
 	}
 	return nil
+}
+
+// GetFriends 获取好友列表
+func (d *Service) GetFriends(ctx context.Context, deviceID string, page, size int) ([]*model.DeviceRelationship, int64, error) {
+	_, span := tracer().Start(ctx, "DeviceService.GetFriends")
+	defer span.End()
+
+	friends, total, err := d.DeviceRelationshipRepo.GetFriends(ctx, deviceID, page, size)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return nil, 0, err
+	}
+	return friends, total, nil
+}
+
+// FindUserInfoByDeviceID 根据设备ID查询用户信息
+func (d *Service) FindUserInfoByDeviceID(ctx context.Context, deviceID string) (*model.User, error) {
+	_, span := tracer().Start(ctx, "DeviceService.GetAiUserInfo")
+	defer span.End()
+
+	user, err := d.DeviceRepo.FindUserInfoByDeviceID(deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return nil, err
+	}
+
+	return user, nil
 }

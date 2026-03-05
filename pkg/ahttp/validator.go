@@ -18,7 +18,7 @@ var Trans ut.Translator
 // 预编译正则表达式
 var (
 	mobileRegex = regexp.MustCompile(`^1[3-9]\d{9}$`)
-	macRegex    = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$`)
+	macRegex    = regexp.MustCompile(`^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$`)
 )
 
 // NewValidator 创建验证器

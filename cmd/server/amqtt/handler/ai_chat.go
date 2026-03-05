@@ -98,6 +98,14 @@ func (h *AiChatHandler) downloadDialogues(deviceID string, beginTime, endTime in
 	client := baidu.NewDialogues()
 	var allDialogues []baidu.DialogueItem
 
+	// 查询当前对话使用的角色信息
+	deviceInfo, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).First()
+	if err != nil {
+		return err
+	}
+
+	agentName := deviceInfo.AgentName
+
 	// 分页获取所有对话记录
 	for {
 		dialogues, err := client.GetDialogues(&baidu.DialoguesRequest{
@@ -122,7 +130,7 @@ func (h *AiChatHandler) downloadDialogues(deviceID string, beginTime, endTime in
 	}
 
 	// 将对话记录配对保存（QUESTION + ANSWER）
-	dialogueModels := h.pairDialogues(deviceID, allDialogues)
+	dialogueModels := h.pairDialogues(deviceID, agentName, allDialogues)
 	if len(dialogueModels) == 0 {
 		return nil
 	}
@@ -133,7 +141,7 @@ func (h *AiChatHandler) downloadDialogues(deviceID string, beginTime, endTime in
 
 // pairDialogues 将对话记录配对（QUESTION + ANSWER）
 // 假设数据格式为交替的 Q, A, Q, A...
-func (h *AiChatHandler) pairDialogues(deviceID string, items []baidu.DialogueItem) []*model.ChatDialogue {
+func (h *AiChatHandler) pairDialogues(deviceID string, agentName string, items []baidu.DialogueItem) []*model.ChatDialogue {
 	var result []*model.ChatDialogue
 
 	for i := 0; i < len(items); i++ {
@@ -144,6 +152,7 @@ func (h *AiChatHandler) pairDialogues(deviceID string, items []baidu.DialogueIte
 				answer := items[i+1]
 				result = append(result, &model.ChatDialogue{
 					DeviceID:     deviceID,
+					AgentName:    agentName,
 					Question:     question.Text,
 					QuestionTime: time.Unix(question.Timestamp, 0),
 					Answer:       answer.Text,

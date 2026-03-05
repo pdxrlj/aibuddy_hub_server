@@ -34,6 +34,27 @@ func newDeviceRelationship(db *gorm.DB, opts ...gen.DOOption) deviceRelationship
 	_deviceRelationship.Status = field.NewString(tableName, "status")
 	_deviceRelationship.CreatedAt = field.NewTime(tableName, "created_at")
 	_deviceRelationship.UpdatedAt = field.NewTime(tableName, "updated_at")
+	_deviceRelationship.Device = deviceRelationshipHasOneDevice{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("Device", "model.Device"),
+		User: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("Device.User", "model.User"),
+		},
+		DeviceInfo: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("Device.DeviceInfo", "model.DeviceInfo"),
+		},
+	}
+
+	_deviceRelationship.TargetDevice = deviceRelationshipBelongsToTargetDevice{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("TargetDevice", "model.Device"),
+	}
 
 	_deviceRelationship.fillFieldMap()
 
@@ -50,6 +71,9 @@ type deviceRelationship struct {
 	Status         field.String // 关系状态
 	CreatedAt      field.Time   // 创建时间
 	UpdatedAt      field.Time   // 更新时间
+	Device         deviceRelationshipHasOneDevice
+
+	TargetDevice deviceRelationshipBelongsToTargetDevice
 
 	fieldMap map[string]field.Expr
 }
@@ -88,23 +112,199 @@ func (d *deviceRelationship) GetFieldByName(fieldName string) (field.OrderExpr, 
 }
 
 func (d *deviceRelationship) fillFieldMap() {
-	d.fieldMap = make(map[string]field.Expr, 6)
+	d.fieldMap = make(map[string]field.Expr, 8)
 	d.fieldMap["id"] = d.ID
 	d.fieldMap["device_id"] = d.DeviceID
 	d.fieldMap["target_device_id"] = d.TargetDeviceID
 	d.fieldMap["status"] = d.Status
 	d.fieldMap["created_at"] = d.CreatedAt
 	d.fieldMap["updated_at"] = d.UpdatedAt
+
 }
 
 func (d deviceRelationship) clone(db *gorm.DB) deviceRelationship {
 	d.deviceRelationshipDo.ReplaceConnPool(db.Statement.ConnPool)
+	d.Device.db = db.Session(&gorm.Session{Initialized: true})
+	d.Device.db.Statement.ConnPool = db.Statement.ConnPool
+	d.TargetDevice.db = db.Session(&gorm.Session{Initialized: true})
+	d.TargetDevice.db.Statement.ConnPool = db.Statement.ConnPool
 	return d
 }
 
 func (d deviceRelationship) replaceDB(db *gorm.DB) deviceRelationship {
 	d.deviceRelationshipDo.ReplaceDB(db)
+	d.Device.db = db.Session(&gorm.Session{})
+	d.TargetDevice.db = db.Session(&gorm.Session{})
 	return d
+}
+
+type deviceRelationshipHasOneDevice struct {
+	db *gorm.DB
+
+	field.RelationField
+
+	User struct {
+		field.RelationField
+	}
+	DeviceInfo struct {
+		field.RelationField
+	}
+}
+
+func (a deviceRelationshipHasOneDevice) Where(conds ...field.Expr) *deviceRelationshipHasOneDevice {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a deviceRelationshipHasOneDevice) WithContext(ctx context.Context) *deviceRelationshipHasOneDevice {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a deviceRelationshipHasOneDevice) Session(session *gorm.Session) *deviceRelationshipHasOneDevice {
+	a.db = a.db.Session(session)
+	return &a
+}
+
+func (a deviceRelationshipHasOneDevice) Model(m *model.DeviceRelationship) *deviceRelationshipHasOneDeviceTx {
+	return &deviceRelationshipHasOneDeviceTx{a.db.Model(m).Association(a.Name())}
+}
+
+func (a deviceRelationshipHasOneDevice) Unscoped() *deviceRelationshipHasOneDevice {
+	a.db = a.db.Unscoped()
+	return &a
+}
+
+type deviceRelationshipHasOneDeviceTx struct{ tx *gorm.Association }
+
+func (a deviceRelationshipHasOneDeviceTx) Find() (result *model.Device, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a deviceRelationshipHasOneDeviceTx) Append(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a deviceRelationshipHasOneDeviceTx) Replace(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a deviceRelationshipHasOneDeviceTx) Delete(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a deviceRelationshipHasOneDeviceTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a deviceRelationshipHasOneDeviceTx) Count() int64 {
+	return a.tx.Count()
+}
+
+func (a deviceRelationshipHasOneDeviceTx) Unscoped() *deviceRelationshipHasOneDeviceTx {
+	a.tx = a.tx.Unscoped()
+	return &a
+}
+
+type deviceRelationshipBelongsToTargetDevice struct {
+	db *gorm.DB
+
+	field.RelationField
+}
+
+func (a deviceRelationshipBelongsToTargetDevice) Where(conds ...field.Expr) *deviceRelationshipBelongsToTargetDevice {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a deviceRelationshipBelongsToTargetDevice) WithContext(ctx context.Context) *deviceRelationshipBelongsToTargetDevice {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a deviceRelationshipBelongsToTargetDevice) Session(session *gorm.Session) *deviceRelationshipBelongsToTargetDevice {
+	a.db = a.db.Session(session)
+	return &a
+}
+
+func (a deviceRelationshipBelongsToTargetDevice) Model(m *model.DeviceRelationship) *deviceRelationshipBelongsToTargetDeviceTx {
+	return &deviceRelationshipBelongsToTargetDeviceTx{a.db.Model(m).Association(a.Name())}
+}
+
+func (a deviceRelationshipBelongsToTargetDevice) Unscoped() *deviceRelationshipBelongsToTargetDevice {
+	a.db = a.db.Unscoped()
+	return &a
+}
+
+type deviceRelationshipBelongsToTargetDeviceTx struct{ tx *gorm.Association }
+
+func (a deviceRelationshipBelongsToTargetDeviceTx) Find() (result *model.Device, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a deviceRelationshipBelongsToTargetDeviceTx) Append(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a deviceRelationshipBelongsToTargetDeviceTx) Replace(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a deviceRelationshipBelongsToTargetDeviceTx) Delete(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a deviceRelationshipBelongsToTargetDeviceTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a deviceRelationshipBelongsToTargetDeviceTx) Count() int64 {
+	return a.tx.Count()
+}
+
+func (a deviceRelationshipBelongsToTargetDeviceTx) Unscoped() *deviceRelationshipBelongsToTargetDeviceTx {
+	a.tx = a.tx.Unscoped()
+	return &a
 }
 
 type deviceRelationshipDo struct{ gen.DO }

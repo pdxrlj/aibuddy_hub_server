@@ -34,6 +34,7 @@ func newChatDialogue(db *gorm.DB, opts ...gen.DOOption) chatDialogue {
 	_chatDialogue.QuestionTime = field.NewTime(tableName, "question_time")
 	_chatDialogue.Answer = field.NewString(tableName, "answer")
 	_chatDialogue.AnswerTime = field.NewTime(tableName, "answer_time")
+	_chatDialogue.AgentName = field.NewString(tableName, "agent_name")
 	_chatDialogue.CreatedAt = field.NewTime(tableName, "created_at")
 	_chatDialogue.UpdatedAt = field.NewTime(tableName, "updated_at")
 
@@ -52,6 +53,7 @@ type chatDialogue struct {
 	QuestionTime field.Time   // 问题时间
 	Answer       field.String // 回答内容
 	AnswerTime   field.Time   // 回答时间
+	AgentName    field.String // 角色名称
 	CreatedAt    field.Time   // 创建时间
 	UpdatedAt    field.Time   // 更新时间
 
@@ -76,6 +78,7 @@ func (c *chatDialogue) updateTableName(table string) *chatDialogue {
 	c.QuestionTime = field.NewTime(table, "question_time")
 	c.Answer = field.NewString(table, "answer")
 	c.AnswerTime = field.NewTime(table, "answer_time")
+	c.AgentName = field.NewString(table, "agent_name")
 	c.CreatedAt = field.NewTime(table, "created_at")
 	c.UpdatedAt = field.NewTime(table, "updated_at")
 
@@ -94,13 +97,14 @@ func (c *chatDialogue) GetFieldByName(fieldName string) (field.OrderExpr, bool) 
 }
 
 func (c *chatDialogue) fillFieldMap() {
-	c.fieldMap = make(map[string]field.Expr, 8)
+	c.fieldMap = make(map[string]field.Expr, 9)
 	c.fieldMap["id"] = c.ID
 	c.fieldMap["device_id"] = c.DeviceID
 	c.fieldMap["question"] = c.Question
 	c.fieldMap["question_time"] = c.QuestionTime
 	c.fieldMap["answer"] = c.Answer
 	c.fieldMap["answer_time"] = c.AnswerTime
+	c.fieldMap["agent_name"] = c.AgentName
 	c.fieldMap["created_at"] = c.CreatedAt
 	c.fieldMap["updated_at"] = c.UpdatedAt
 }

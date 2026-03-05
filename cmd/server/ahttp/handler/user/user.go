@@ -153,7 +153,6 @@ func (h *Handler) CompleteProfile(state *ahttp.State, req *UserinfoRequest) erro
 		Avatar:      req.Avatar,
 		Gender:      req.Gender,
 		Birthday:    birthday,
-		Relation:    req.Relation,
 		Hobbies:     []string{req.Hobbies},
 		Values:      []string{req.Values},
 		Skills:      []string{req.Skills},
