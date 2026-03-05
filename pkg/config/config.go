@@ -48,6 +48,7 @@ type StorageConfig struct {
 	Database *DatabaseConfig `json:"database" mapstructure:"database"`
 	Redis    *RedisConfig    `json:"redis" mapstructure:"redis"`
 	Flash    *FlashConfig    `json:"flash" mapstructure:"flash"`
+	OSS      *OSSConfig      `json:"oss" mapstructure:"oss"`
 }
 
 // DatabaseConfig 数据库配置
@@ -71,6 +72,15 @@ type RedisConfig struct {
 // FlashConfig 闪存配置
 type FlashConfig struct {
 	Use string `json:"use" mapstructure:"use"`
+}
+
+// OSSConfig OSS配置
+type OSSConfig struct {
+	AccessKeyID     string `json:"access_key_id" mapstructure:"access_key_id"`
+	AccessKeySecret string `json:"access_key_secret" mapstructure:"access_key_secret"`
+	Region          string `json:"region" mapstructure:"region"`
+	Endpoint        string `json:"endpoint" mapstructure:"endpoint"`
+	Bucket          string `json:"bucket" mapstructure:"bucket"`
 }
 
 // AgentConfig Agent配置

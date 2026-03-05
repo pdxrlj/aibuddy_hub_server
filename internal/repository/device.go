@@ -181,14 +181,21 @@ func (d *DeviceRepo) EraseDevice(ctx context.Context, deviceID string) error {
 }
 
 // FindUserInfoByDeviceID 根据设备ID查询用户信息
-func (d *DeviceRepo) FindUserInfoByDeviceID(deviceID string) (*model.User, error) {
+func (d *DeviceRepo) FindUserInfoByDeviceID(ctx context.Context, deviceID string) (*model.User, error) {
+	_, span := tracer.Start(ctx, "DeviceService.FindUserInfoByDeviceID")
+	defer span.End()
+
 	user, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).
 		Preload(query.Device.User).
 		First()
 	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
 		return nil, err
 	}
 	if user == nil || user.User == nil {
+		span.RecordError(errors.New("设备未绑定用户"))
+		span.SetAttributes(attribute.String("device_id", deviceID))
 		return nil, errors.New("设备未绑定用户")
 	}
 

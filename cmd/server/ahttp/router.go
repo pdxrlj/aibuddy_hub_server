@@ -31,6 +31,21 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 获取好友列表
 			deviceGroup.GET("/:device_id/friends", device.GetFriends)
+
+			// 查询好友信息
+			deviceGroup.GET("/:device_id/device_info", device.GetDeviceInfo)
+
+			// 添加好友
+			deviceGroup.POST("/:device_id/add_friend", device.AddFriend)
+
+			// 删除好友
+			deviceGroup.DELETE("/:device_id/delete_friend", device.DeleteFriend)
+
+			// 上传文件
+			// deviceGroup.POST("/:device_id/upload_file", device.UploadFile)
+
+			// 消息发送 文本/语音
+			deviceGroup.POST("/:device_id/send_message", device.SendMessage)
 		})
 
 		group.Group("/ota", nil, func(otaGroup *ahttp.Group) {

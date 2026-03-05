@@ -86,7 +86,7 @@ func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
 		return state.Resposne().Error(err)
 	}
 
-	// 把妈妈信息也添加上
+	// 把微信用户信息也添加上
 	user, err := d.Service.FindUserInfoByDeviceID(ctx, req.DeviceID)
 	if err != nil {
 		span.RecordError(err)
@@ -130,4 +130,91 @@ func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
 		Size:    req.Size,
 		Friends: friendsResponse,
 	})
+}
+
+// GetDeviceInfo 获取设备信息
+func (d *Device) GetDeviceInfo(state *ahttp.State, req *GetDeviceInfoRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.GetDeviceInfo")
+	defer span.End()
+
+	deviceInfo, err := d.Service.GetDeviceInfo(ctx, req.TargetDeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("target_device_id", req.TargetDeviceID))
+		return state.Resposne().Error(err)
+	}
+
+	isFriend, err := d.Service.IsFriend(ctx, req.DeviceID, req.TargetDeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("target_device_id", req.TargetDeviceID))
+		return state.Resposne().Error(err)
+	}
+
+	relation := "朋友"
+	if !isFriend {
+		relation = "陌生人"
+	}
+
+	var nickName, avatar string
+	if deviceInfo.DeviceInfo != nil {
+		nickName = deviceInfo.DeviceInfo.NickName
+		avatar = deviceInfo.DeviceInfo.Avatar
+	}
+
+	return state.Resposne().Success(&GetDeviceInfoResponse{
+		DeviceID:   deviceInfo.DeviceID,
+		DeviceName: nickName,
+		Avatar:     avatar,
+		Relation:   relation,
+	})
+}
+
+// AddFriend 添加好友
+func (d *Device) AddFriend(state *ahttp.State, req *AddFriendRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.AddFriend")
+	defer span.End()
+
+	targetDevice, err := d.Service.AddFriend(ctx, req.DeviceID, req.TargetDeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("target_device_id", req.TargetDeviceID))
+		return state.Resposne().Error(err)
+	}
+
+	return state.Resposne().Success(&AddFriendResponse{
+		Name:     targetDevice.DeviceInfo.NickName,
+		Avatar:   targetDevice.DeviceInfo.Avatar,
+		DeviceID: targetDevice.DeviceID,
+	})
+}
+
+// DeleteFriend 删除好友
+func (d *Device) DeleteFriend(state *ahttp.State, req *DeleteFriendRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.DeleteFriend")
+	defer span.End()
+
+	err := d.Service.DeleteFriend(ctx, req.DeviceID, req.TargetDeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("target_device_id", req.TargetDeviceID))
+		return state.Resposne().Error(err)
+	}
+
+	return state.Resposne().Success()
+}
+
+// SendMessage 发送消息
+func (d *Device) SendMessage(state *ahttp.State, req *SendMessageRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.SendMessage")
+	defer span.End()
+
+	err := d.Service.SendMessage(ctx, req.DeviceID, req.TargetDeviceID, req.Content, req.Fmt, req.Dur)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("target_device_id", req.TargetDeviceID))
+		return state.Resposne().Error(err)
+	}
+
+	return state.Resposne().Success()
 }
