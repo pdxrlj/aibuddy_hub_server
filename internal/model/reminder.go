@@ -36,6 +36,10 @@ const (
 	RepeatTypeYearly RepeatType = "每年"
 )
 
+func (r RepeatType) String() string {
+	return string(r)
+}
+
 // Reminder represents a reminder in the system.
 type Reminder struct {
 	ID int64 `gorm:"primaryKey;autoIncrement;column:id;"`

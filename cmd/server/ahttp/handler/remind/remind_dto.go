@@ -1,7 +1,5 @@
 package remindhandler
 
-import "aibuddy/internal/model"
-
 // AddRemindRequest 添加提醒事件数据
 type AddRemindRequest struct {
 	ID              int64  `json:"id"`
@@ -20,15 +18,26 @@ type RemindRequest struct {
 
 // ListReqeust 提醒事件列表数据
 type ListReqeust struct {
-	DeviceID string `json:"device_id" validate:"required"`
-	Page     int64  `json:"page" validate:"required,min=1"`
-	Size     int64  `jsons:"size" validate:"required,min=10"`
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id"  validate:"required"`
+	Page     int64  `json:"page" form:"page" param:"page" query:"page" validate:"required,min=1"`
+	Size     int64  `jsons:"size" form:"size" param:"size" query:"size" validate:"required,min=10"`
 }
 
 // ListResponse 列表响应
 type ListResponse struct {
-	Total int64             `json:"total"`
-	Page  int64             `json:"page"`
-	Size  int64             `json:"size"`
-	Data  []*model.Reminder `json:"data"`
+	Total int64           `json:"total"`
+	Page  int64           `json:"page"`
+	Size  int64           `json:"size"`
+	Data  []*ReminderInfo `json:"data"`
+}
+
+// ReminderInfo 提醒事件数据
+type ReminderInfo struct {
+	ID              int64  `json:"id"`
+	DeviceID        string `json:"device_id"`
+	RepeatType      string `json:"repeat_type"`
+	ReminderTitle   string `json:"reminder_title"`
+	ReminderContent string `json:"reminder_content"`
+	ReminderTime    string `json:"reminder_time"`
+	Status          string `json:"status"`
 }

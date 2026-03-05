@@ -122,15 +122,17 @@ func (m *Remind) ListRemind(state *ahttp.State, req *ListReqeust) error {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	result := &ListResponse{Total: total, Page: req.Page, Size: req.Size, Data: make([]*model.Reminder, 0)}
+	result := &ListResponse{Total: total, Page: req.Page, Size: req.Size, Data: make([]*ReminderInfo, 0)}
 
 	for _, v := range data {
-		result.Data = append(result.Data, &model.Reminder{
+		result.Data = append(result.Data, &ReminderInfo{
 			ID:              v.ID,
-			RepeatType:      v.RepeatType,
+			DeviceID:        req.DeviceID,
+			RepeatType:      v.RepeatType.String(),
+			ReminderTitle:   v.ReminderTitle,
 			ReminderContent: v.ReminderContent,
-			CreatedAt:       v.CreatedAt,
-			Status:          v.Status,
+			ReminderTime:    time.Unix(v.ReminderTime.Unix(), 0).Format(time.DateTime),
+			Status:          v.Status.String(),
 		})
 	}
 

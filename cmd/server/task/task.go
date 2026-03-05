@@ -101,6 +101,11 @@ func (m *Manager) CancelTask(queue, taskID string) error {
 	return m.inspector.DeleteTask(queue, taskID)
 }
 
+// GetTaskInfoByID get task info by taskId
+func (m *Manager) GetTaskInfoByID(query, taskID string) (*asynq.TaskInfo, error) {
+	return m.inspector.GetTaskInfo(query, taskID)
+}
+
 // Start starts the scheduler
 func (m *Manager) Start() error {
 	return m.scheduler.Run()
