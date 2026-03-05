@@ -94,12 +94,19 @@ func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
 		return state.Resposne().Error(err)
 	}
 
+	deviceInfo, err := d.Service.GetDeviceInfo(ctx, req.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		return state.Resposne().Error(err)
+	}
+
 	friendsResponse := make([]*GetFriendsResponseItem, len(friends)+1)
 	friendsResponse[0] = &GetFriendsResponseItem{
 		DeviceID:   cast.ToString(user.ID),
 		DeviceName: user.Nickname,
 		Avatar:     user.Avatar,
-		Relation:   user.Relation,
+		Relation:   deviceInfo.Relation,
 	}
 
 	for i, friend := range friends {

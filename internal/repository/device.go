@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 
+	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gen"
 	"gorm.io/gorm"
 )
@@ -192,4 +193,21 @@ func (d *DeviceRepo) FindUserInfoByDeviceID(deviceID string) (*model.User, error
 	}
 
 	return user.User, nil
+}
+
+// GetDeviceInfo 获取设备信息
+func (d *DeviceRepo) GetDeviceInfo(ctx context.Context, deviceID string) (*model.Device, error) {
+	_, span := tracer.Start(ctx, "DeviceService.GetDeviceInfo")
+	defer span.End()
+
+	device, err := query.Device.
+		Preload(query.Device.DeviceInfo).
+		Where(query.Device.DeviceID.Eq(deviceID)).
+		First()
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return nil, err
+	}
+	return device, nil
 }

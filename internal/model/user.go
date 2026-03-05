@@ -14,8 +14,6 @@ type User struct {
 
 	Avatar string `gorm:"column:avatar;type:varchar(255);not null;"`
 
-	Relation string `gorm:"column:relation;type:varchar(8);default:家长;comment:角色关系:爷爷,奶奶,爸爸,妈妈,其他;"`
-
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;"`
 }

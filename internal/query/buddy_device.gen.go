@@ -38,6 +38,7 @@ func newDevice(db *gorm.DB, opts ...gen.DOOption) device {
 	_device.Location = field.NewString(tableName, "location")
 	_device.HardwareInfo = field.NewField(tableName, "hardware_info")
 	_device.UID = field.NewInt64(tableName, "uid")
+	_device.Relation = field.NewString(tableName, "relation")
 	_device.LastActiveAt = field.NewTime(tableName, "last_active_at")
 	_device.Status = field.NewString(tableName, "status")
 	_device.IsAdmin = field.NewBool(tableName, "is_admin")
@@ -75,6 +76,7 @@ type device struct {
 	Location     field.String // 位置
 	HardwareInfo field.Field  // 硬件信息
 	UID          field.Int64  // 绑定用户id
+	Relation     field.String // 角色关系:爷爷,奶奶,爸爸,妈妈,其他
 	LastActiveAt field.Time   // 最后活跃时间
 	Status       field.String // 状态:未知
 	IsAdmin      field.Bool   // 是否管理员设备,首次绑定的用户是管理员
@@ -110,6 +112,7 @@ func (d *device) updateTableName(table string) *device {
 	d.Location = field.NewString(table, "location")
 	d.HardwareInfo = field.NewField(table, "hardware_info")
 	d.UID = field.NewInt64(table, "uid")
+	d.Relation = field.NewString(table, "relation")
 	d.LastActiveAt = field.NewTime(table, "last_active_at")
 	d.Status = field.NewString(table, "status")
 	d.IsAdmin = field.NewBool(table, "is_admin")
@@ -132,7 +135,7 @@ func (d *device) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (d *device) fillFieldMap() {
-	d.fieldMap = make(map[string]field.Expr, 18)
+	d.fieldMap = make(map[string]field.Expr, 19)
 	d.fieldMap["id"] = d.ID
 	d.fieldMap["device_id"] = d.DeviceID
 	d.fieldMap["iccid"] = d.ICCID
@@ -143,6 +146,7 @@ func (d *device) fillFieldMap() {
 	d.fieldMap["location"] = d.Location
 	d.fieldMap["hardware_info"] = d.HardwareInfo
 	d.fieldMap["uid"] = d.UID
+	d.fieldMap["relation"] = d.Relation
 	d.fieldMap["last_active_at"] = d.LastActiveAt
 	d.fieldMap["status"] = d.Status
 	d.fieldMap["is_admin"] = d.IsAdmin

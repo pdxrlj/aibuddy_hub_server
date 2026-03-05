@@ -49,7 +49,10 @@ type Device struct {
 	// 设备的硬件信息JSON
 	HardwareInfo datatypes.JSON `gorm:"column:hardware_info;type:json;comment:硬件信息;"`
 
-	UID          int64     `gorm:"column:uid;index;type:bigint;not null;default:0;comment:绑定用户id;"`
+	UID int64 `gorm:"column:uid;index;type:bigint;not null;default:0;comment:绑定用户id;"`
+
+	Relation string `gorm:"column:relation;type:varchar(8);default:家长;comment:角色关系:爷爷,奶奶,爸爸,妈妈,其他;"`
+
 	LastActiveAt time.Time `gorm:"column:last_active_at;type:timestamp;comment:最后活跃时间;"`
 
 	Status    DeviceStatus `gorm:"column:status;type:varchar(50);not null;default:未知;comment:状态:未知;"`

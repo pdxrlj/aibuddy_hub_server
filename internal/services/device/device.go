@@ -182,3 +182,18 @@ func (d *Service) FindUserInfoByDeviceID(ctx context.Context, deviceID string) (
 
 	return user, nil
 }
+
+// GetDeviceInfo 获取设备信息
+func (d *Service) GetDeviceInfo(ctx context.Context, deviceID string) (*model.Device, error) {
+	_, span := tracer().Start(ctx, "DeviceService.GetDeviceInfo")
+	defer span.End()
+
+	device, err := d.DeviceRepo.GetDeviceInfo(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return nil, err
+	}
+
+	return device, nil
+}
