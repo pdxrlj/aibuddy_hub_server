@@ -48,6 +48,11 @@ var (
 	MQTTSendMessageTopic = func(deviceID string) string {
 		return GetTopic(fmt.Sprintf("%s/msg", deviceID))
 	}
+
+	// NFCCrateTopic 卡片制作主题
+	NFCCrateTopic = func(deviceID string) string {
+		return GetTopic(fmt.Sprintf("%s/nfc", deviceID))
+	}
 )
 
 // GetTopic 获取 MQTT 主题

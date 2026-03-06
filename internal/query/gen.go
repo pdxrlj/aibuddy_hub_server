@@ -26,6 +26,7 @@ var (
 	DeviceOta           *deviceOta
 	DeviceRelationship  *deviceRelationship
 	DeviceSN            *deviceSN
+	NFC                 *nFC
 	OtaResource         *otaResource
 	Reminder            *reminder
 	User                *user
@@ -42,6 +43,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	DeviceOta = &Q.DeviceOta
 	DeviceRelationship = &Q.DeviceRelationship
 	DeviceSN = &Q.DeviceSN
+	NFC = &Q.NFC
 	OtaResource = &Q.OtaResource
 	Reminder = &Q.Reminder
 	User = &Q.User
@@ -59,6 +61,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		DeviceOta:           newDeviceOta(db, opts...),
 		DeviceRelationship:  newDeviceRelationship(db, opts...),
 		DeviceSN:            newDeviceSN(db, opts...),
+		NFC:                 newNFC(db, opts...),
 		OtaResource:         newOtaResource(db, opts...),
 		Reminder:            newReminder(db, opts...),
 		User:                newUser(db, opts...),
@@ -77,6 +80,7 @@ type Query struct {
 	DeviceOta           deviceOta
 	DeviceRelationship  deviceRelationship
 	DeviceSN            deviceSN
+	NFC                 nFC
 	OtaResource         otaResource
 	Reminder            reminder
 	User                user
@@ -96,6 +100,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		DeviceOta:           q.DeviceOta.clone(db),
 		DeviceRelationship:  q.DeviceRelationship.clone(db),
 		DeviceSN:            q.DeviceSN.clone(db),
+		NFC:                 q.NFC.clone(db),
 		OtaResource:         q.OtaResource.clone(db),
 		Reminder:            q.Reminder.clone(db),
 		User:                q.User.clone(db),
@@ -122,6 +127,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		DeviceOta:           q.DeviceOta.replaceDB(db),
 		DeviceRelationship:  q.DeviceRelationship.replaceDB(db),
 		DeviceSN:            q.DeviceSN.replaceDB(db),
+		NFC:                 q.NFC.replaceDB(db),
 		OtaResource:         q.OtaResource.replaceDB(db),
 		Reminder:            q.Reminder.replaceDB(db),
 		User:                q.User.replaceDB(db),
@@ -138,6 +144,7 @@ type queryCtx struct {
 	DeviceOta           IDeviceOtaDo
 	DeviceRelationship  IDeviceRelationshipDo
 	DeviceSN            IDeviceSNDo
+	NFC                 INFCDo
 	OtaResource         IOtaResourceDo
 	Reminder            IReminderDo
 	User                IUserDo
@@ -154,6 +161,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		DeviceOta:           q.DeviceOta.WithContext(ctx),
 		DeviceRelationship:  q.DeviceRelationship.WithContext(ctx),
 		DeviceSN:            q.DeviceSN.WithContext(ctx),
+		NFC:                 q.NFC.WithContext(ctx),
 		OtaResource:         q.OtaResource.WithContext(ctx),
 		Reminder:            q.Reminder.WithContext(ctx),
 		User:                q.User.WithContext(ctx),

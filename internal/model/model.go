@@ -72,6 +72,8 @@ func (d *DB) GenerateQuery() {
 		DeviceRelationship{},
 
 		DeviceMessage{},
+
+		NFC{},
 	}
 
 	_ = d.db.AutoMigrate(models...)

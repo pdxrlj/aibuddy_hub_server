@@ -43,10 +43,10 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 	aiChatHandler := handler.NewAiChatHandler()
 	r.On(":device_id/ai", aiChatHandler.Chat)
 
-	// ================================ 待验证 ================================
-
 	nfcHandler := handler.NewNFCHandler()
 	r.On(":device_id/nfc", nfcHandler.Handle)
+
+	// ================================ 待验证 ================================
 
 	// 设备状态
 	r.On("device/:id/status", func(ctx *mqtt.Context) {

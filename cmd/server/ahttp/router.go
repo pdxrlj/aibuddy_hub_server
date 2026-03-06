@@ -5,10 +5,12 @@ import (
 	anniversaryhandler "aibuddy/cmd/server/ahttp/handler/anniversary"
 	devicehandler "aibuddy/cmd/server/ahttp/handler/device"
 	filehandler "aibuddy/cmd/server/ahttp/handler/file"
+	"aibuddy/cmd/server/ahttp/handler/nfc"
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
 	remindhandler "aibuddy/cmd/server/ahttp/handler/remind"
 	rolehandleer "aibuddy/cmd/server/ahttp/handler/role"
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
+	websockethandler "aibuddy/cmd/server/ahttp/handler/websocket"
 	"aibuddy/cmd/server/ahttp/middleware"
 	"aibuddy/pkg/ahttp"
 
@@ -104,6 +106,16 @@ func RegisterRoutes(base *ahttp.Base) {
 			group.POST("/update", m.UpdateAnniversary)  // 更新纪念日
 			group.POST("/delete", m.DeleateAnniversary) // 删除纪念日
 			group.GET("/list", m.ListAnniversary)       // 纪念日列表
+		})
+
+		group.GET("/websocket", websockethandler.NewHandler().HandleConnect, middleware.UnifiedAuthMiddleware())
+
+		group.Group("/nfc", nil, func(group *ahttp.Group) {
+			nfcHandler := nfc.NewHandler()
+			group.POST("/create", nfcHandler.CreateNFC, middleware.UnifiedAuthMiddleware())
+
+			// 获取NFC信息
+			group.GET("/:nfc_id/info", nfcHandler.GetNFCInfo)
 		})
 	})
 }
