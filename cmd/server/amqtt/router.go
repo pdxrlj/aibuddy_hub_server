@@ -48,6 +48,10 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 
 	// ================================ 待验证 ================================
 
+	// 消息处理
+	msgHandler := handler.NewMsgHandler()
+	r.On(":device_id/msg", msgHandler.Handle)
+
 	// 设备状态
 	r.On("device/:id/status", func(ctx *mqtt.Context) {
 		deviceID := ctx.Params["id"]

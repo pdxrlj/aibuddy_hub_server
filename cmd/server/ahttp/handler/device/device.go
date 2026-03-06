@@ -20,15 +20,17 @@ var tracer = func() trace.Tracer {
 
 // Device is a device handler.
 type Device struct {
-	Service  *device.Service
-	UserRepo *repository.UserRepo
+	Service       *device.Service
+	UserRepo      *repository.UserRepo
+	DeviceMsgRepo *repository.DeviceMessageRepo
 }
 
 // NewDevice creates a new device handler.
 func NewDevice() *Device {
 	return &Device{
-		Service:  device.NewService(),
-		UserRepo: repository.NewUserRepo(),
+		Service:       device.NewService(),
+		UserRepo:      repository.NewUserRepo(),
+		DeviceMsgRepo: repository.NewDeviceMessageRepo(),
 	}
 }
 
@@ -217,4 +219,37 @@ func (d *Device) SendMessage(state *ahttp.State, req *SendMessageRequest) error 
 	}
 
 	return state.Resposne().Success()
+}
+
+// MessageList 设备消息列表
+func (d *Device) MessageList(state *ahttp.State, req *MessageListRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.MessageList")
+	defer span.End()
+
+	data, total, err := d.DeviceMsgRepo.GetMessageList(ctx, req.DeviceID, req.Page, req.Size)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("device_id", req.DeviceID))
+		return state.Resposne().Error(err)
+	}
+
+	result := make([]*MessageInfo, 0, len(data))
+	for _, v := range data {
+		result = append(result, &MessageInfo{
+			Mid:      v.MsgID,
+			Ts:       int(v.CreatedAt.Unix()),
+			From:     v.FromDeviceID,
+			FromName: v.FromUsername,
+			Fmt:      string(v.Fmt),
+			Content:  v.Content,
+			Dur:      v.Dur,
+		})
+	}
+
+	return state.Resposne().SetData(MessageListResponse{
+		Page:  req.Page,
+		Size:  req.Size,
+		Total: total,
+		List:  result,
+	}).Success()
 }

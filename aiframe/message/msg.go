@@ -25,6 +25,12 @@ func (m MsgType) String() string {
 	return string(m)
 }
 
+// HandMsg 请求数据
+type HandMsg struct {
+	Type string   `json:"type"`
+	Mids []string `josn:"mids"`
+}
+
 // RecvMsg 接收留言消息
 type RecvMsg struct {
 	Type     MsgType `json:"type"`
@@ -56,4 +62,9 @@ func SendMessage(fromDeviceID, fromUsername, targetDeviceID, msgID, content stri
 	topic := aiframe.MQTTSendMessageTopic(targetDeviceID)
 
 	return mqtt.Instance.Publish(topic, 1, false, payload)
+}
+
+// Decode 从JSON反序列化
+func (h *HandMsg) Decode(data []byte) error {
+	return json.Unmarshal(data, h)
 }

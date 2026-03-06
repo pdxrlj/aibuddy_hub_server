@@ -5,6 +5,7 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
+	"strings"
 	"time"
 )
 
@@ -37,4 +38,24 @@ func (r *DeviceMessageRepo) MarkMessageRead(ctx context.Context, messageID strin
 		return err
 	}
 	return nil
+}
+
+// BatchMessageRead 批量已读消息
+func (r *DeviceMessageRepo) BatchMessageRead(ctx context.Context, deviceID string, messageID []string) error {
+	ids := strings.Join(messageID, ",")
+	_, err := query.DeviceMessage.WithContext(ctx).Where(query.DeviceMessage.MsgID.In(ids), query.DeviceMessage.ToDeviceID.Eq(deviceID)).
+		Updates(map[string]any{
+			query.DeviceMessage.UpdatedAt.ColumnName().String(): time.Now(),
+			query.DeviceMessage.Read.ColumnName().String():      true,
+		})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetMessageList 消息列表
+func (r *DeviceMessageRepo) GetMessageList(ctx context.Context, deviceID string, page int, size int) ([]*model.DeviceMessage, int64, error) {
+	offset := (page - 1) * size
+	return query.DeviceMessage.WithContext(ctx).Where(query.DeviceMessage.ToDeviceID.Eq(deviceID)).FindByPage(offset, size)
 }

@@ -47,6 +47,9 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 消息发送 文本/语音
 			deviceGroup.POST("/:device_id/send_message", device.SendMessage)
+
+			// 获取设备消息列表
+			deviceGroup.POST("/:device_id/message_list", device.MessageList)
 		})
 
 		group.Group("/file", nil, func(fileGroup *ahttp.Group) {

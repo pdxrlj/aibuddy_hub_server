@@ -97,3 +97,29 @@ type SendMessageRequest struct {
 	Fmt            string `json:"fmt" form:"fmt" validate:"required,oneof=text voice" msg:"required:消息格式不能为空|oneof:消息格式必须为text或voice"`
 	Dur            int    `json:"dur" form:"dur" validate:"required_if_gt=Fmt=voice" msg:"required_if_gt:语音消息时长必须大于0"`
 }
+
+// MessageListRequest 消息列表请求
+type MessageListRequest struct {
+	DeviceID string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
+	Page     int    `json:"page" param:"page" validate:"required" msg:"required:page不能为空"`
+	Size     int    `json:"size" param:"size" validate:"required" msg:"required:size不能为空"`
+}
+
+// MessageListResponse 消息列表请求
+type MessageListResponse struct {
+	Page  int            `json:"page"`
+	Size  int            `json:"size"`
+	Total int64          `json:"total"`
+	List  []*MessageInfo `json:"list"`
+}
+
+// MessageInfo 消息内容数据
+type MessageInfo struct {
+	Mid      string `json:"msg_id"`
+	From     string `json:"from"`
+	FromName string `json:"from_name"`
+	Fmt      string `json:"fmt"`
+	Content  string `json:"content"`
+	Dur      int    `json:"dur"`
+	Ts       int
+}
