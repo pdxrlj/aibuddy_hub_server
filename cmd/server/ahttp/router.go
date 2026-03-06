@@ -46,6 +46,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			deviceGroup.DELETE("/:device_id/delete_friend", device.DeleteFriend)
 
 			// 消息发送 文本/语音
+			// TODO 缺少对家长端的websocket消息发送
 			deviceGroup.POST("/:device_id/send_message", device.SendMessage)
 
 			// 获取设备消息列表
