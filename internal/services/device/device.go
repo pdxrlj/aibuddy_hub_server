@@ -3,7 +3,7 @@ package device
 
 import (
 	"aibuddy/aiframe/location"
-	"aibuddy/aiframe/message"
+	mqttmessage "aibuddy/aiframe/message"
 	"aibuddy/internal/model"
 	"aibuddy/internal/repository"
 	"aibuddy/internal/services/cache"
@@ -332,7 +332,7 @@ func (d *Service) SendMessage(ctx context.Context, deviceID, targetDeviceID, con
 	}
 
 	username := deviceInfo.DeviceInfo.NickName
-	err = message.SendMessage(deviceID, username, targetDeviceID, msgID, content, fmt, dur)
+	err = mqttmessage.SendMessage(deviceID, username, targetDeviceID, msgID, content, fmt, dur)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
