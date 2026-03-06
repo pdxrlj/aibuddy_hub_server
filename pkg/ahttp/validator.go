@@ -47,6 +47,10 @@ func NewValidator() *validator.Validate {
 		slog.Error(logger.ValidateRegister, "error", err)
 	}
 
+	if err := v.RegisterValidation("ota_required", validateOTA); err != nil {
+		slog.Error(logger.ValidateRegister, "error", err)
+	}
+
 	// 注册自定义翻译
 	registerCustomTranslations(v)
 
@@ -90,6 +94,16 @@ func registerCustomTranslations(v *validator.Validate) {
 		return ut.Add("required_if_gt", "{0}必须大于0", true)
 	}, func(ut ut.Translator, fe validator.FieldError) string {
 		t, _ := ut.T("required_if_gt", fe.Field())
+		return t
+	}); err != nil {
+		slog.Error(logger.ValidateRegister, "error", err)
+	}
+
+	// 自定义 ota_required 消息
+	if err := v.RegisterTranslation("ota_required", Trans, func(ut ut.Translator) error {
+		return ut.Add("ota_required", "send_all与device_ids不能同时存在", true)
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T("ota_required", fe.Field())
 		return t
 	}); err != nil {
 		slog.Error(logger.ValidateRegister, "error", err)
@@ -170,4 +184,24 @@ func splitTwo(s, sep string) []string {
 		}
 	}
 	return []string{s}
+}
+
+// validateOTA 结构体验证：send_all 与 device_ids 不能同时存在
+func validateOTA(fl validator.FieldLevel) bool {
+	parent := fl.Parent()
+	sendAllField := parent.FieldByName("SendAll")
+	deviceIDsField := parent.FieldByName("DeviceIDs")
+
+	if !sendAllField.IsValid() || !deviceIDsField.IsValid() {
+		return true
+	}
+
+	sendAll := sendAllField.Bool()
+	deviceIDs, _ := deviceIDsField.Interface().([]string)
+
+	if sendAll && len(deviceIDs) > 0 {
+		return false
+	}
+
+	return true
 }
