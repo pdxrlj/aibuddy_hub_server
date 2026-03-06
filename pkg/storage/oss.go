@@ -11,7 +11,7 @@ import (
 )
 
 // ObjectStorage 定义存储接口
-var _ ObjectStorage[*oss.GetObjectResult] = (*OSS)(nil)
+var _ ObjectStorage[io.ReadCloser] = (*OSS)(nil)
 
 // OSS 阿里云 OSS 存储
 type OSS struct {
@@ -73,8 +73,8 @@ func (o *OSS) PresignURL(ctx context.Context, key string, expires time.Duration,
 	return result.URL, nil
 }
 
-// Download 下载文件
-func (o *OSS) Download(ctx context.Context, key string) (*oss.GetObjectResult, error) {
+// Download 下载文件（流式）
+func (o *OSS) Download(ctx context.Context, key string) (io.ReadCloser, error) {
 	result, err := o.Client.GetObject(ctx, &oss.GetObjectRequest{
 		Bucket: oss.Ptr(o.bucket),
 		Key:    oss.Ptr(key),
@@ -84,7 +84,7 @@ func (o *OSS) Download(ctx context.Context, key string) (*oss.GetObjectResult, e
 		return nil, err
 	}
 
-	return result, nil
+	return result.Body, nil
 }
 
 // Delete 删除文件

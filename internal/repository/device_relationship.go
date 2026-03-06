@@ -95,7 +95,7 @@ func (d *DeviceRelationshipRepo) IsFriend(ctx context.Context, deviceID, targetD
 	return rel2 != nil, nil
 }
 
-// CreateDeviceRelationship 创建设备关系（唯一索引冲突时更新 status）
+// CreateDeviceRelationship 创建设备关系，唯一索引冲突时更新 status
 func (d *DeviceRelationshipRepo) CreateDeviceRelationship(ctx context.Context, deviceID, targetDeviceID string, status model.RelationshipStatus) error {
 	_, span := tracer.Start(ctx, "DeviceRelationshipRepo.CreateDeviceRelationship")
 	defer span.End()

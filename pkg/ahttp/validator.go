@@ -4,6 +4,7 @@ package ahttp
 import (
 	logger "aibuddy/pkg/log"
 	"log/slog"
+	"reflect"
 	"regexp"
 
 	"github.com/go-playground/locales/zh"
@@ -40,6 +41,9 @@ func NewValidator() *validator.Validate {
 		slog.Error(logger.ValidateRegister, "error", err)
 	}
 	if err := v.RegisterValidation("aimac", validateMAC); err != nil {
+		slog.Error(logger.ValidateRegister, "error", err)
+	}
+	if err := v.RegisterValidation("required_if_gt", validateRequiredIfGT); err != nil {
 		slog.Error(logger.ValidateRegister, "error", err)
 	}
 
@@ -80,6 +84,16 @@ func registerCustomTranslations(v *validator.Validate) {
 	}); err != nil {
 		slog.Error(logger.ValidateRegister, "error", err)
 	}
+
+	// 自定义 required_if_gt 消息
+	if err := v.RegisterTranslation("required_if_gt", Trans, func(ut ut.Translator) error {
+		return ut.Add("required_if_gt", "{0}必须大于0", true)
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T("required_if_gt", fe.Field())
+		return t
+	}); err != nil {
+		slog.Error(logger.ValidateRegister, "error", err)
+	}
 }
 
 // validateMobile 手机号验证
@@ -106,4 +120,54 @@ func validateMAC(fl validator.FieldLevel) bool {
 	// 处理单个字符串
 	mac := field.String()
 	return macRegex.MatchString(mac)
+}
+
+// validateRequiredIfGT 当条件字段等于指定值时，当前字段必须大于0
+// 参数格式: field=value 例如: Fmt=voice 表示当 Fmt=voice 时，当前字段必须>0
+func validateRequiredIfGT(fl validator.FieldLevel) bool {
+	params := fl.Param()
+	if params == "" {
+		return true
+	}
+
+	// 解析参数 field=value
+	parts := splitTwo(params, "=")
+	if len(parts) != 2 {
+		return false
+	}
+
+	conditionField := parts[0]
+	conditionValue := parts[1]
+
+	// 获取条件字段的值
+	parent := fl.Parent()
+	conditionFieldValue := parent.FieldByName(conditionField)
+	if !conditionFieldValue.IsValid() {
+		return true // 条件字段不存在，跳过验证
+	}
+
+	// 检查条件字段是否等于指定值
+	if conditionFieldValue.String() != conditionValue {
+		return true // 条件不满足，跳过验证
+	}
+
+	// 条件满足，检查当前字段是否大于0
+	field := fl.Field()
+	switch field.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return field.Int() > 0
+	case reflect.Float32, reflect.Float64:
+		return field.Float() > 0
+	default:
+		return true
+	}
+}
+
+func splitTwo(s, sep string) []string {
+	for i := 0; i < len(s); i++ {
+		if s[i:i+1] == sep {
+			return []string{s[:i], s[i+1:]}
+		}
+	}
+	return []string{s}
 }

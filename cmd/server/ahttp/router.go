@@ -3,6 +3,7 @@ package ahttp
 
 import (
 	devicehandler "aibuddy/cmd/server/ahttp/handler/device"
+	filehandler "aibuddy/cmd/server/ahttp/handler/file"
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
 	remindhandler "aibuddy/cmd/server/ahttp/handler/remind"
 	rolehandleer "aibuddy/cmd/server/ahttp/handler/role"
@@ -41,11 +42,17 @@ func RegisterRoutes(base *ahttp.Base) {
 			// 删除好友
 			deviceGroup.DELETE("/:device_id/delete_friend", device.DeleteFriend)
 
-			// 上传文件
-			// deviceGroup.POST("/:device_id/upload_file", device.UploadFile)
-
 			// 消息发送 文本/语音
 			deviceGroup.POST("/:device_id/send_message", device.SendMessage)
+		})
+
+		group.Group("/file", nil, func(fileGroup *ahttp.Group) {
+			f := filehandler.NewFile()
+			// 上传文件
+			fileGroup.POST("/:device_id/upload_file", f.UploadFile)
+
+			// 文件代理
+			fileGroup.GET("/:device_id/file_proxy", f.FileProxy)
 		})
 
 		group.Group("/ota", nil, func(otaGroup *ahttp.Group) {
