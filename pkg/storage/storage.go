@@ -4,8 +4,6 @@ import (
 	"context"
 	"io"
 	"time"
-
-	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 )
 
 // ObjectStorage 定义对象存储接口
@@ -17,6 +15,6 @@ type ObjectStorage[T any] interface {
 }
 
 // NewStorage 创建存储实例
-func NewStorage(accessKeyID, accessKeySecret, region, endpoint, bucket string) ObjectStorage[*oss.GetObjectResult] {
+func NewStorage(accessKeyID, accessKeySecret, region, endpoint, bucket string) ObjectStorage[io.ReadCloser] {
 	return NewOss(accessKeyID, accessKeySecret, region, endpoint, bucket)
 }

@@ -11,10 +11,12 @@ import (
 	"aibuddy/pkg/flash"
 	"aibuddy/pkg/helpers"
 	"aibuddy/pkg/mqtt"
+	"aibuddy/pkg/storage"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"strings"
 
@@ -36,10 +38,16 @@ type Service struct {
 	DeviceRelationshipRepo *repository.DeviceRelationshipRepo
 
 	DeviceMessageRepo *repository.DeviceMessageRepo
+
+	FileStorage storage.ObjectStorage[io.ReadCloser]
 }
 
 // NewService 创建设备服务实例
 func NewService() *Service {
+	if config.Instance.Storage == nil || config.Instance.Storage.OSS == nil {
+		panic("storage config is not set")
+	}
+
 	return &Service{
 		ClientIDPrefix:         "GID_AIBuddy@@@",
 		cache:                  cache.Flash(),
@@ -47,6 +55,13 @@ func NewService() *Service {
 		DeviceRelationshipRepo: repository.NewDeviceRelationshipRepo(),
 		UserRepo:               repository.NewUserRepo(),
 		DeviceMessageRepo:      repository.NewDeviceMessageRepo(),
+		FileStorage: storage.NewStorage(
+			config.Instance.Storage.OSS.AccessKeyID,
+			config.Instance.Storage.OSS.AccessKeySecret,
+			config.Instance.Storage.OSS.Region,
+			config.Instance.Storage.OSS.Endpoint,
+			config.Instance.Storage.OSS.Bucket,
+		),
 	}
 }
 

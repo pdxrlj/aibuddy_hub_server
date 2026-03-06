@@ -1,7 +1,9 @@
 package ahttp
 
 import (
+	"io"
 	"net/http"
+	"path/filepath"
 
 	"github.com/labstack/echo/v4"
 )
@@ -86,4 +88,45 @@ func (r *Response) Error(err error) error {
 	}
 	r.Message = err.Error()
 	return r.Ctx.JSON(http.StatusOK, r)
+}
+
+// File 返回文件响应（流式）
+func (r *Response) File(reader io.Reader, filename string) error {
+	if r.Ctx.Response().Committed {
+		return nil
+	}
+	// 根据文件扩展名获取 MIME 类型
+	contentType := "application/octet-stream"
+	if ext := filepath.Ext(filename); ext != "" {
+		if mime := mimeTypes[ext]; mime != "" {
+			contentType = mime
+		}
+	}
+	r.Ctx.Response().Header().Set(echo.HeaderContentType, contentType)
+	r.Ctx.Response().Header().Set(echo.HeaderContentDisposition, "inline; filename="+filepath.Base(filename))
+	_, err := io.Copy(r.Ctx.Response(), reader)
+	return err
+}
+
+// mimeTypes 文件扩展名到 MIME 类型的映射
+var mimeTypes = map[string]string{
+	".html": "text/html",
+	".htm":  "text/html",
+	".css":  "text/css",
+	".js":   "application/javascript",
+	".json": "application/json",
+	".xml":  "application/xml",
+	".txt":  "text/plain",
+	".png":  "image/png",
+	".jpg":  "image/jpeg",
+	".jpeg": "image/jpeg",
+	".gif":  "image/gif",
+	".svg":  "image/svg+xml",
+	".webp": "image/webp",
+	".mp3":  "audio/mpeg",
+	".wav":  "audio/wav",
+	".mp4":  "video/mp4",
+	".webm": "video/webm",
+	".pdf":  "application/pdf",
+	".zip":  "application/zip",
 }
