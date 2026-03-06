@@ -200,6 +200,11 @@ func (b *Base) createHandler(handlerValue reflect.Value, inputNumber int) echo.H
 			return err
 		}
 
+		// 验证失败时响应已被写入
+		if ctx.Response().Committed {
+			return nil
+		}
+
 		// 如果 handler 期望指针，则传指针；否则传值
 		if handlerParamType.Kind() == reflect.Ptr {
 			return b.ResoverHandler(ctx, handlerValue, instance)

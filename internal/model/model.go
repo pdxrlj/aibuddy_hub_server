@@ -70,6 +70,8 @@ func (d *DB) GenerateQuery() {
 		ChatDialogue{},
 
 		DeviceRelationship{},
+
+		DeviceMessage{},
 	}
 
 	_ = d.db.AutoMigrate(models...)

@@ -22,6 +22,7 @@ var (
 	ChatDialogue        *chatDialogue
 	Device              *device
 	DeviceInfo          *deviceInfo
+	DeviceMessage       *deviceMessage
 	DeviceOta           *deviceOta
 	DeviceRelationship  *deviceRelationship
 	DeviceSN            *deviceSN
@@ -37,6 +38,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	ChatDialogue = &Q.ChatDialogue
 	Device = &Q.Device
 	DeviceInfo = &Q.DeviceInfo
+	DeviceMessage = &Q.DeviceMessage
 	DeviceOta = &Q.DeviceOta
 	DeviceRelationship = &Q.DeviceRelationship
 	DeviceSN = &Q.DeviceSN
@@ -53,6 +55,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		ChatDialogue:        newChatDialogue(db, opts...),
 		Device:              newDevice(db, opts...),
 		DeviceInfo:          newDeviceInfo(db, opts...),
+		DeviceMessage:       newDeviceMessage(db, opts...),
 		DeviceOta:           newDeviceOta(db, opts...),
 		DeviceRelationship:  newDeviceRelationship(db, opts...),
 		DeviceSN:            newDeviceSN(db, opts...),
@@ -70,6 +73,7 @@ type Query struct {
 	ChatDialogue        chatDialogue
 	Device              device
 	DeviceInfo          deviceInfo
+	DeviceMessage       deviceMessage
 	DeviceOta           deviceOta
 	DeviceRelationship  deviceRelationship
 	DeviceSN            deviceSN
@@ -88,6 +92,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		ChatDialogue:        q.ChatDialogue.clone(db),
 		Device:              q.Device.clone(db),
 		DeviceInfo:          q.DeviceInfo.clone(db),
+		DeviceMessage:       q.DeviceMessage.clone(db),
 		DeviceOta:           q.DeviceOta.clone(db),
 		DeviceRelationship:  q.DeviceRelationship.clone(db),
 		DeviceSN:            q.DeviceSN.clone(db),
@@ -113,6 +118,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		ChatDialogue:        q.ChatDialogue.replaceDB(db),
 		Device:              q.Device.replaceDB(db),
 		DeviceInfo:          q.DeviceInfo.replaceDB(db),
+		DeviceMessage:       q.DeviceMessage.replaceDB(db),
 		DeviceOta:           q.DeviceOta.replaceDB(db),
 		DeviceRelationship:  q.DeviceRelationship.replaceDB(db),
 		DeviceSN:            q.DeviceSN.replaceDB(db),
@@ -128,6 +134,7 @@ type queryCtx struct {
 	ChatDialogue        IChatDialogueDo
 	Device              IDeviceDo
 	DeviceInfo          IDeviceInfoDo
+	DeviceMessage       IDeviceMessageDo
 	DeviceOta           IDeviceOtaDo
 	DeviceRelationship  IDeviceRelationshipDo
 	DeviceSN            IDeviceSNDo
@@ -143,6 +150,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		ChatDialogue:        q.ChatDialogue.WithContext(ctx),
 		Device:              q.Device.WithContext(ctx),
 		DeviceInfo:          q.DeviceInfo.WithContext(ctx),
+		DeviceMessage:       q.DeviceMessage.WithContext(ctx),
 		DeviceOta:           q.DeviceOta.WithContext(ctx),
 		DeviceRelationship:  q.DeviceRelationship.WithContext(ctx),
 		DeviceSN:            q.DeviceSN.WithContext(ctx),

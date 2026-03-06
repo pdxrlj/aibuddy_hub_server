@@ -3,16 +3,19 @@ package device
 
 import (
 	"aibuddy/aiframe/location"
+	"aibuddy/aiframe/message"
 	"aibuddy/internal/model"
 	"aibuddy/internal/repository"
 	"aibuddy/internal/services/cache"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
+	"aibuddy/pkg/helpers"
 	"aibuddy/pkg/mqtt"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"go.opentelemetry.io/otel"
@@ -31,6 +34,8 @@ type Service struct {
 	DeviceRepo             *repository.DeviceRepo
 	UserRepo               *repository.UserRepo
 	DeviceRelationshipRepo *repository.DeviceRelationshipRepo
+
+	DeviceMessageRepo *repository.DeviceMessageRepo
 }
 
 // NewService 创建设备服务实例
@@ -41,6 +46,7 @@ func NewService() *Service {
 		DeviceRepo:             repository.NewDeviceRepo(),
 		DeviceRelationshipRepo: repository.NewDeviceRelationshipRepo(),
 		UserRepo:               repository.NewUserRepo(),
+		DeviceMessageRepo:      repository.NewDeviceMessageRepo(),
 	}
 }
 
@@ -168,12 +174,25 @@ func (d *Service) GetFriends(ctx context.Context, deviceID string, page, size in
 	return friends, total, nil
 }
 
-// FindUserInfoByDeviceID 根据设备ID查询用户信息
-func (d *Service) FindUserInfoByDeviceID(ctx context.Context, deviceID string) (*model.User, error) {
-	_, span := tracer().Start(ctx, "DeviceService.GetAiUserInfo")
+// IsFriend 判断是否是好友关系
+func (d *Service) IsFriend(ctx context.Context, deviceID, targetDeviceID string) (bool, error) {
+	ctx, span := tracer().Start(ctx, "DeviceService.IsFirstOnline")
 	defer span.End()
 
-	user, err := d.DeviceRepo.FindUserInfoByDeviceID(deviceID)
+	isFriend, err := d.DeviceRelationshipRepo.IsFriend(ctx, deviceID, targetDeviceID)
+	if err != nil {
+		return false, err
+	}
+
+	return isFriend, nil
+}
+
+// FindUserInfoByDeviceID 根据设备ID查询用户信息
+func (d *Service) FindUserInfoByDeviceID(ctx context.Context, deviceID string) (*model.User, error) {
+	ctx, span := tracer().Start(ctx, "DeviceService.FindUserInfoByDeviceID")
+	defer span.End()
+
+	user, err := d.DeviceRepo.FindUserInfoByDeviceID(ctx, deviceID)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
@@ -196,4 +215,114 @@ func (d *Service) GetDeviceInfo(ctx context.Context, deviceID string) (*model.De
 	}
 
 	return device, nil
+}
+
+// AddFriend 添加好友
+func (d *Service) AddFriend(ctx context.Context, deviceID, targetDeviceID string) (*model.Device, error) {
+	_, span := tracer().Start(ctx, "DeviceService.AddFriend")
+	defer span.End()
+
+	// 判断是否已经是好友了
+	isFriend, err := d.IsFriend(ctx, deviceID, targetDeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return nil, err
+	}
+	if isFriend {
+		return nil, errors.New("已经是好友关系，无法添加好友")
+	}
+
+	err = d.DeviceRelationshipRepo.CreateDeviceRelationship(ctx, deviceID, targetDeviceID, model.RelationshipStatusAccepted)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return nil, err
+	}
+
+	targetDevice, err := d.DeviceRepo.GetDeviceInfo(ctx, targetDeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return nil, err
+	}
+
+	if targetDevice.DeviceInfo == nil {
+		span.RecordError(errors.New("目标设备信息不存在"))
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return nil, errors.New("目标设备信息不存在")
+	}
+
+	return targetDevice, nil
+}
+
+// DeleteFriend 删除好友
+func (d *Service) DeleteFriend(ctx context.Context, deviceID, targetDeviceID string) error {
+	_, span := tracer().Start(ctx, "DeviceService.DeleteFriend")
+	defer span.End()
+
+	err := d.DeviceRelationshipRepo.DeleteDeviceRelationship(ctx, deviceID, targetDeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return err
+	}
+	return nil
+}
+
+// SendMessage 发送消息
+func (d *Service) SendMessage(ctx context.Context, deviceID, targetDeviceID, content string, fmt string, dur int) error {
+	_, span := tracer().Start(ctx, "DeviceService.SendMessage")
+	defer span.End()
+
+	slog.Info("[SendMessage]", "device_id", deviceID, "target_device_id", targetDeviceID)
+	// 确认是好友关系
+	isFriend, err := d.IsFriend(ctx, deviceID, targetDeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return errors.New("确认好友关系失败")
+	}
+	if !isFriend {
+		span.RecordError(errors.New("不是好友关系"))
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return errors.New("不是好友关系，无法发送消息")
+	}
+	msgID := helpers.GenerateNumber(10)
+	deviceInfo, err := d.GetDeviceInfo(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+
+	if deviceInfo == nil || deviceInfo.DeviceInfo == nil {
+		span.RecordError(errors.New("无法查询到完整的设备信息"))
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return errors.New("无法查询到完整的设备信息")
+	}
+
+	if err = d.DeviceMessageRepo.CreateDeviceMessage(ctx, &model.DeviceMessage{
+		MsgID:        msgID,
+		FromDeviceID: deviceID,
+		FromUsername: deviceInfo.DeviceInfo.NickName,
+		ToDeviceID:   targetDeviceID,
+		Content:      content,
+		Fmt:          model.MessageFmt(fmt),
+		Dur:          dur,
+	}); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return errors.New("创建消息失败")
+	}
+
+	username := deviceInfo.DeviceInfo.NickName
+	err = message.SendMessage(deviceID, username, targetDeviceID, msgID, content, fmt, dur)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return err
+	}
+
+	return nil
 }

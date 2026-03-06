@@ -31,9 +31,9 @@ type DeviceRelationship struct {
 	ID int64 `gorm:"primaryKey;autoIncrement;column:id;"`
 
 	// 发起方用户ID
-	DeviceID string `gorm:"column:device_id;index;type:varchar(255);not null;comment:发起方用户ID;"`
+	DeviceID string `gorm:"column:device_id;uniqueIndex:idx_device_target;type:varchar(255);not null;comment:发起方用户ID;"`
 	// 目标用户ID
-	TargetDeviceID string `gorm:"column:target_device_id;index;type:varchar(255);not null;comment:目标用户ID;"`
+	TargetDeviceID string `gorm:"column:target_device_id;uniqueIndex:idx_device_target;type:varchar(255);not null;comment:目标用户ID;"`
 
 	// 关系状态
 	Status RelationshipStatus `gorm:"column:status;type:varchar(16);not null;default:pending;comment:关系状态;"`

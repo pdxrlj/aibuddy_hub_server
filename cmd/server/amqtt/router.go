@@ -45,9 +45,6 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 
 	// ================================ 待验证 ================================
 
-	msgHandler := handler.NewMsgHandler()
-	r.On(":device_id/msg", msgHandler.Handle)
-
 	nfcHandler := handler.NewNFCHandler()
 	r.On(":device_id/nfc", nfcHandler.Handle)
 

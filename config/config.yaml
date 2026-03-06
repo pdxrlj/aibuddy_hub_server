@@ -23,6 +23,12 @@ storage:
     password: ""
     db: 0
     username: ""
+  oss:
+    access_key_id: ""
+    access_key_secret: ""
+    region: ""
+    endpoint: ""
+    bucket: ""
   flash:
     use: "redis"
 wechat:

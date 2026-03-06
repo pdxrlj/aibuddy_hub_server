@@ -43,6 +43,11 @@ var (
 	MQTTUnLostTopic = func(deviceID string) string {
 		return GetTopic(fmt.Sprintf("%s/mgmt", deviceID))
 	}
+
+	// MQTTSendMessageTopic 消息主题
+	MQTTSendMessageTopic = func(deviceID string) string {
+		return GetTopic(fmt.Sprintf("%s/msg", deviceID))
+	}
 )
 
 // GetTopic 获取 MQTT 主题
