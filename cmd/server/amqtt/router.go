@@ -2,11 +2,8 @@
 package amqtt
 
 import (
-	"log/slog"
-
 	"aibuddy/cmd/server/amqtt/handler"
 	"aibuddy/pkg/config"
-	"aibuddy/pkg/helpers"
 	"aibuddy/pkg/mqtt"
 )
 
@@ -45,35 +42,7 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 
 	nfcHandler := handler.NewNFCHandler()
 	r.On(":device_id/nfc", nfcHandler.Handle)
-
-	// ================================ 待验证 ================================
-
 	// 消息处理
 	msgHandler := handler.NewMsgHandler()
 	r.On(":device_id/msg", msgHandler.Handle)
-
-	// 设备状态
-	r.On("device/:id/status", func(ctx *mqtt.Context) {
-		deviceID := ctx.Params["id"]
-		msgID := ctx.Message.MessageID()
-		var msg MsgNotification
-		if err := ctx.BindJSON(&msg); err != nil {
-			ctx.Message.Ack()
-			slog.Error("[MQTT] BindJSON failed", "error", err)
-			return
-		}
-		helpers.PP(msg)
-		slog.Info("[MQTT] Device status========", "device_id", deviceID, "msg_id", msgID)
-		ctx.Message.Ack()
-		slog.Info("[MQTT] Message acknowledged==========", "device_id", deviceID, "msg_id", msgID)
-	})
-
-	// 设备请求
-	r.On("device/:id/request", func(ctx *mqtt.Context) {
-		deviceID := ctx.Params["id"]
-		slog.Info("[MQTT] Device request", "device_id", deviceID, "payload", ctx.String())
-		if err := ctx.Reply("device/"+deviceID+"/response", "ack"); err != nil {
-			slog.Error("[MQTT] Reply failed", "error", err)
-		}
-	})
 }
