@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"math/rand"
 	"regexp"
 	"strings"
@@ -16,28 +17,78 @@ import (
 	randv2 "math/rand/v2"
 )
 
+// RetrySkippable 定义接口，实现此接口的错误将跳过重试
+type RetrySkippable interface {
+	SkipRetry() bool
+}
+
+// RetrySkipError 实现 RetrySkippable 接口，表示该错误不需要重试
+type RetrySkipError struct {
+	Message string
+}
+
+// Error 实现 error 接口
+func (e RetrySkipError) Error() string {
+	return e.Message
+}
+
+// SkipRetry 实现 RetrySkippable 接口，表示该错误不需要重试
+func (e RetrySkipError) SkipRetry() bool {
+	return true
+}
+
+// SkipRetry 跳过重试的错误
+var SkipRetry = RetrySkipError{Message: "数据太少了,请过段时间再来吧"}
+
+// IsSkipError 判断错误是否需要跳过重试
+// 支持实现 RetrySkippable 接口的错误
+func IsSkipError(err error) bool {
+	if err == nil {
+		return false
+	}
+	var s RetrySkippable
+	if errors.As(err, &s) {
+		return s.SkipRetry()
+	}
+	return false
+}
+
 // Retry 带超时的重试函数
-func Retry(times int, timeout time.Duration, fn func() error) error {
+func Retry[T any](times int, timeout time.Duration, fn func() (T, error)) (T, error) {
 	var lastErr error
+	var zero T
 
 	for i := 0; i < times; i++ {
-		done := make(chan error, 1)
+		done := make(chan struct {
+			result T
+			err    error
+		}, 1)
 
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					done <- fmt.Errorf("panic: %v", r)
+					done <- struct {
+						result T
+						err    error
+					}{zero, fmt.Errorf("panic: %v", r)}
 				}
 			}()
-			done <- fn()
+			result, err := fn()
+			done <- struct {
+				result T
+				err    error
+			}{result, err}
+			if i > 0 {
+				slog.Info("[Helpers] Retry", "重试次数", i)
+			}
 		}()
 
 		select {
-		case err := <-done:
-			if err == nil {
-				return nil
+		case res := <-done:
+			if res.err == nil || IsSkipError(res.err) {
+				return res.result, res.err
 			}
-			lastErr = err
+			lastErr = res.err
 		case <-time.After(timeout):
 			lastErr = fmt.Errorf("timeout after %v", timeout)
 		}
@@ -47,7 +98,7 @@ func Retry(times int, timeout time.Duration, fn func() error) error {
 		}
 	}
 
-	return fmt.Errorf("retry %d times failed, last error: %v", times, lastErr)
+	return zero, fmt.Errorf("retry %d times failed, last error: %v", times, lastErr)
 }
 
 // RetryWithCancelableContext 带可取消上下文的重试函数

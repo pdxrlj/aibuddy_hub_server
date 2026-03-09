@@ -17,6 +17,12 @@ const (
 	FrameTypeUserMsg FrameType = "user_message"
 	// FrameTypeNFCCreateSuccess NFC创建成功帧
 	FrameTypeNFCCreateSuccess FrameType = "nfc_create_success"
+
+	// FrameTypeRoleGenerateReport 角色生成报告帧
+	FrameTypeRoleGenerateReport FrameType = "role_generate_report"
+
+	// FrameTypeRoleGenerateFailure 角色生成失败帧
+	FrameTypeRoleGenerateFailure FrameType = "role_generate_failure"
 )
 
 // Frame 帧接口
@@ -108,5 +114,24 @@ func (f *NFCCreateSuccessFrame) Encode() ([]byte, error) {
 
 // Decode 解码NFC创建成功帧
 func (f *NFCCreateSuccessFrame) Decode(data []byte) error {
+	return json.Unmarshal(data, f)
+}
+
+// RoleGenerateReportFrame 角色生成成功通知
+type RoleGenerateReportFrame struct {
+	Type      FrameType       `json:"type"`
+	DeviceID  string          `json:"device_id"`
+	AgentName string          `json:"agent_name"`
+	Error     string          `json:"error,omitempty"`
+	Message   json.RawMessage `json:"message"`
+}
+
+// Encode 编码角色生成成功通知
+func (f *RoleGenerateReportFrame) Encode() ([]byte, error) {
+	return json.Marshal(f)
+}
+
+// Decode 解码角色生成成功通知
+func (f *RoleGenerateReportFrame) Decode(data []byte) error {
 	return json.Unmarshal(data, f)
 }

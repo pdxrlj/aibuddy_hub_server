@@ -4,13 +4,22 @@ package role
 import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/repository"
+	"aibuddy/internal/services/agent"
+	"aibuddy/internal/services/websocket"
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"log/slog"
+	"sync"
+	"time"
 
 	"github.com/cespare/xxhash/v2"
+	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -24,15 +33,27 @@ type Service struct {
 	DeviceRepo *repository.DeviceRepo
 	RoleAPI    *baidu.Role
 	SwitchRole *baidu.SwitchRole
+
+	UserAgentRepo *repository.UserAgentRepository
+
+	RoleAgentService *agent.RoleAgentService
+
+	// 生成中的任务缓存，防止重复生成
+	generatingMu sync.Mutex
+	generating   map[string]bool
 }
 
 // NewRoleService 实例化服务
 func NewRoleService() *Service {
 	return &Service{
-		AgentRepo:  repository.NewAgentRepo(),
-		DeviceRepo: repository.NewDeviceRepo(),
-		RoleAPI:    baidu.NewRole(),
-		SwitchRole: baidu.NewSwitchRole(),
+		AgentRepo:     repository.NewAgentRepo(),
+		DeviceRepo:    repository.NewDeviceRepo(),
+		RoleAPI:       baidu.NewRole(),
+		SwitchRole:    baidu.NewSwitchRole(),
+		UserAgentRepo: repository.NewUserAgentRepository(),
+
+		RoleAgentService: agent.NewRoleAgentService(),
+		generating:       make(map[string]bool),
 	}
 }
 
@@ -105,4 +126,136 @@ func (r *Service) GetRoleListByAPI(ctx context.Context) ([]*model.Agent, error) 
 	}
 
 	return result, nil
+}
+
+// setSpanAttrs 设置 span 公共属性
+func setSpanAttrs(span trace.Span, deviceID string, startTime, endTime time.Time, agentName string) {
+	span.SetAttributes(
+		attribute.String("device_id", deviceID),
+		attribute.String("start_time", startTime.Format(time.DateTime)),
+		attribute.String("end_time", endTime.Format(time.DateTime)),
+		attribute.String("agent_name", agentName),
+	)
+}
+
+// sendReport 发送报告给前端
+func (r *Service) sendReport(uid int64, deviceID, agentName string, msg []byte, frameType websocket.FrameType) {
+	frame := &websocket.RoleGenerateReportFrame{
+		Type:      frameType,
+		DeviceID:  deviceID,
+		AgentName: agentName,
+		Message:   msg,
+	}
+	websocket.SendMessage(cast.ToString(uid), frame)
+}
+
+// sendError 发送错误消息给前端
+func (r *Service) sendError(uid int64, deviceID, agentName, errMsg string) {
+	frame := &websocket.RoleGenerateReportFrame{
+		Type:      websocket.FrameTypeRoleGenerateFailure,
+		DeviceID:  deviceID,
+		AgentName: agentName,
+		Error:     errMsg,
+	}
+	websocket.SendMessage(cast.ToString(uid), frame)
+}
+
+// GetChatAnalysis 获取聊天分析
+func (r *Service) GetChatAnalysis(ctx context.Context, deviceID string, agentName string) (*model.UserAgent, error) {
+	ctx, span := tracer().Start(ctx, "GetChatAnalysis")
+	defer span.End()
+	setSpanAttrs(span, deviceID, time.Time{}, time.Time{}, agentName)
+
+	data, err := r.UserAgentRepo.GetUserAgent(ctx, deviceID, agentName)
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// RefreshChatAnalysis 刷新聊天分析
+func (r *Service) RefreshChatAnalysis(ctx context.Context, uid int64, deviceID string, startTime, endTime time.Time, agentName string) (*model.UserAgent, error) {
+	_, span := tracer().Start(ctx, "ChatAnalysis")
+	defer span.End()
+	setSpanAttrs(span, deviceID, startTime, endTime, agentName)
+
+	taskKey := fmt.Sprintf("%s:%s", deviceID, agentName)
+
+	r.generatingMu.Lock()
+	if r.generating[taskKey] {
+		r.generatingMu.Unlock()
+		return nil, errors.New("当前任务正在生成中，请勿重复提交")
+	}
+	r.generating[taskKey] = true
+	r.generatingMu.Unlock()
+
+	go func() {
+		defer r.clearGeneratingTask(taskKey)
+
+		bgCtx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+		defer cancel()
+
+		ctx, agentSpan := tracer().Start(bgCtx, "RoleChatAgent")
+		defer agentSpan.End()
+		setSpanAttrs(agentSpan, deviceID, startTime, endTime, agentName)
+
+		report, err := r.RoleAgentService.RoleChatAgent(deviceID, startTime, endTime, agentName)
+		if err != nil {
+			agentSpan.RecordError(err)
+			r.sendError(uid, deviceID, agentName, "生成分析报告失败了")
+			return
+		}
+
+		conversationAnalysis, err := report.ConversationAnalysis.Encode()
+		if err != nil {
+			agentSpan.RecordError(err)
+			r.sendError(uid, deviceID, agentName, "生成对话分析失败了")
+			return
+		}
+
+		emotionAnalysis, err := report.EmotionAnalysis.Encode()
+		if err != nil {
+			agentSpan.RecordError(err)
+			r.sendError(uid, deviceID, agentName, "生成情绪分析失败了")
+			return
+		}
+		slog.Info("[RoleService] 生成分析报告成功", "device_id", deviceID, "agent_name", agentName)
+		if err := r.UserAgentRepo.CreateUserAgent(ctx, &model.UserAgent{
+			DeviceID:             deviceID,
+			AgentName:            agentName,
+			ConversationAnalysis: conversationAnalysis,
+			EmotionAnalysis:      emotionAnalysis,
+		}); err != nil {
+			agentSpan.RecordError(err)
+			r.sendError(uid, deviceID, agentName, "保存记录失败了")
+			return
+		}
+
+		data, err := r.UserAgentRepo.GetUserAgent(ctx, deviceID, agentName)
+		if err != nil {
+			agentSpan.RecordError(err)
+			r.sendError(uid, deviceID, agentName, "获取记录失败了")
+			return
+		}
+
+		message, err := json.Marshal(data)
+		if err != nil {
+			agentSpan.RecordError(err)
+			r.sendError(uid, deviceID, agentName, "序列化记录失败了")
+			return
+		}
+
+		r.sendReport(uid, deviceID, agentName, message, websocket.FrameTypeRoleGenerateReport)
+	}()
+
+	return nil, nil
+}
+
+// clearGeneratingTask 清除正在生成的任务标记
+func (r *Service) clearGeneratingTask(taskKey string) {
+	r.generatingMu.Lock()
+	delete(r.generating, taskKey)
+	r.generatingMu.Unlock()
 }

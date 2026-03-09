@@ -101,3 +101,42 @@ func (r *Handler) RoleInfo(state *ahttp.State, req *InfoRequest) error {
 		UpdatedAt:        data.UpdatedAt.Format(time.DateTime),
 	}).Success()
 }
+
+// GetChatAnalysis 获取聊天分析
+func (r *Handler) GetChatAnalysis(state *ahttp.State, req *GetChatAnalysisRequest) error {
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "get_chat_analysis")
+	defer span.End()
+	span.SetAttributes(attribute.String("device_id", req.DeviceID))
+	span.SetAttributes(attribute.String("agent_name", req.AgentName))
+
+	data, err := r.RoleSerivce.GetChatAnalysis(ctx, req.DeviceID, req.AgentName)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success(data)
+}
+
+// RefreshChatAnalysis 聊天分析
+func (r *Handler) RefreshChatAnalysis(state *ahttp.State, req *RefreshChatAnalysisRequest) error {
+	req.NormalizeTime()
+
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "chat_analysis")
+	defer span.End()
+	span.SetAttributes(attribute.String("device_id", req.DeviceID))
+	span.SetAttributes(attribute.String("start_time", req.StartTime.Format(time.DateTime)))
+	span.SetAttributes(attribute.String("end_time", req.EndTime.Format(time.DateTime)))
+	span.SetAttributes(attribute.String("agent_name", req.AgentName))
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	_, err = r.RoleSerivce.RefreshChatAnalysis(ctx, uid, req.DeviceID, req.StartTime, req.EndTime, req.AgentName)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().SetMessage("正在生成中...").Success()
+}

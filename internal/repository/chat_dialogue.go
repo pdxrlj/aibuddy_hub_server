@@ -23,15 +23,23 @@ func NewChatDialogueRepository() *ChatDialogueRepository {
 // roleAgentName 角色代理名称,nil 为查询所有角色的聊天记录
 // 查询聊天记录获取对应角色代理的聊天记录
 // 返回聊天记录
-func (r *ChatDialogueRepository) GetChatDialogue(startDate, endDate time.Time, roleAgentName ...string) ([]*model.ChatDialogue, error) {
-	dialogue, err := query.ChatDialogue.Scopes(func(db gen.Dao) gen.Dao {
+func (r *ChatDialogueRepository) GetChatDialogue(deviceID string, startDate, endDate time.Time, roleAgentName ...string) ([]*model.ChatDialogue, error) {
+	dialogue, err := query.ChatDialogue.Debug().Scopes(func(db gen.Dao) gen.Dao {
 		if len(roleAgentName) > 0 {
 			return db.Where(query.ChatDialogue.AgentName.In(roleAgentName...))
 		}
+
 		return db
-	}).Where(
-		query.ChatDialogue.CreatedAt.Between(startDate, endDate),
-	).Find()
+	}).
+		Scopes(func(db gen.Dao) gen.Dao {
+			if deviceID != "" {
+				return db.Where(query.ChatDialogue.DeviceID.Eq(deviceID))
+			}
+			return db
+		}).
+		Where(
+			query.ChatDialogue.CreatedAt.Between(startDate, endDate),
+		).Find()
 
 	return dialogue, err
 }

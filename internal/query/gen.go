@@ -30,6 +30,7 @@ var (
 	OtaResource         *otaResource
 	Reminder            *reminder
 	User                *user
+	UserAgent           *userAgent
 )
 
 func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
@@ -47,6 +48,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	OtaResource = &Q.OtaResource
 	Reminder = &Q.Reminder
 	User = &Q.User
+	UserAgent = &Q.UserAgent
 }
 
 func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
@@ -65,6 +67,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		OtaResource:         newOtaResource(db, opts...),
 		Reminder:            newReminder(db, opts...),
 		User:                newUser(db, opts...),
+		UserAgent:           newUserAgent(db, opts...),
 	}
 }
 
@@ -84,6 +87,7 @@ type Query struct {
 	OtaResource         otaResource
 	Reminder            reminder
 	User                user
+	UserAgent           userAgent
 }
 
 func (q *Query) Available() bool { return q.db != nil }
@@ -104,6 +108,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		OtaResource:         q.OtaResource.clone(db),
 		Reminder:            q.Reminder.clone(db),
 		User:                q.User.clone(db),
+		UserAgent:           q.UserAgent.clone(db),
 	}
 }
 
@@ -131,6 +136,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		OtaResource:         q.OtaResource.replaceDB(db),
 		Reminder:            q.Reminder.replaceDB(db),
 		User:                q.User.replaceDB(db),
+		UserAgent:           q.UserAgent.replaceDB(db),
 	}
 }
 
@@ -148,6 +154,7 @@ type queryCtx struct {
 	OtaResource         IOtaResourceDo
 	Reminder            IReminderDo
 	User                IUserDo
+	UserAgent           IUserAgentDo
 }
 
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
@@ -165,6 +172,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		OtaResource:         q.OtaResource.WithContext(ctx),
 		Reminder:            q.Reminder.WithContext(ctx),
 		User:                q.User.WithContext(ctx),
+		UserAgent:           q.UserAgent.WithContext(ctx),
 	}
 }
 

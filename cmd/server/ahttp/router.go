@@ -90,10 +90,13 @@ func RegisterRoutes(base *ahttp.Base) {
 			userGroup.POST("/unbind", h.Unbind)
 		})
 
-		group.Group("/role", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
+		group.Group("/role", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(role *ahttp.Group) {
 			r := rolehandleer.NewRoleHandler()
-			group.GET("/list", r.RoleList)
-			group.POST("/change", r.ChangeRole) // 切换角色
+			role.GET("/list", r.RoleList)
+			role.POST("/change", r.ChangeRole) // 切换角色
+
+			role.GET("/:device_id/get_chat_analysis", r.GetChatAnalysis)
+			role.GET("/:device_id/refresh_chat_analysis", r.RefreshChatAnalysis)
 		})
 
 		group.Group("/remind", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {

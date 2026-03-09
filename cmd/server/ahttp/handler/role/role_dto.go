@@ -1,6 +1,8 @@
 // Package role 角色请求体
 package role
 
+import "time"
+
 // ListRequest 角色列表请求
 type ListRequest struct {
 	Page int `json:"page" form:"page" param:"page" query:"page" validate:"gte=1" default:"1"`
@@ -43,4 +45,36 @@ type InfoResponse struct {
 	SystemPrompt     string `json:"system_prompt"`
 	CreatedAt        string `json:"created_at"`
 	UpdatedAt        string `json:"updated_at"`
+}
+
+// GetChatAnalysisRequest 获取聊天分析请求
+type GetChatAnalysisRequest struct {
+	DeviceID  string `json:"device_id" param:"device_id"  validate:"required,aimac" msg:"required:设备ID不能为空|aimac:不是有效的设备号"`
+	AgentName string `json:"agent_name" query:"agent_name"  validate:"required,min=1,max=255" msg:"required:角色名称不能为空|min:1|max:255:角色名称不能超过255个字符"`
+}
+
+// RefreshChatAnalysisRequest 聊天分析请求
+type RefreshChatAnalysisRequest struct {
+	DeviceID  string    `json:"device_id" param:"device_id"  validate:"required,aimac" msg:"required:设备ID不能为空|aimac:不是有效的设备号"`
+	StartTime time.Time `json:"start_time" query:"start_time"`
+	EndTime   time.Time `json:"end_time" query:"end_time"`
+
+	AgentName string `json:"agent_name" query:"agent_name"  validate:"required,min=1,max=255" msg:"required:角色名称不能为空|min:1|max:255:角色名称不能超过255个字符"`
+}
+
+// NormalizeTime 规范化时间，如果为空则设置为最近7天
+func (r *RefreshChatAnalysisRequest) NormalizeTime() {
+	now := time.Now()
+	if r.EndTime.IsZero() {
+		r.EndTime = now
+	}
+	if r.StartTime.IsZero() {
+		r.StartTime = now.AddDate(0, 0, -7)
+	}
+}
+
+// ChatAnalysisResponse 聊天分析响应
+type ChatAnalysisResponse struct {
+	ConversationAnalysis string `json:"conversation_analysis"`
+	EmotionAnalysis      string `json:"emotion_analysis"`
 }
