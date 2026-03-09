@@ -6,6 +6,8 @@ import (
 	"aibuddy/internal/services/device"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
+	"log/slog"
+	"strconv"
 
 	"github.com/cespare/xxhash/v2"
 	"github.com/spf13/cast"
@@ -211,7 +213,19 @@ func (d *Device) SendMessage(state *ahttp.State, req *SendMessageRequest) error 
 	ctx, span := tracer().Start(state.Context(), "Device.SendMessage")
 	defer span.End()
 
-	err := d.Service.SendMessage(ctx, req.DeviceID, req.TargetDeviceID, req.Content, req.Fmt, req.Dur)
+	// 判断发送对象是否为用户uid
+	uid, err := strconv.Atoi(req.TargetDeviceID)
+	if err != nil {
+		slog.Info("[sendmessage]", "check device id", req.TargetDeviceID, "result", err.Error())
+	}
+	if uid > 0 {
+		if err := d.Service.SendMessageToUser(ctx, req.DeviceID, uid, req.Content, req.Fmt, req.Dur); err != nil {
+			return state.Resposne().Error(err)
+		}
+		return state.Resposne().Success()
+	}
+
+	err = d.Service.SendMessage(ctx, req.DeviceID, req.TargetDeviceID, req.Content, req.Fmt, req.Dur)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("target_device_id", req.TargetDeviceID))

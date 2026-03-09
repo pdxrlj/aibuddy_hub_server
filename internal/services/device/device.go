@@ -7,6 +7,7 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/repository"
 	"aibuddy/internal/services/cache"
+	"aibuddy/internal/services/websocket"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
 	"aibuddy/pkg/helpers"
@@ -18,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/otel"
@@ -338,6 +340,72 @@ func (d *Service) SendMessage(ctx context.Context, deviceID, targetDeviceID, con
 		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
 		return err
 	}
+
+	return nil
+}
+
+// SendMessageToUser 发送信息通过ID
+func (d *Service) SendMessageToUser(ctx context.Context, deviceID string, uid int, content string, fmt string, dur int) error {
+	ctx, span := tracer().Start(ctx, "DeviceService.SendMessageToUser")
+	defer span.End()
+	info, err := d.DeviceRepo.GetDeviceInfo(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.Int("uid", uid))
+		return err
+	}
+
+	if int(info.UID) != uid {
+		span.SetAttributes(attribute.Int64("device_id", info.UID), attribute.Int("uid", uid))
+		return errors.New("无发送给用户信息的权限")
+	}
+
+	msgID := helpers.GenerateNumber(10)
+	deviceInfo, err := d.GetDeviceInfo(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+
+	if deviceInfo == nil || deviceInfo.DeviceInfo == nil {
+		span.RecordError(errors.New("无法查询到完整的设备信息"))
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return errors.New("无法查询到完整的设备信息")
+	}
+
+	if err = d.DeviceMessageRepo.CreateDeviceMessage(ctx, &model.DeviceMessage{
+		MsgID:        msgID,
+		FromDeviceID: deviceID,
+		FromUsername: deviceInfo.DeviceInfo.NickName,
+		ToDeviceID:   strconv.Itoa(uid),
+		Content:      content,
+		Fmt:          model.MessageFmt(fmt),
+		Dur:          dur,
+	}); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.Int("target_", uid))
+		return errors.New("创建消息失败")
+	}
+
+	msg := map[string]any{
+		"msg_id":    msgID,
+		"from":      deviceID,
+		"from_user": deviceInfo.DeviceInfo.NickName,
+		"content":   content,
+		"fmt":       model.MessageFmt(fmt),
+		"dur":       dur,
+	}
+	message, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	websocket.SendMessage(strconv.Itoa(uid), &websocket.DeviceToUserFrame{
+		Type:     websocket.FrameTypeDeviceMsg,
+		DeviceID: deviceID,
+		Message:  message,
+	})
 
 	return nil
 }

@@ -92,7 +92,7 @@ type DeleteFriendRequest struct {
 // SendMessageRequest 发送消息请求
 type SendMessageRequest struct {
 	DeviceID       string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
-	TargetDeviceID string `json:"target_device_id" form:"target_device_id" validate:"required,aimac" msg:"required:目标设备ID不能为空|aimac:目标设备ID格式无效"`
+	TargetDeviceID string `json:"target_device_id" form:"target_device_id" validate:"required" msg:"required:目标设备ID不能为空"`
 	Content        string `json:"content" form:"content" validate:"required" msg:"required:消息内容不能为空"`
 	Fmt            string `json:"fmt" form:"fmt" validate:"required,oneof=text voice" msg:"required:消息格式不能为空|oneof:消息格式必须为text或voice"`
 	Dur            int    `json:"dur" form:"dur" validate:"required_if_gt=Fmt=voice" msg:"required_if_gt:语音消息时长必须大于0"`
