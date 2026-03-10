@@ -53,3 +53,43 @@ func TestRoleChatAgentIntegration(t *testing.T) {
 
 	t.Logf("Result JSON: %s", string(g))
 }
+
+// TestInteractionSummary 测试角色互动小结
+func TestInteractionSummary(t *testing.T) {
+	report := NewGroupReport()
+
+	// 测试时间范围
+	startTime := time.Date(2026, 1, 1, 0, 0, 0, 0, time.Local)
+	endTime := time.Date(2026, 3, 31, 23, 59, 59, 0, time.Local)
+
+	result := report.GetInteractionSummary("30:ED:A0:E9:F3:13", startTime, endTime)
+	require.NotNil(t, result)
+
+	// 验证返回结构
+	assert.NotNil(t, result.TopRoles, "TopRoles should not be nil")
+
+	// 打印结果
+	g, err := json.MarshalIndent(result, "", "  ")
+	require.NoError(t, err)
+	t.Logf("InteractionSummary Result:\n%s", string(g))
+}
+
+// TestGetSocialSummary 测试社交互动总结
+func TestGetSocialSummary(t *testing.T) {
+	report := NewGroupReport()
+
+	// 测试时间范围
+	startTime := time.Date(2026, 1, 1, 0, 0, 0, 0, time.Local)
+	endTime := time.Date(2026, 3, 31, 23, 59, 59, 0, time.Local)
+
+	result := report.GetSocialSummary("30:ED:A0:E9:F3:13", startTime, endTime)
+	require.NotNil(t, result)
+
+	// 验证返回结构
+	assert.NotNil(t, result.FamilyInteractions, "FamilyInteractions should not be nil")
+
+	// 打印结果
+	g, err := json.MarshalIndent(result, "", "  ")
+	require.NoError(t, err)
+	t.Logf("GetSocialSummary Result:\n%s", string(g))
+}

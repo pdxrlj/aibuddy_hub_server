@@ -4,6 +4,7 @@ package repository
 import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
+	"time"
 )
 
 // NFCRepository NFC仓库
@@ -41,4 +42,14 @@ func (r *NFCRepository) GetByCid(cid string) (*model.NFC, error) {
 func (r *NFCRepository) GetByNFCID(nfcID string) (*model.NFC, error) {
 	nfc, err := query.NFC.Where(query.NFC.NFCID.Eq(nfcID)).First()
 	return nfc, err
+}
+
+// GetNfcData 获取NFC数据
+func (r *NFCRepository) GetNfcData(deviceID string, startTime, endTime time.Time) ([]*model.NFC, error) {
+	nfcData, err := query.NFC.Where(query.NFC.DeviceID.Eq(deviceID)).Where(query.NFC.CreatedAt.Between(startTime, endTime)).Find()
+	if err != nil {
+		return nil, err
+	}
+
+	return nfcData, nil
 }
