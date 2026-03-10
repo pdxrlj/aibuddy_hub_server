@@ -139,6 +139,11 @@ func (s *Service) CheckLoginCode(phone, code string) error {
 	if slices.Contains(testPhoneNumber, phone) && code == testCode {
 		return nil
 	}
+
+	if err := helpers.ValidateMobile(phone); err != nil {
+		return errors.New("手机号码格式错误")
+	}
+
 	cachekey := fmt.Sprintf("sms:%s", phone)
 	result, err := s.cache.Get(cachekey)
 

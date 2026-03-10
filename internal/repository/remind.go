@@ -35,7 +35,7 @@ func (r *RemindRepo) InsertOrUpdate(ctx context.Context, data *model.Reminder) e
 	if !model.IsValidReminderStatus(data.Status) {
 		return errors.New("不存在的重复类型")
 	}
-	if data.ID >= 0 {
+	if data.ID > 0 {
 		count, err := query.Reminder.Where(query.Reminder.ID.Eq(data.ID)).Count()
 		if err != nil || count < 1 {
 			return errors.New("不存在的事件ID")
