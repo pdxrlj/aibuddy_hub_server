@@ -77,8 +77,11 @@ func RegisterRoutes(base *ahttp.Base) {
 			// 完善用户信息，扫描绑定后完善用户信息
 			userGroup.POST("/profile", h.CompleteProfile)
 
-			// ===============================================
-			// 设备操作 挂失 解除挂失 解绑
+			// 用户是否已经绑定了设备
+			userGroup.GET("/have_device", h.HaveDevice)
+
+			// 设备列表
+			userGroup.GET("/device_list", h.DeviceList)
 
 			// 发送挂失消息给设备
 			userGroup.POST("/lost", h.Lost)

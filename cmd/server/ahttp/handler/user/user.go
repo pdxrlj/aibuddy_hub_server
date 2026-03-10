@@ -212,3 +212,61 @@ func (h *Handler) Unbind(state *ahttp.State, req *UnbindRequest) error {
 	}
 	return state.Resposne().Success()
 }
+
+// HaveDevice 用户是否已经绑定了设备
+func (h *Handler) HaveDevice(state *ahttp.State) error {
+	ctx, span := tracer().Start(state.Context(), "User.HaveDevice")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	haveDevice, err := h.UserServer.HaveDevice(ctx, uid)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().SetData(HaveDeviceResponse{
+		HaveDevice: haveDevice,
+	}).Success()
+}
+
+// DeviceList 设备列表
+func (h *Handler) DeviceList(state *ahttp.State) error {
+	ctx, span := tracer().Start(state.Context(), "User.DeviceList")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	deviceList, err := h.UserServer.UserDeviceList(ctx, uid)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	deviceListItems := make([]*DeviceInfoListItem, 0)
+	for _, device := range deviceList {
+		deviceName := ""
+		if device.DeviceInfo != nil {
+			deviceName = device.DeviceInfo.NickName
+		}
+		deviceListItems = append(deviceListItems, &DeviceInfoListItem{
+			DeviceID:   device.DeviceID,
+			DeviceName: deviceName,
+			Version:    device.Version,
+			Status:     device.Status.String(),
+		})
+	}
+
+	return state.Resposne().SetData(&DeviceListResponse{
+		DeviceList: deviceListItems,
+	}).Success()
+}

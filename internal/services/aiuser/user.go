@@ -394,3 +394,32 @@ func (s *Service) Unbind(ctx context.Context, deviceID string) error {
 
 	return nil
 }
+
+// HaveDevice 用户是否已经绑定了设备
+func (s *Service) HaveDevice(ctx context.Context, uid int64) (bool, error) {
+	_, span := tracer().Start(ctx, "HaveDevice")
+	defer span.End()
+
+	deviceInfo, err := s.DeviceRepo.GetUserDeviceList(ctx, uid)
+	if err != nil {
+		return false, err
+	}
+
+	return len(deviceInfo) == 0, nil
+}
+
+// UserDeviceList 设备列表
+func (s *Service) UserDeviceList(ctx context.Context, uid int64) ([]*model.Device, error) {
+	_, span := tracer().Start(ctx, "UserDeviceList")
+	defer span.End()
+
+	devices, err := s.DeviceRepo.GetUserDeviceList(ctx, uid)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("user_id", uid))
+		span.SetAttributes(attribute.String("error", err.Error()))
+		return nil, err
+	}
+
+	return devices, nil
+}

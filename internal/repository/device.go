@@ -219,3 +219,19 @@ func (d *DeviceRepo) GetDeviceInfo(ctx context.Context, deviceID string) (*model
 	}
 	return device, nil
 }
+
+// GetUserDeviceList 获取用户的设备列表
+func (d *DeviceRepo) GetUserDeviceList(ctx context.Context, uid int64) ([]*model.Device, error) {
+	_, span := tracer.Start(ctx, "DeviceService.GetUserDeviceList")
+	defer span.End()
+
+	devices, err := query.Device.
+		Where(query.Device.UID.Eq(uid)).
+		Preload(query.Device.DeviceInfo).
+		Find()
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+	return devices, nil
+}

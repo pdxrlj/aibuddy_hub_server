@@ -77,3 +77,21 @@ type UnlostRequest struct {
 type UnbindRequest struct {
 	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac"`
 }
+
+// HaveDeviceResponse 是否第一次完善设备信息响应
+type HaveDeviceResponse struct {
+	HaveDevice bool `json:"have_device"`
+}
+
+// DeviceListResponse 设备列表响应
+type DeviceListResponse struct {
+	DeviceList []*DeviceInfoListItem `json:"device_list"`
+}
+
+// DeviceInfoListItem 设备信息列表项
+type DeviceInfoListItem struct {
+	DeviceID   string `json:"device_id"`
+	DeviceName string `json:"device_name"`
+	Version    string `json:"version"`
+	Status     string `json:"status"`
+}
