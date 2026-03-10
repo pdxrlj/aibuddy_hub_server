@@ -34,7 +34,7 @@ func New() *Handler {
 
 // Login 手机号码登录
 func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
-	_, span := tracer().Start(state.Ctx.Request().Context(), "phone_login")
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "phone_login")
 	defer span.End()
 
 	span.SetAttributes(attribute.String("wechat_code", req.WechatCode))
@@ -53,7 +53,7 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 		}
 	} else {
 		// 微信小程序登录
-		wxUser, err := h.UserServer.CheckLoginMiniProgram(req.WechatCode, req.EncryptedData, req.IV, userInfo)
+		wxUser, err := h.UserServer.CheckLoginMiniProgram(ctx, req.WechatCode, req.EncryptedData, req.IV, userInfo)
 		if err != nil || wxUser == nil {
 			return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 		}

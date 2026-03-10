@@ -164,7 +164,9 @@ func (s *Service) CheckLoginCode(phone, code string) error {
 }
 
 // CheckLoginMiniProgram 验证微信小程序登录参数
-func (s *Service) CheckLoginMiniProgram(code, encryptedData, iv string, userInfo *model.User) (user *model.User, err error) {
+func (s *Service) CheckLoginMiniProgram(ctx context.Context, code, encryptedData, iv string, userInfo *model.User) (user *model.User, err error) {
+	_, span := tracer().Start(ctx, "CheckLoginMiniProgram")
+	defer span.End()
 	// 获取微信小程序实例
 	miniprogram, err := wechatservice.GetWechatMiniProgram()
 	if err != nil {
@@ -175,6 +177,8 @@ func (s *Service) CheckLoginMiniProgram(code, encryptedData, iv string, userInfo
 	// 调用微信登录接口获取 session 信息
 	session, err := miniprogram.GetAuth().Code2Session(code)
 	if err != nil {
+		span.SetAttributes(attribute.String("err", err.Error()))
+		span.RecordError(err)
 		slog.Error(logger.Authorization, "msg", "Failed to exchange WeChat code for session", "error", err)
 		return nil, errors.New("登录参数不合法")
 	}
