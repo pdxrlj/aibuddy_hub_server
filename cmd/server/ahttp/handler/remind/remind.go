@@ -69,11 +69,14 @@ func (m *Remind) UpdateRemind(state *ahttp.State, req *AddRemindRequest) error {
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
-
 	reminderTime, err := time.Parse(time.DateTime, req.ReminderTime)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(errors.New("时间格式错误"))
 	}
+	if req.ID <= 0 {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(errors.New("缺少必要参数ID"))
+	}
+
 	if err := m.RemindService.SubmitRemind(ctx, uid, &model.Reminder{
 		ID:              req.ID,
 		RepeatType:      model.RepeatType(req.RepeatType),

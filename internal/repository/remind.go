@@ -4,6 +4,8 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
+	"errors"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gen"
@@ -22,6 +24,23 @@ func NewRemindRepo() *RemindRepo {
 func (r *RemindRepo) InsertOrUpdate(ctx context.Context, data *model.Reminder) error {
 	_, span := tracer.Start(ctx, "InsertOrUpdate")
 	defer span.End()
+
+	if data.ReminderTime.Unix() < time.Now().Unix() {
+		return errors.New("提醒时间不能是过去时间")
+	}
+
+	if !model.IsValidRepeatType(data.RepeatType) {
+		return errors.New("不存在的重复类型")
+	}
+	if !model.IsValidReminderStatus(data.Status) {
+		return errors.New("不存在的重复类型")
+	}
+	if data.ID >= 0 {
+		count, err := query.Reminder.Where(query.Reminder.ID.Eq(data.ID)).Count()
+		if err != nil || count < 1 {
+			return errors.New("不存在的事件ID")
+		}
+	}
 
 	if err := query.Reminder.Clauses(
 		clause.OnConflict{

@@ -68,11 +68,11 @@ func (r *Service) SubmitRemind(ctx context.Context, uid int64, data *model.Remin
 		info, err := r.TaskClient.EnqueueAt(task, data.ReminderTime, asynq.TaskID(taskID))
 		if err != nil {
 			span.RecordError(err)
-			return errors.New("添加提醒任务失败:%s" + err.Error())
+			return errors.New("添加提醒任务失败:" + err.Error())
 		}
 
 		if _, err := r.RemindRepo.UpdateEntryID(data.ID, info.ID); err != nil {
-			return errors.New("添加提醒任务失败:%s" + err.Error())
+			return errors.New("更新提醒任务失败:" + err.Error())
 		}
 	} else {
 		info, _ := r.TaskClient.GetTaskInfoByID("default", taskID)

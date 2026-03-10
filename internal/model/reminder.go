@@ -40,6 +40,26 @@ func (r RepeatType) String() string {
 	return string(r)
 }
 
+// IsValidReminderStatus 是否符合ReminderStatus
+func IsValidReminderStatus(t ReminderStatus) bool {
+	switch t {
+	case ReminderStatusFailed, ReminderStatusCancelled, ReminderStatusPending, ReminderStatusCompleted:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsValidRepeatType 是否符合IsValidRepeatType
+func IsValidRepeatType(t RepeatType) bool {
+	switch t {
+	case RepeatTypeNone, RepeatTypeDaily, RepeatTypeWeekly, RepeatTypeMonthly, RepeatTypeYearly:
+		return true
+	default:
+		return false
+	}
+}
+
 // Reminder represents a reminder in the system.
 type Reminder struct {
 	ID int64 `gorm:"primaryKey;autoIncrement;column:id;"`

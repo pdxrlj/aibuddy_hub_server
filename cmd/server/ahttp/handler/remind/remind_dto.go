@@ -4,7 +4,7 @@ package remindhandler
 type AddRemindRequest struct {
 	ID              int64  `json:"id"`
 	ReminderTitle   string `json:"reminder_title" validate:"required"`
-	ReminderContent string `json:"reminder_content" validate:"required"`
+	ReminderContent string `json:"reminder_content" validate:"required,max=120"`
 	ReminderTime    string `json:"reminder_time"`
 	DeviceID        string `json:"device_id" validate:"required"`
 	RepeatType      string `json:"repeat_type" validate:"required"`
