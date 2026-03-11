@@ -94,4 +94,6 @@ type DeviceInfoListItem struct {
 	DeviceName string `json:"device_name"`
 	Version    string `json:"version"`
 	Status     string `json:"status"`
+	Avatar     string `json:"avatar"`
+	Gender     string `json:"gender"`
 }

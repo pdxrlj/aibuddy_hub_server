@@ -255,14 +255,20 @@ func (h *Handler) DeviceList(state *ahttp.State) error {
 	deviceListItems := make([]*DeviceInfoListItem, 0)
 	for _, device := range deviceList {
 		deviceName := ""
+		avatar := ""
+		gender := ""
 		if device.DeviceInfo != nil {
 			deviceName = device.DeviceInfo.NickName
+			avatar = device.DeviceInfo.Avatar
+			gender = device.DeviceInfo.Gender
 		}
 		deviceListItems = append(deviceListItems, &DeviceInfoListItem{
 			DeviceID:   device.DeviceID,
 			DeviceName: deviceName,
 			Version:    device.Version,
 			Status:     device.Status.String(),
+			Avatar:     avatar,
+			Gender:     gender,
 		})
 	}
 
