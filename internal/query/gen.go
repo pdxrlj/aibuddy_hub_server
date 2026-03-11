@@ -26,8 +26,10 @@ var (
 	DeviceOta           *deviceOta
 	DeviceRelationship  *deviceRelationship
 	DeviceSN            *deviceSN
+	Emotion             *emotion
 	NFC                 *nFC
 	OtaResource         *otaResource
+	PomodoroClock       *pomodoroClock
 	Reminder            *reminder
 	User                *user
 	UserAgent           *userAgent
@@ -44,8 +46,10 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	DeviceOta = &Q.DeviceOta
 	DeviceRelationship = &Q.DeviceRelationship
 	DeviceSN = &Q.DeviceSN
+	Emotion = &Q.Emotion
 	NFC = &Q.NFC
 	OtaResource = &Q.OtaResource
+	PomodoroClock = &Q.PomodoroClock
 	Reminder = &Q.Reminder
 	User = &Q.User
 	UserAgent = &Q.UserAgent
@@ -63,8 +67,10 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		DeviceOta:           newDeviceOta(db, opts...),
 		DeviceRelationship:  newDeviceRelationship(db, opts...),
 		DeviceSN:            newDeviceSN(db, opts...),
+		Emotion:             newEmotion(db, opts...),
 		NFC:                 newNFC(db, opts...),
 		OtaResource:         newOtaResource(db, opts...),
+		PomodoroClock:       newPomodoroClock(db, opts...),
 		Reminder:            newReminder(db, opts...),
 		User:                newUser(db, opts...),
 		UserAgent:           newUserAgent(db, opts...),
@@ -83,8 +89,10 @@ type Query struct {
 	DeviceOta           deviceOta
 	DeviceRelationship  deviceRelationship
 	DeviceSN            deviceSN
+	Emotion             emotion
 	NFC                 nFC
 	OtaResource         otaResource
+	PomodoroClock       pomodoroClock
 	Reminder            reminder
 	User                user
 	UserAgent           userAgent
@@ -104,8 +112,10 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		DeviceOta:           q.DeviceOta.clone(db),
 		DeviceRelationship:  q.DeviceRelationship.clone(db),
 		DeviceSN:            q.DeviceSN.clone(db),
+		Emotion:             q.Emotion.clone(db),
 		NFC:                 q.NFC.clone(db),
 		OtaResource:         q.OtaResource.clone(db),
+		PomodoroClock:       q.PomodoroClock.clone(db),
 		Reminder:            q.Reminder.clone(db),
 		User:                q.User.clone(db),
 		UserAgent:           q.UserAgent.clone(db),
@@ -132,8 +142,10 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		DeviceOta:           q.DeviceOta.replaceDB(db),
 		DeviceRelationship:  q.DeviceRelationship.replaceDB(db),
 		DeviceSN:            q.DeviceSN.replaceDB(db),
+		Emotion:             q.Emotion.replaceDB(db),
 		NFC:                 q.NFC.replaceDB(db),
 		OtaResource:         q.OtaResource.replaceDB(db),
+		PomodoroClock:       q.PomodoroClock.replaceDB(db),
 		Reminder:            q.Reminder.replaceDB(db),
 		User:                q.User.replaceDB(db),
 		UserAgent:           q.UserAgent.replaceDB(db),
@@ -150,8 +162,10 @@ type queryCtx struct {
 	DeviceOta           IDeviceOtaDo
 	DeviceRelationship  IDeviceRelationshipDo
 	DeviceSN            IDeviceSNDo
+	Emotion             IEmotionDo
 	NFC                 INFCDo
 	OtaResource         IOtaResourceDo
+	PomodoroClock       IPomodoroClockDo
 	Reminder            IReminderDo
 	User                IUserDo
 	UserAgent           IUserAgentDo
@@ -168,8 +182,10 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		DeviceOta:           q.DeviceOta.WithContext(ctx),
 		DeviceRelationship:  q.DeviceRelationship.WithContext(ctx),
 		DeviceSN:            q.DeviceSN.WithContext(ctx),
+		Emotion:             q.Emotion.WithContext(ctx),
 		NFC:                 q.NFC.WithContext(ctx),
 		OtaResource:         q.OtaResource.WithContext(ctx),
+		PomodoroClock:       q.PomodoroClock.WithContext(ctx),
 		Reminder:            q.Reminder.WithContext(ctx),
 		User:                q.User.WithContext(ctx),
 		UserAgent:           q.UserAgent.WithContext(ctx),

@@ -1,9 +1,14 @@
+// Package agent is the agent for the role agent
+package agent
+
+// RoleAgentPrompt is the prompt for the role agent
+const RoleAgentPrompt = `
 # 角色：儿童-AI对话分析专家
 # 任务：分析孩子与AI角色的7天对话记录，生成家长报告
 # 请使用中文回答
 
 ## 输入数据：
-{{ .dialogue }}
+{{ .Dialogue }}
 
 ## 分析要求：
 
@@ -118,3 +123,4 @@
     }
   }
 }
+`
