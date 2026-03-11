@@ -39,7 +39,7 @@ type DeviceInfo struct {
 	DeviceID string    `gorm:"column:device_id;index;type:varchar(32);not null;uniqueIndex;comment:设备ID;"`
 	NickName string    `gorm:"column:nickname;type:varchar(16);not null;comment:设备昵称;"`
 	Avatar   string    `gorm:"column:avatar;type:varchar(255);comment:头像;"`
-	Gender   int8      `gorm:"column:gender;type:int;default:0;oneof=0 1 2;comment:性别;"`
+	Gender   string    `gorm:"column:gender;type:varchar(16);default:'未知';comment:性别 未知 男性 女性;"`
 	Birthday time.Time `gorm:"column:birthday;type:date;not null;comment:生日;"`
 
 	Hobbies     JSONArray `gorm:"column:hobbies;type:json;not null;comment:兴趣;"`

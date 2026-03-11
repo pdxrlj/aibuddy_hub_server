@@ -35,7 +35,7 @@ func (s DeviceStatus) String() string {
 type Device struct {
 	ID        int64  `gorm:"primaryKey;autoIncrement;column:id;"`
 	DeviceID  string `gorm:"column:device_id;index;type:varchar(255);not null;uniqueIndex;comment:设备ID;"`
-	ICCID     string `gorm:"column:iccid;index;type:varchar(20);not null;uniqueIndex;comment:ICCID;comment:手机卡ICCID;"`
+	ICCID     string `gorm:"column:iccid;index;type:varchar(30);not null;uniqueIndex;comment:ICCID;comment:手机卡ICCID;"`
 	BoardType string `gorm:"column:board_type;type:varchar(255);not null;comment:板子类型;"`
 	Version   string `gorm:"column:version;type:varchar(255);not null;comment:板子版本;"`
 

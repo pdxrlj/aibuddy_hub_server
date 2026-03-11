@@ -263,30 +263,52 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType stri
 
 	return query.Q.Transaction(func(tx *query.Query) error {
 		if err := s.DeviceInfoRepo.UpsertProfile(ctx, d, tx); err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", d.DeviceID))
+			span.SetAttributes(attribute.String("error", err.Error()))
 			return err
 		}
 		if err := s.DeviceRepo.FirstAddDevice(ctx, d.DeviceID, uid, tx); err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", d.DeviceID))
+			span.SetAttributes(attribute.String("error", err.Error()))
 			return err
 		}
 
 		iccid, version, err := s.deviceService.FromCacheGetDeviceInfo(d.DeviceID)
 		if err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", d.DeviceID))
+			span.SetAttributes(attribute.String("error", err.Error()))
 			return err
 		}
 
 		if err := s.DeviceRepo.ChangeDeviceInfo(ctx, d.DeviceID, iccid, boardType, version, relation, tx); err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", d.DeviceID))
+			span.SetAttributes(attribute.String("iccid", iccid))
+			span.SetAttributes(attribute.String("board_type", boardType))
+			span.SetAttributes(attribute.String("version", version))
+			span.SetAttributes(attribute.String("relation", relation))
+			span.SetAttributes(attribute.String("error", err.Error()))
 			return err
 		}
 
 		user, err := s.UserRepo.FindUserByUserID(uid)
 		if err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", d.DeviceID))
+			span.SetAttributes(attribute.String("error", err.Error()))
 			return err
 		}
 
 		// 如果表里面没有这个Device那可能就是非法的Device
 		sn, err := s.BindDeviceSnRepo.GetDeviceSnByDeviceID(ctx, d.DeviceID)
 		if err != nil {
-			return err
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", d.DeviceID))
+			span.SetAttributes(attribute.String("error", err.Error()))
+			return errors.New("当前设备没有找到合法的SN编码，请检查设备")
 		}
 
 		mMgmt := management.Mgmt{
@@ -297,6 +319,9 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType stri
 		}
 
 		if err := mMgmt.SendBoundToDevice(d.DeviceID); err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", d.DeviceID))
+			span.SetAttributes(attribute.String("error", err.Error()))
 			return err
 		}
 

@@ -53,7 +53,7 @@ type UserinfoRequest struct {
 	DeviceID string `json:"device_id" validate:"required"`
 	NickName string `json:"nickname" validate:"required"`
 	Avatar   string `json:"avatar"`
-	Gender   int8   `json:"gender" validate:"required,oneof=0 1 2"`
+	Gender   string `json:"gender" validate:"required,oneof=未知 男 女"`
 	Birthday string `json:"birthday" validate:"required"`
 	Relation string `json:"relation"`
 
