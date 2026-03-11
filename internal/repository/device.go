@@ -30,7 +30,7 @@ func (d *DeviceRepo) FirstAddDevice(ctx context.Context, deviceID string, uid in
 	}
 
 	data, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID), db.Device.UID.Eq(uid)).First()
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
 
