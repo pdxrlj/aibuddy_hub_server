@@ -5,6 +5,7 @@ import (
 	"aibuddy/internal/repository"
 	"aibuddy/pkg/config"
 	"context"
+	"encoding/json"
 	"log/slog"
 	"strings"
 	"time"
@@ -235,5 +236,63 @@ func (g *GrowthReport) GetDeviceBaseInfo(ctx context.Context, deviceID string) *
 		NickName: device.DeviceInfo.NickName,
 		Gender:   device.DeviceInfo.Gender,
 		Age:      age,
+	}
+}
+
+// AlertTypeData 预警类型统计
+type AlertTypeData struct {
+	Type  string `json:"type"`
+	Count int    `json:"count"`
+}
+
+// ConversationWarning 对话预警
+type ConversationWarning struct {
+	AlertCount int              `json:"alert_count"`
+	AlertTypes []*AlertTypeData `json:"alert_types"`
+}
+
+// GetConversationWarning 获取对话预警统计
+func (g *GrowthReport) GetConversationWarning(ctx context.Context, deviceID string, startTime, endTime time.Time) *ConversationWarning {
+	_, span := tracer().Start(ctx, "GrowthReport.GetConversationWarning")
+	defer span.End()
+
+	emotions, err := g.EmotionRepository.GetEmotionsByDeviceID(ctx, deviceID, startTime, endTime)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		span.SetAttributes(attribute.String("start_time", startTime.Format(time.RFC3339)))
+		span.SetAttributes(attribute.String("end_time", endTime.Format(time.RFC3339)))
+		slog.Error("[GrowthReport] GetConversationWarning error", "error", err.Error())
+		return nil
+	}
+
+	alertCount := len(emotions)
+	typeCountMap := make(map[string]int)
+
+	for _, emotion := range emotions {
+		var warningTypes []string
+		if len(emotion.WarningTypes) > 0 {
+			if err := json.Unmarshal(emotion.WarningTypes, &warningTypes); err != nil {
+				slog.Warn("[GrowthReport] unmarshal warning_types failed", "error", err.Error())
+				continue
+			}
+		}
+
+		for _, t := range warningTypes {
+			typeCountMap[t]++
+		}
+	}
+
+	alertTypes := make([]*AlertTypeData, 0, len(typeCountMap))
+	for t, count := range typeCountMap {
+		alertTypes = append(alertTypes, &AlertTypeData{
+			Type:  t,
+			Count: count,
+		})
+	}
+
+	return &ConversationWarning{
+		AlertCount: alertCount,
+		AlertTypes: alertTypes,
 	}
 }

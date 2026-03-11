@@ -58,9 +58,9 @@ func (d *DeviceRepo) ChangeDeviceRole(ctx context.Context, uid int64, deviceID s
 	return nil
 }
 
-// ChangeDeviceInfo 更换设备 ICCID
-func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, iccid string, boardType, version string, relation string, tx ...*query.Query) error {
-	_, span := tracer.Start(ctx, "ChangeDeviceIccid")
+// ChangeDeviceInfo 更换设备 SIM 卡号
+func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, simCard string, boardType, version string, relation string, tx ...*query.Query) error {
+	_, span := tracer.Start(ctx, "ChangeDeviceInfo")
 	defer span.End()
 
 	db := query.Q
@@ -70,20 +70,20 @@ func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, icci
 
 	if _, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID)).
 		Updates(map[string]interface{}{
-			db.Device.ICCID.ColumnName().String():     iccid,
+			db.Device.SIMCard.ColumnName().String():   simCard,
 			db.Device.BoardType.ColumnName().String(): boardType,
 			db.Device.Version.ColumnName().String():   version,
 			db.Device.Relation.ColumnName().String():  relation,
 		}); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
-		span.SetAttributes(attribute.String("iccid", iccid))
+		span.SetAttributes(attribute.String("sim_card", simCard))
 		span.SetAttributes(attribute.String("board_type", boardType))
 		span.SetAttributes(attribute.String("version", version))
 		span.SetAttributes(attribute.String("relation", relation))
 		span.SetAttributes(attribute.String("error", err.Error()))
 
-		slog.Error("[DeviceRepo] ChangeDeviceInfo error", "device_id", deviceID, "iccid", iccid, "board_type", boardType, "version", version, "relation", relation, "error", err.Error())
+		slog.Error("[DeviceRepo] ChangeDeviceInfo error", "device_id", deviceID, "sim_card", simCard, "board_type", boardType, "version", version, "relation", relation, "error", err.Error())
 		return err
 	}
 

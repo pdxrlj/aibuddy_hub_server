@@ -275,7 +275,7 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType stri
 			return err
 		}
 
-		iccid, version, err := s.deviceService.FromCacheGetDeviceInfo(d.DeviceID)
+		simCard, version, err := s.deviceService.FromCacheGetDeviceInfo(d.DeviceID)
 		if err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
@@ -283,10 +283,10 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType stri
 			return err
 		}
 
-		if err := s.DeviceRepo.ChangeDeviceInfo(ctx, d.DeviceID, iccid, boardType, version, relation, tx); err != nil {
+		if err := s.DeviceRepo.ChangeDeviceInfo(ctx, d.DeviceID, simCard, boardType, version, relation, tx); err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
-			span.SetAttributes(attribute.String("iccid", iccid))
+			span.SetAttributes(attribute.String("sim_card", simCard))
 			span.SetAttributes(attribute.String("board_type", boardType))
 			span.SetAttributes(attribute.String("version", version))
 			span.SetAttributes(attribute.String("relation", relation))

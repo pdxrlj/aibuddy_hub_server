@@ -30,7 +30,7 @@ func newDevice(db *gorm.DB, opts ...gen.DOOption) device {
 	_device.ALL = field.NewAsterisk(tableName)
 	_device.ID = field.NewInt64(tableName, "id")
 	_device.DeviceID = field.NewString(tableName, "device_id")
-	_device.ICCID = field.NewString(tableName, "iccid")
+	_device.SIMCard = field.NewString(tableName, "sim_card")
 	_device.BoardType = field.NewString(tableName, "board_type")
 	_device.Version = field.NewString(tableName, "version")
 	_device.Longitude = field.NewString(tableName, "longitude")
@@ -68,7 +68,7 @@ type device struct {
 	ALL          field.Asterisk
 	ID           field.Int64
 	DeviceID     field.String // 设备ID
-	ICCID        field.String // 手机卡ICCID
+	SIMCard      field.String // 手机卡SIM卡号
 	BoardType    field.String // 板子类型
 	Version      field.String // 板子版本
 	Longitude    field.String // 经度
@@ -104,7 +104,7 @@ func (d *device) updateTableName(table string) *device {
 	d.ALL = field.NewAsterisk(table)
 	d.ID = field.NewInt64(table, "id")
 	d.DeviceID = field.NewString(table, "device_id")
-	d.ICCID = field.NewString(table, "iccid")
+	d.SIMCard = field.NewString(table, "sim_card")
 	d.BoardType = field.NewString(table, "board_type")
 	d.Version = field.NewString(table, "version")
 	d.Longitude = field.NewString(table, "longitude")
@@ -138,7 +138,7 @@ func (d *device) fillFieldMap() {
 	d.fieldMap = make(map[string]field.Expr, 19)
 	d.fieldMap["id"] = d.ID
 	d.fieldMap["device_id"] = d.DeviceID
-	d.fieldMap["iccid"] = d.ICCID
+	d.fieldMap["sim_card"] = d.SIMCard
 	d.fieldMap["board_type"] = d.BoardType
 	d.fieldMap["version"] = d.Version
 	d.fieldMap["longitude"] = d.Longitude

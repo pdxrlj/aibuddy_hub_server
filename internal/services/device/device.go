@@ -79,7 +79,7 @@ type ConfigInfo struct {
 // deviceID: 设备ID
 // 返回：设备的配置信息，如 mqtt 的连接信息
 // 错误：如果生成 MQTT 认证信息失败，则返回错误
-func (d *Service) FirstOnline(ctx context.Context, deviceID, iccid, version string) (*ConfigInfo, error) {
+func (d *Service) FirstOnline(ctx context.Context, deviceID, simCard, version string) (*ConfigInfo, error) {
 	_, span := tracer().Start(ctx, "DeviceService.FirstOnline")
 	defer span.End()
 
@@ -97,7 +97,7 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, iccid, version stri
 	span.SetAttributes(attribute.String("password", password))
 
 	// 为后续的完善用户信息做准备，缓存设备信息
-	if err := d.cacheDeviceInfo(deviceID, iccid, version); err != nil {
+	if err := d.cacheDeviceInfo(deviceID, simCard, version); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
 		return nil, err
@@ -111,10 +111,10 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, iccid, version stri
 	}, nil
 }
 
-func (d *Service) cacheDeviceInfo(deviceID, iccid, version string) error {
+func (d *Service) cacheDeviceInfo(deviceID, simCard, version string) error {
 	cacheData := map[string]string{
-		"iccid":   iccid,
-		"version": version,
+		"sim_card": simCard,
+		"version":  version,
 	}
 	jsonData, err := json.Marshal(cacheData)
 	if err != nil {
@@ -124,11 +124,11 @@ func (d *Service) cacheDeviceInfo(deviceID, iccid, version string) error {
 	return d.cache.Set("device_info:"+deviceID, jsonData)
 }
 
-// FromCacheGetDeviceInfo 获取设备 ICCID 和版本号信息
-func (d *Service) FromCacheGetDeviceInfo(deviceID string) (iccid, version string, err error) {
+// FromCacheGetDeviceInfo 获取设备 SIM 卡号和版本号信息
+func (d *Service) FromCacheGetDeviceInfo(deviceID string) (simCard, version string, err error) {
 	data, err := d.cache.Get("device_info:" + strings.ReplaceAll(deviceID, ":", "-"))
 	if err != nil {
-		return "", "", fmt.Errorf("无法从缓存信息获取设备的 SN: %w", err)
+		return "", "", fmt.Errorf("无法从缓存信息获取设备的 SIM 卡号: %w", err)
 	}
 
 	var jsonData []byte
@@ -138,25 +138,25 @@ func (d *Service) FromCacheGetDeviceInfo(deviceID string) (iccid, version string
 	case string:
 		jsonData = []byte(v)
 	default:
-		return "", "", fmt.Errorf("无法从缓存信息获取设备的 SN: 数据类型错误")
+		return "", "", fmt.Errorf("无法从缓存信息获取设备的 SIM 卡号: 数据类型错误")
 	}
 
 	var cacheData map[string]string
 	if err := json.Unmarshal(jsonData, &cacheData); err != nil {
-		return "", "", errors.New("无法从缓存信息获取设备的 SN: 数据类型错误")
+		return "", "", errors.New("无法从缓存信息获取设备的 SIM 卡号: 数据类型错误")
 	}
 	var ok bool
 
-	iccid, ok = cacheData["iccid"]
+	simCard, ok = cacheData["sim_card"]
 	if !ok {
-		return "", "", errors.New("无法从缓存信息获取设备的SN: iccid not found")
+		return "", "", errors.New("无法从缓存信息获取设备的SIM卡号: sim_card not found")
 	}
 	version, ok = cacheData["version"]
 	if !ok {
-		return "", "", errors.New("无法从缓存信息获取设备的SN: version not found")
+		return "", "", errors.New("无法从缓存信息获取设备的SIM卡号: version not found")
 	}
 
-	return iccid, version, nil
+	return simCard, version, nil
 }
 
 // GetLocation 获取设备位置信息
