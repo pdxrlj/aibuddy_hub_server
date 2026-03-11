@@ -5,18 +5,16 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/repository"
 	"aibuddy/pkg/helpers"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"text/template"
 	"time"
 
 	agentmodel "trpc.group/trpc-go/trpc-agent-go/model"
 	"trpc.group/trpc-go/trpc-agent-go/runner"
 )
-
-// RoleAgentUserPrompt 角色代理用户提示
-// embed role_agent.prompt
-var RoleAgentUserPrompt string
 
 // RoleAgentService 角色代理服务
 type RoleAgentService struct {
@@ -28,6 +26,27 @@ func NewRoleAgentService() *RoleAgentService {
 	return &RoleAgentService{
 		ChatDialogueRepository: repository.NewChatDialogueRepository(),
 	}
+}
+
+// BuildRoleAgentPrompt 构建角色代理提示词
+func (s *RoleAgentService) BuildRoleAgentPrompt(dialogue string) (string, error) {
+	tmpl, err := template.New("role_agent").Parse(RoleAgentPrompt)
+	if err != nil {
+		return "", fmt.Errorf("parse template failed: %w", err)
+	}
+
+	data := struct {
+		Dialogue string
+	}{
+		Dialogue: dialogue,
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("execute template failed: %w", err)
+	}
+
+	return buf.String(), nil
 }
 
 // RoleChatAgent 角色聊天代理
@@ -51,6 +70,11 @@ func (s *RoleAgentService) RoleChatAgent(deviceID string, startDate, endDate tim
 			return nil, err
 		}
 
+		prompt, err := s.BuildRoleAgentPrompt(content)
+		if err != nil {
+			return nil, err
+		}
+
 		agentModel := NewAgentModel(
 			s.AgentOutputFormat(),
 			"请严格按照需求输出",
@@ -60,7 +84,7 @@ func (s *RoleAgentService) RoleChatAgent(deviceID string, startDate, endDate tim
 
 		eventCh, err := r.Run(context.Background(), "role_agent", "role_agent", agentmodel.Message{
 			Role:    agentmodel.RoleUser,
-			Content: content,
+			Content: prompt,
 		})
 
 		if err != nil {

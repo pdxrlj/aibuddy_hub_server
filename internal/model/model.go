@@ -76,6 +76,10 @@ func (d *DB) GenerateQuery() {
 		NFC{},
 
 		UserAgent{},
+
+		Emotion{},
+
+		PomodoroClock{},
 	}
 
 	_ = d.db.AutoMigrate(models...)

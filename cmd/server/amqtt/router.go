@@ -42,7 +42,12 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 
 	nfcHandler := handler.NewNFCHandler()
 	r.On(":device_id/nfc", nfcHandler.Handle)
+
 	// 消息处理
 	msgHandler := handler.NewMsgHandler()
 	r.On(":device_id/msg", msgHandler.Handle)
+
+	// 番茄钟
+	pomodoroHandler := handler.NewPomodoroHandler()
+	r.On(":device_id/pomodoro", pomodoroHandler.Handle)
 }

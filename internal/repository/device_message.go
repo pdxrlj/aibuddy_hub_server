@@ -59,3 +59,15 @@ func (r *DeviceMessageRepo) GetMessageList(ctx context.Context, deviceID string,
 	offset := (page - 1) * size
 	return query.DeviceMessage.WithContext(ctx).Where(query.DeviceMessage.ToDeviceID.Eq(deviceID)).FindByPage(offset, size)
 }
+
+// GetMessageListByDeviceID 获取设备在指定时间范围内的消息列表
+func (r *DeviceMessageRepo) GetMessageListByDeviceID(ctx context.Context, deviceID string, startTime, endTime time.Time) ([]*model.DeviceMessage, error) {
+	_, span := tracer.Start(ctx, "DeviceMessageRepo.GetMessageListByDeviceID")
+	defer span.End()
+
+	return query.DeviceMessage.WithContext(ctx).
+		Where(query.DeviceMessage.ToDeviceID.Eq(deviceID)).
+		Or(query.DeviceMessage.FromDeviceID.Eq(deviceID)).
+		Where(query.DeviceMessage.CreatedAt.Between(startTime, endTime)).
+		Find()
+}

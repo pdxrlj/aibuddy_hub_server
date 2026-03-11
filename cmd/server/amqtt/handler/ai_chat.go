@@ -4,11 +4,13 @@ import (
 	ai "aibuddy/aiframe/ai_chat"
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
+	"aibuddy/internal/services/agent"
 	"aibuddy/internal/services/cache"
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
 	"aibuddy/pkg/mqtt"
+	"context"
 	"fmt"
 	"log/slog"
 	"time"
@@ -18,13 +20,15 @@ import (
 
 // AiChatHandler AI对话处理器
 type AiChatHandler struct {
-	cache flash.Flash
+	cache          flash.Flash
+	EmotionService *agent.EmotionWarningService
 }
 
 // NewAiChatHandler 创建AI对话处理器
 func NewAiChatHandler() *AiChatHandler {
 	return &AiChatHandler{
-		cache: cache.Flash(),
+		cache:          cache.Flash(),
+		EmotionService: agent.NewEmotionWarningService(),
 	}
 }
 
@@ -42,22 +46,7 @@ func (h *AiChatHandler) Chat(ctx *mqtt.Context) {
 
 	// 角色切换
 	if msg.Type == ai.ChatTypeSwitchRole {
-		slog.Error("[MQTT] Invalid chat type", "type", msg.Type)
-		instanceID := xxhash.Sum64String(deviceID)
-		if err := baidu.NewSwitchRole().SwitchSceneRole(&baidu.SwitchRoleRequest{
-			AiAgentInstanceID: instanceID,
-			SceneRole:         msg.Role,
-		}); err != nil {
-			slog.Error("[MQTT] Switch role failed", "error", err)
-			return
-		}
-
-		_, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).Update(query.Device.AgentName, msg.Role)
-		if err != nil {
-			slog.Error("[MQTT] Update device agent name failed", "error", err)
-			return
-		}
-
+		h.handleSwitchRole(deviceID, msg.Role)
 		return
 	}
 
@@ -78,14 +67,45 @@ func (h *AiChatHandler) Chat(ctx *mqtt.Context) {
 			startTime = time.Now().Add(-time.Duration(msg.Dur) * time.Second).Unix()
 		}
 
-		// 下载数据
+		// 下载数据并触发预警
 		go func() {
 			if err := h.downloadDialogues(deviceID, startTime, time.Now().Unix()); err != nil {
 				slog.Error("[MQTT] Download dialogues failed", "error", err)
+				return
+			}
+
+			// 查询刚下载的对话记录
+			dialogues, err := query.ChatDialogue.
+				Where(query.ChatDialogue.DeviceID.Eq(deviceID)).
+				Where(query.ChatDialogue.QuestionTime.Gte(time.Unix(startTime, 0))).
+				Find()
+			if err != nil {
+				slog.Error("[MQTT] Query dialogues failed", "error", err)
+				return
+			}
+
+			// 触发情绪预警
+			if _, err := h.TriggerWarning(context.Background(), deviceID, dialogues); err != nil {
+				slog.Error("[MQTT] Trigger warning failed", "error", err)
 			}
 		}()
+	}
+}
 
-		// TODO 触发模型数据整理
+// handleSwitchRole 处理角色切换
+func (h *AiChatHandler) handleSwitchRole(deviceID, role string) {
+	instanceID := xxhash.Sum64String(deviceID)
+	if err := baidu.NewSwitchRole().SwitchSceneRole(&baidu.SwitchRoleRequest{
+		AiAgentInstanceID: instanceID,
+		SceneRole:         role,
+	}); err != nil {
+		slog.Error("[MQTT] Switch role failed", "error", err)
+		return
+	}
+
+	_, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).Update(query.Device.AgentName, role)
+	if err != nil {
+		slog.Error("[MQTT] Update device agent name failed", "error", err)
 	}
 }
 
@@ -164,4 +184,45 @@ func (h *AiChatHandler) pairDialogues(deviceID string, agentName string, items [
 	}
 
 	return result
+}
+
+// TriggerWarning 情绪预警服务
+func (h *AiChatHandler) TriggerWarning(ctx context.Context, deviceID string, dialogues []*model.ChatDialogue) (*agent.WarningResult, error) {
+	if len(dialogues) == 0 {
+		return nil, nil
+	}
+
+	result, err := h.EmotionService.GenerateWarning(dialogues)
+	if err != nil {
+		slog.Error("[MQTT] Generate warning failed", "error", err)
+		return nil, err
+	}
+
+	slog.Info("[MQTT] Warning result",
+		"trigger_warning", result.TriggerWarning,
+		"warning_level", result.WarningLevel,
+		"confidence", result.Confidence,
+	)
+
+	if result.TriggerWarning {
+		var dialogueID int64
+		if len(dialogues) > 0 {
+			dialogueID = dialogues[len(dialogues)-1].ID
+		}
+
+		emotion, err := result.ToEmotion(deviceID, dialogueID)
+		if err != nil {
+			slog.Error("[MQTT] Convert to emotion failed", "error", err)
+			return result, nil
+		}
+
+		if err := h.EmotionService.CreateEmotion(ctx, emotion); err != nil {
+			slog.Error("[MQTT] Create emotion failed", "error", err)
+			return result, nil
+		}
+
+		slog.Info("[MQTT] Emotion saved", "device_id", deviceID, "warning_level", result.WarningLevel)
+	}
+
+	return result, nil
 }

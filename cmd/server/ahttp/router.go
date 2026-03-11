@@ -4,6 +4,7 @@ package ahttp
 import (
 	anniversaryhandler "aibuddy/cmd/server/ahttp/handler/anniversary"
 	devicehandler "aibuddy/cmd/server/ahttp/handler/device"
+	emotionhandler "aibuddy/cmd/server/ahttp/handler/emotion"
 	filehandler "aibuddy/cmd/server/ahttp/handler/file"
 	"aibuddy/cmd/server/ahttp/handler/nfc"
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
@@ -91,6 +92,13 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 发送解绑消息给设备
 			userGroup.POST("/unbind", h.Unbind)
+		})
+
+		// 情绪
+		group.Group("/emotion", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(emotionGroup *ahttp.Group) {
+			h := emotionhandler.NewHandler()
+			emotionGroup.GET("/:device_id/list", h.GetEmotions)
+			emotionGroup.GET("/:device_id/latest", h.GetLatestEmotion)
 		})
 
 		group.Group("/role", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(role *ahttp.Group) {

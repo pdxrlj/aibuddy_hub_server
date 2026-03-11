@@ -167,7 +167,7 @@ type MemoryCapsuleSummaryData struct {
 
 // GetMemoryCapsuleSummary 获取记忆胶囊总结
 func (g *GrowthReport) GetMemoryCapsuleSummary(deviceID string, startTime, endTime time.Time) []*MemoryCapsuleSummaryData {
-	nfcData, err := g.nfcRepository.GetNfcData(deviceID, startTime, endTime)
+	nfcData, err := g.nfcRepository.GetNfcDataByDeviceID(deviceID, startTime, endTime)
 	if err != nil {
 		return nil
 	}

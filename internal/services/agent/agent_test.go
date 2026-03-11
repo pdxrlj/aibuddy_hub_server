@@ -36,8 +36,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// TestRoleChatAgentIntegration 集成测试，需要真实 LLM API
-// 运行前请确保配置了正确的 API Key
+// TestRoleChatAgentIntegration 集成测试
 func TestRoleChatAgentIntegration(t *testing.T) {
 	service := NewRoleAgentService()
 
