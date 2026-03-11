@@ -5,6 +5,7 @@ import (
 	"aibuddy/internal/query"
 	"context"
 	"errors"
+	"log/slog"
 
 	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gen"
@@ -21,7 +22,7 @@ func NewDeviceRepo() *DeviceRepo {
 
 // FirstAddDevice 第一次绑定设备
 func (d *DeviceRepo) FirstAddDevice(ctx context.Context, deviceID string, uid int64, tx ...*query.Query) error {
-	_, span := tracer.Start(ctx, "UpsertProfile")
+	_, span := tracer.Start(ctx, "FirstAddDevice")
 	defer span.End()
 
 	db := query.Q
@@ -74,6 +75,15 @@ func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, icci
 			db.Device.Version.ColumnName().String():   version,
 			db.Device.Relation.ColumnName().String():  relation,
 		}); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		span.SetAttributes(attribute.String("iccid", iccid))
+		span.SetAttributes(attribute.String("board_type", boardType))
+		span.SetAttributes(attribute.String("version", version))
+		span.SetAttributes(attribute.String("relation", relation))
+		span.SetAttributes(attribute.String("error", err.Error()))
+
+		slog.Error("[DeviceRepo] ChangeDeviceInfo error", "device_id", deviceID, "iccid", iccid, "board_type", boardType, "version", version, "relation", relation, "error", err.Error())
 		return err
 	}
 
@@ -231,6 +241,7 @@ func (d *DeviceRepo) GetUserDeviceList(ctx context.Context, uid int64) ([]*model
 		Find()
 	if err != nil {
 		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid))
 		return nil, err
 	}
 	return devices, nil

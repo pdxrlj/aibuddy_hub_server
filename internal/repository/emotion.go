@@ -5,6 +5,9 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
+	"time"
+
+	"gorm.io/gen"
 )
 
 // EmotionRepo is the repository for the emotion
@@ -35,4 +38,20 @@ func (r *EmotionRepo) GetLatestEmotion(ctx context.Context, deviceID string) (*m
 		Where(query.Emotion.DeviceID.Eq(deviceID)).
 		Order(query.Emotion.CreatedAt.Desc()).
 		First()
+}
+
+// GetEmotionsByDeviceID 获取设备在指定时间范围内的情绪列表
+func (r *EmotionRepo) GetEmotionsByDeviceID(ctx context.Context, deviceID string, startTime, endTime time.Time, confidences ...float64) ([]*model.Emotion, error) {
+	return query.Emotion.WithContext(ctx).
+		Scopes(func(d gen.Dao) gen.Dao {
+			if len(confidences) > 0 {
+				// 必须是大于等于confidences[0]的值
+				return d.Where(query.Emotion.Confidence.Gte(confidences[0]))
+			}
+			return d
+		}).
+		Where(query.Emotion.DeviceID.Eq(deviceID)).
+		Where(query.Emotion.CreatedAt.Between(startTime, endTime)).
+		Order(query.Emotion.CreatedAt.Desc()).
+		Find()
 }

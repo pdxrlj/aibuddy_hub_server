@@ -44,8 +44,8 @@ func (r *NFCRepository) GetByNFCID(nfcID string) (*model.NFC, error) {
 	return nfc, err
 }
 
-// GetNfcData 获取NFC数据
-func (r *NFCRepository) GetNfcData(deviceID string, startTime, endTime time.Time) ([]*model.NFC, error) {
+// GetNfcDataByDeviceID 获取设备在指定时间范围内的NFC数据
+func (r *NFCRepository) GetNfcDataByDeviceID(deviceID string, startTime, endTime time.Time) ([]*model.NFC, error) {
 	nfcData, err := query.NFC.Where(query.NFC.DeviceID.Eq(deviceID)).Where(query.NFC.CreatedAt.Between(startTime, endTime)).Find()
 	if err != nil {
 		return nil, err

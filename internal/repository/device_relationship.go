@@ -147,3 +147,30 @@ func (d *DeviceRelationshipRepo) DeleteDeviceRelationship(ctx context.Context, d
 
 	return nil
 }
+
+// GetFriendsByDeviceID 获取所有的朋友，在指定时间范围内的朋友
+func (d *DeviceRelationshipRepo) GetFriendsByDeviceID(ctx context.Context, deviceID string, startTime, endTime time.Time) ([]*model.DeviceRelationship, error) {
+	_, span := tracer.Start(ctx, "DeviceRelationshipRepo.GetFriendsByDeviceID")
+	defer span.End()
+
+	var reverseDeviceIDs []string
+	err := query.DeviceRelationship.WithContext(ctx).
+		Where(query.DeviceRelationship.TargetDeviceID.Eq(deviceID)).
+		Where(query.DeviceRelationship.Status.Eq(model.RelationshipStatusAccepted.String())).
+		Pluck(query.DeviceRelationship.DeviceID, &reverseDeviceIDs)
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	if len(reverseDeviceIDs) == 0 {
+		return []*model.DeviceRelationship{}, nil
+	}
+
+	return query.DeviceRelationship.WithContext(ctx).
+		Where(query.DeviceRelationship.DeviceID.Eq(deviceID)).
+		Where(query.DeviceRelationship.Status.Eq(model.RelationshipStatusAccepted.String())).
+		Where(query.DeviceRelationship.TargetDeviceID.In(reverseDeviceIDs...)).
+		Where(query.DeviceRelationship.CreatedAt.Between(startTime, endTime)).
+		Find()
+}
