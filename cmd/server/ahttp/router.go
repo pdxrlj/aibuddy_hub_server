@@ -92,6 +92,10 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 发送解绑消息给设备
 			userGroup.POST("/unbind", h.Unbind)
+
+			// 小程序留言
+			userGroup.POST("/message", h.LeavaMessage)
+			userGroup.GET("/message_list", h.MessageList)
 		})
 
 		// 情绪

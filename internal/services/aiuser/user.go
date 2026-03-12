@@ -8,6 +8,7 @@ import (
 	"aibuddy/internal/repository"
 	"aibuddy/internal/services/cache"
 	"aibuddy/internal/services/device"
+	"aibuddy/internal/services/websocket"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
 	"aibuddy/pkg/helpers"
@@ -15,13 +16,16 @@ import (
 	"aibuddy/pkg/sms"
 	"aibuddy/pkg/wechatservice"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -42,6 +46,7 @@ type Service struct {
 	DeviceInfoRepo   *repository.DeviceInfoRepo
 	DeviceRepo       *repository.DeviceRepo
 	BindDeviceSnRepo *repository.BindDeviceSnRepo
+	DeviceMsgRepo    *repository.DeviceMessageRepo
 
 	sms   *sms.AliyunSMS
 	cache flash.Flash
@@ -74,6 +79,7 @@ func New() *Service {
 		sms:              sms,
 		cache:            cache.Flash(),
 		deviceService:    device.NewService(),
+		DeviceMsgRepo:    repository.NewDeviceMessageRepo(),
 	}
 }
 
@@ -447,4 +453,71 @@ func (s *Service) UserDeviceList(ctx context.Context, uid int64) ([]*model.Devic
 	}
 
 	return devices, nil
+}
+
+// CreateMessage 用户留言
+func (s *Service) CreateMessage(ctx context.Context, uid int64, data *model.DeviceMessage) error {
+	_, span := tracer().Start(ctx, "CreateMessage")
+	defer span.End()
+
+	if !s.DeviceRepo.CheckDeviceAuth(ctx, uid, data.ToDeviceID) {
+		err := errors.New("无法给未绑定的设备留言")
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", data.ToDeviceID))
+		return err
+	}
+	info, err := s.DeviceRepo.GetDeviceInfo(ctx, data.ToDeviceID)
+	if err != nil || info == nil {
+		err := errors.New("设备信息异常")
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", data.ToDeviceID))
+		return err
+	}
+
+	data.MsgID = helpers.GenerateNumber(10)
+	data.FromDeviceID = fmt.Sprintf("%d", uid)
+	data.FromUsername = info.Relation
+	if err = s.DeviceMsgRepo.CreateDeviceMessage(ctx, data); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", data.ToDeviceID), attribute.Int64("uid", uid))
+		return errors.New("创建留言失败")
+	}
+
+	// 通过 WebSocket 发送消息给设备
+	msg := map[string]any{
+		"msg_id":    data.MsgID,
+		"from":      uid,
+		"from_user": info.DeviceInfo.NickName,
+		"content":   data.Content,
+		"fmt":       data.Fmt,
+		"dur":       data.Dur,
+	}
+
+	message, err := json.Marshal(msg)
+	if err != nil {
+		span.RecordError(err)
+		return err
+	}
+	websocket.SendMessage(cast.ToString(info.UID), &websocket.UserToDeviceFrame{
+		Type:     websocket.FrameTypeUserMsg,
+		DeviceID: data.ToDeviceID,
+		Message:  message,
+	})
+
+	return nil
+}
+
+// GetMessage 获取指定留言
+func (s *Service) GetMessage(ctx context.Context, uid int64, deviceID string, page int, pageSize int) ([]*model.DeviceMessage, int64, error) {
+	_, span := tracer().Start(ctx, "CreateMessage")
+	defer span.End()
+
+	if !s.DeviceRepo.CheckDeviceAuth(ctx, uid, deviceID) {
+		err := errors.New("设备ID参数错误")
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", deviceID))
+		return nil, 0, err
+	}
+
+	return s.DeviceMsgRepo.GetMessageBetweenUser(ctx, deviceID, strconv.Itoa(int(uid)), page, pageSize)
 }

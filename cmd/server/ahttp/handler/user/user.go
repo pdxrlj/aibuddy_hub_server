@@ -276,3 +276,51 @@ func (h *Handler) DeviceList(state *ahttp.State) error {
 		DeviceList: deviceListItems,
 	}).Success()
 }
+
+// LeavaMessage 发送留言
+func (h *Handler) LeavaMessage(state *ahttp.State, req *SendMsgRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.LeavaMessage")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	if err := h.UserServer.CreateMessage(ctx, uid, &model.DeviceMessage{
+		ToDeviceID: req.DeviceID,
+		Fmt:        model.MessageFmt(req.Fmt),
+		Content:    req.Content,
+		Dur:        req.Dur,
+	}); err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success()
+}
+
+// MessageList 获取留言列表
+func (h *Handler) MessageList(state *ahttp.State, req *GetMessageRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.MessageList")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	data, total, err := h.UserServer.GetMessage(ctx, uid, req.DeviceID, req.Page, req.PageSize)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().SetData(MsgListResponse{
+		Page:     req.Page,
+		PageSize: req.PageSize,
+		Total:    total,
+		Data:     data,
+	}).Success()
+}

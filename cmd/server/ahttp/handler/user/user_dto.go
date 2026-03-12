@@ -1,6 +1,8 @@
 // Package userhandler 提供用户相关的 HTTP 处理器
 package userhandler
 
+import "aibuddy/internal/model"
+
 // LoginRequest 登录请求
 type LoginRequest struct {
 	Username string `json:"username" validate:"required"`
@@ -65,17 +67,17 @@ type UserinfoRequest struct {
 
 // LostRequest 挂失请求
 type LostRequest struct {
-	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac"`
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
 }
 
 // UnlostRequest 解除挂失请求
 type UnlostRequest struct {
-	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac"`
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
 }
 
 // UnbindRequest 解绑请求
 type UnbindRequest struct {
-	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac"`
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
 }
 
 // HaveDeviceResponse 是否第一次完善设备信息响应
@@ -96,4 +98,27 @@ type DeviceInfoListItem struct {
 	Status     string `json:"status"`
 	Avatar     string `json:"avatar"`
 	Gender     string `json:"gender"`
+}
+
+// SendMsgRequest 创建留言数据
+type SendMsgRequest struct {
+	DeviceID string `json:"device_id"`
+	Fmt      string `json:"fmt"`
+	Content  string `json:"content"`
+	Dur      int    `json:"dur"`
+}
+
+// GetMessageRequest 获取留言列表数据
+type GetMessageRequest struct {
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+	Page     int    `json:"page" form:"page" param:"page" query:"page" validate:"required"`
+	PageSize int    `json:"page_size" form:"page_size" param:"page_size" query:"page_size" validate:"required"`
+}
+
+// MsgListResponse 留言列表响应
+type MsgListResponse struct {
+	Page     int                    `json:"page"`
+	PageSize int                    `json:"page_size"`
+	Total    int64                  `json:"total"`
+	Data     []*model.DeviceMessage `json:"data"`
 }
