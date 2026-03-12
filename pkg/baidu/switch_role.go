@@ -24,6 +24,7 @@ type SwitchRoleRequest struct {
 	AiAgentInstanceID uint64 `json:"ai_agent_instance_id"` // 大模型互动实例ID
 	SceneRole         string `json:"scene_role"`           // 角色名称（需已在控制台创建）
 	TTS               string `json:"tts,omitempty"`        // TTS配置，取值等价于创建实例接口的tts_url
+	Query             string `json:"query,omitempty"`      // 查询内容
 	TTSSayHi          string `json:"tts_sayhi,omitempty"`  // 切换音色后的招呼语
 }
 
@@ -45,6 +46,9 @@ func (s *SwitchRole) SwitchSceneRole(req *SwitchRoleRequest) error {
 	}
 	if req.TTS != "" {
 		body["tts"] = req.TTS
+	}
+	if req.Query != "" {
+		body["query"] = req.Query
 	}
 	if req.TTSSayHi != "" {
 		body["tts_sayhi"] = req.TTSSayHi

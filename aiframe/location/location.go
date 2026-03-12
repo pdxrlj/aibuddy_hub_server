@@ -7,22 +7,6 @@ import (
 	"encoding/json"
 )
 
-// {
-//     "type": "bs",
-//     "lon": "116.397428",
-//     "lat": "39.90923",
-//     "lac": 12345,
-//     "cid": 67890
-// }
-
-// {
-//     "type": "wifi",
-//     "data": [
-//         "54:6c:3e:77:89:ab,-45",
-//         "a4:5d:3c:12:34:56,-67"
-//     ]
-// }
-
 // SourceType 位置类型
 type SourceType string
 

@@ -147,9 +147,35 @@ type ReconnectConfig struct {
 
 // BaiduConfig 百度云配置
 type BaiduConfig struct {
-	Ak    string `json:"ak" mapstructure:"ak"`
-	Sk    string `json:"sk" mapstructure:"sk"`
-	AppID string `json:"app_id" mapstructure:"app_id"`
+	Ak       string            `json:"ak" mapstructure:"ak"`
+	Sk       string            `json:"sk" mapstructure:"sk"`
+	AppID    string            `json:"app_id" mapstructure:"app_id"`
+	Qianfan  *QianfanConfig    `json:"qianfan" mapstructure:"qianfan"`
+	Qianwen  *QianwenConfig    `json:"qianwen" mapstructure:"qianwen"`
+	Volc     *VolcConfig       `json:"volc" mapstructure:"volc"`
+}
+
+// QianfanConfig 千帆大模型配置
+type QianfanConfig struct {
+	Model   string `json:"model" mapstructure:"model"`
+	BaseURL string `json:"base_url" mapstructure:"base_url"`
+	APIKey  string `json:"api_key" mapstructure:"api_key"`
+}
+
+// QianwenConfig 千问大模型配置
+type QianwenConfig struct {
+	Model   string `json:"model" mapstructure:"model"`
+	BaseURL string `json:"base_url" mapstructure:"base_url"`
+	APIKey  string `json:"api_key" mapstructure:"api_key"`
+}
+
+// VolcConfig 火山引擎配置
+type VolcConfig struct {
+	Apid   string  `json:"apid" mapstructure:"apid"`
+	Apikey string  `json:"apikey" mapstructure:"apikey"`
+	Vcn    string  `json:"vcn" mapstructure:"vcn"`
+	Vol    float64 `json:"vol" mapstructure:"vol"`
+	Spd    float64 `json:"spd" mapstructure:"spd"`
 }
 
 // Setup 初始化配置

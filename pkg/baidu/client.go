@@ -40,6 +40,41 @@ func NewClient() *Client {
 	}
 }
 
+// NewClientWithAKSK 使用指定AK/SK创建百度云API客户端
+func NewClientWithAKSK(ak, sk string) *Client {
+	return &Client{
+		httpClient: resty.New().
+			SetRetryCount(3).
+			SetRetryWaitTime(500 * time.Millisecond).
+			SetRetryMaxWaitTime(5 * time.Second).
+			AddRetryCondition(func(r *resty.Response, err error) bool {
+				if err != nil {
+					return true
+				}
+				return r.StatusCode() >= http.StatusInternalServerError
+			}),
+		signer: NewSignature(ak, sk),
+		host:   "rtc-aiagent.baidubce.com",
+	}
+}
+
+// BuildAuthorization 构建鉴权字符串
+func (c *Client) BuildAuthorization(method, requestURL string) (string, error) {
+	parsedURL, err := url.Parse(requestURL)
+	if err != nil {
+		return "", fmt.Errorf("解析URL失败: %w", err)
+	}
+
+	path := parsedURL.Path
+	query := parsedURL.Query()
+
+	auth := c.signer.GenerateAuth(method, path, query, map[string]string{
+		"host": parsedURL.Host,
+	})
+
+	return auth.Authorization, nil
+}
+
 // Request 发送带自动签名的请求
 func (c *Client) Request(method, path string, query url.Values, body any, result any) error {
 	auth := c.signer.GenerateAuth(method, path, query, map[string]string{

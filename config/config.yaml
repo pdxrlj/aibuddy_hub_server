@@ -63,6 +63,20 @@ baidu:
   ak: ""
   sk: ""
   app_id: ""
+  qianfan:
+    model: ""
+    base_url: ""
+    api_key: ""
+  qianwen:
+    model: ""
+    base_url: ""
+    api_key: ""
+  volc:
+    apid: ""
+    apikey: ""
+    vcn: "zh_female_daimengchuanmei_moon_bigtts"
+    vol: 1.0
+    spd: 1.0
 tracer:
   service_name: "aibuddy_hub"
   endpoint: "112.132.224.74:4317"

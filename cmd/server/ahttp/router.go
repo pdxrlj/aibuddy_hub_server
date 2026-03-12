@@ -56,7 +56,18 @@ func RegisterRoutes(base *ahttp.Base) {
 			// 大模型互动实例
 			deviceGroup.Group("/aiagent", nil, func(rtcGroup *ahttp.Group) {
 				rtc := devicehandler.NewRtcHandler()
+				// 与端侧SDK交互的接口
 				rtcGroup.POST("/generateAIAgentCall", rtc.GenerateAIAgentCall)
+				rtcGroup.POST("/stopAIAgentInstance", rtc.StopAIAgentInstance)
+				rtcGroup.POST("/switchSceneRole", rtc.SwitchSceneRole)
+
+				// userserver接口
+				rtcGroup.POST("/userserver/instance/generate", rtc.InstanceGenerate)
+				rtcGroup.POST("/userserver/instance/stop", rtc.InstanceStop)
+				rtcGroup.POST("/userserver/auth/generate", rtc.AuthGenerate)
+				rtcGroup.POST("/userserver/instance/baidu", rtc.InstanceBaidu)
+				rtcGroup.POST("/userserver/instance/qianwen", rtc.InstanceQianwen)
+				rtcGroup.POST("/userserver/instance/volc", rtc.InstanceVolc)
 			})
 		})
 

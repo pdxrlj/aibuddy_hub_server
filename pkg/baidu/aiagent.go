@@ -18,6 +18,11 @@ func NewAIAgent() *AIAgent {
 	return &AIAgent{client: NewClient()}
 }
 
+// NewAIAgentWithAKSK 使用指定AK/SK创建大模型互动实例客户端
+func NewAIAgentWithAKSK(ak, sk string) *AIAgent {
+	return &AIAgent{client: NewClientWithAKSK(ak, sk)}
+}
+
 // InstanceType 互动实例类型
 type InstanceType string
 
@@ -70,7 +75,7 @@ type AIAgentConfig struct {
 type GenerateAIAgentCallRequest struct {
 	AppID        string
 	InstanceType InstanceType   `json:"instance_type,omitempty"`
-	Config       *AIAgentConfig `json:"config,omitempty"`
+	Config       any `json:"config,omitempty"` // 支持 *AIAgentConfig 或 string
 }
 
 // AIAgentContext 大模型互动实例上下文
@@ -103,11 +108,18 @@ func (a *AIAgent) GenerateAIAgentCall(req *GenerateAIAgentCallRequest) (*Generat
 	}
 
 	if req.Config != nil {
-		configBytes, err := json.Marshal(req.Config)
-		if err != nil {
-			return nil, fmt.Errorf("序列化配置失败: %w", err)
+		switch cfg := req.Config.(type) {
+		case string:
+			// 如果已经是字符串，直接传递（原始JSON字符串）
+			body["config"] = cfg
+		case *AIAgentConfig:
+			// 如果是结构体，需要序列化
+			configBytes, err := json.Marshal(cfg)
+			if err != nil {
+				return nil, fmt.Errorf("序列化配置失败: %w", err)
+			}
+			body["config"] = string(configBytes)
 		}
-		body["config"] = string(configBytes)
 	}
 
 	var result GenerateAIAgentCallResponse
@@ -121,7 +133,7 @@ func (a *AIAgent) GenerateAIAgentCall(req *GenerateAIAgentCallRequest) (*Generat
 // StopAIAgentInstanceRequest 停止大模型互动实例请求
 type StopAIAgentInstanceRequest struct {
 	AppID             string
-	AiAgentInstanceID uint64 `json:"ai_agent_instance_id"` // 大模型互动实例ID
+	AiAgentInstanceID any `json:"ai_agent_instance_id"` // 大模型互动实例ID，支持string或uint64
 }
 
 // StopAIAgentInstance 停止大模型互动实例

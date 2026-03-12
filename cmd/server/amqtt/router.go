@@ -38,7 +38,7 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 
 	// AI 对话
 	aiChatHandler := handler.NewAiChatHandler()
-	r.On(":device_id/ai", aiChatHandler.Chat)
+	r.On(":device_id/aichat", aiChatHandler.Chat)
 
 	nfcHandler := handler.NewNFCHandler()
 	r.On(":device_id/nfc", nfcHandler.Handle)

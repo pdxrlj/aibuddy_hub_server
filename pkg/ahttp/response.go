@@ -90,6 +90,14 @@ func (r *Response) Error(err error) error {
 	return r.Ctx.JSON(http.StatusOK, r)
 }
 
+// Raw 直接返回原始JSON响应，不包装
+func (r *Response) Raw(data any) error {
+	if r.Ctx.Response().Committed {
+		return nil
+	}
+	return r.Ctx.JSON(http.StatusOK, data)
+}
+
 // File 返回文件响应（流式）
 func (r *Response) File(reader io.Reader, filename string) error {
 	if r.Ctx.Response().Committed {
