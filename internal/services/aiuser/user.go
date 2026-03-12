@@ -3,6 +3,7 @@ package aiuser
 
 import (
 	management "aibuddy/aiframe/managemet"
+	"aibuddy/aiframe/message"
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"aibuddy/internal/repository"
@@ -490,26 +491,11 @@ func (s *Service) CreateMessage(ctx context.Context, uid int64, data *model.Devi
 		return errors.New("创建留言失败")
 	}
 
-	// 通过 WebSocket 发送消息给设备
-	msg := map[string]any{
-		"msg_id":    data.MsgID,
-		"from":      uid,
-		"from_user": info.DeviceInfo.NickName,
-		"content":   data.Content,
-		"fmt":       data.Fmt,
-		"dur":       data.Dur,
-	}
-
-	message, err := json.Marshal(msg)
-	if err != nil {
+	// 通过 MQTT 发送消息给设备
+	if err := message.SendMessage(strconv.Itoa(int(uid)), info.DeviceInfo.NickName, info.DeviceID, data.MsgID, data.Content, data.Fmt.String(), data.Dur); err != nil {
 		span.RecordError(err)
-		return err
+		return errors.New("给设备留言失败")
 	}
-	websocket.SendMessage(cast.ToString(info.UID), &websocket.UserToDeviceFrame{
-		Type:     websocket.FrameTypeUserMsg,
-		DeviceID: data.ToDeviceID,
-		Message:  message,
-	})
 
 	return nil
 }
