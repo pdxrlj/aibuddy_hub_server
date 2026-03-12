@@ -44,16 +44,12 @@ func (r *Handler) RoleList(state *ahttp.State) error {
 		res = append(res, RolesResponse{
 			ID:               v.ID,
 			AgentName:        v.AgentName,
+			DefaultUsage:     v.DefaultUsage,
 			RoleIntroduction: v.RoleIntroduction,
 		})
 	}
 
-	return state.Resposne().SetData(ListResponse{
-		Total: len(res),
-		Page:  1,
-		Size:  10,
-		Roles: res,
-	}).Success()
+	return state.Resposne().SetData(res).Success()
 }
 
 // ChangeRole 切换角色信息
