@@ -51,6 +51,7 @@ func (h *AiChatHandler) Chat(ctx *mqtt.Context) {
 	}
 
 	cacheKey := fmt.Sprintf("ai_chat:%s:%s:%s", deviceID, msg.Sid, msg.Type)
+	slog.Info("[MQTT] Chat request", "device_id", deviceID, "sid", msg.Sid, "type", msg.Type)
 	if err := h.cache.Set(cacheKey, time.Now().Unix(), time.Hour*24); err != nil {
 		slog.Error("[MQTT] Set cache failed", "error", err)
 		return
@@ -64,7 +65,9 @@ func (h *AiChatHandler) Chat(ctx *mqtt.Context) {
 			startTime = val.(int64)
 		} else {
 			// 没有开始时间，默认使用当前时间减去对话时长
-			startTime = time.Now().Add(-time.Duration(msg.Dur) * time.Second).Unix()
+			// startTime = time.Now().Add(-time.Duration(msg.Dur) * time.Second).Unix()
+
+			return
 		}
 
 		// 下载数据并触发预警
@@ -88,6 +91,7 @@ func (h *AiChatHandler) Chat(ctx *mqtt.Context) {
 			if _, err := h.TriggerWarning(context.Background(), deviceID, dialogues); err != nil {
 				slog.Error("[MQTT] Trigger warning failed", "error", err)
 			}
+			slog.Info("[MQTT] Trigger warning success", "device_id", deviceID)
 		}()
 	}
 }

@@ -121,6 +121,7 @@ func (r *Service) GetRoleListByAPI(ctx context.Context) ([]*model.Agent, error) 
 		result = append(result, &model.Agent{
 			ID:               r.ID,
 			AgentName:        r.Name,
+			DefaultUsage:     r.DefaultUsage,
 			RoleIntroduction: r.Description,
 		})
 	}

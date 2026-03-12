@@ -49,7 +49,6 @@ func (t ChatType) IsValid() bool {
 type Chat struct {
 	Type ChatType `json:"type,omitempty"`
 	Sid  string   `json:"sid,omitempty"`
-	Dur  int      `json:"dur,omitempty"`
 	Role string   `json:"role,omitempty"`
 }
 
