@@ -337,7 +337,13 @@ func (h *Handler) AnalysisGrowthReport(state *ahttp.State, req *AnalysisGrowthRe
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	err = h.UserServer.AnalysisGrowthReport(ctx, uid, req.DeviceID, req.StartTime, req.EndTime)
+	startTime, endTime, err := req.ParseTime()
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	err = h.UserServer.AnalysisGrowthReport(ctx, uid, req.DeviceID, startTime, endTime)
 	if err != nil {
 		span.RecordError(err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
