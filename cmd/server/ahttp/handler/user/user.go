@@ -324,3 +324,42 @@ func (h *Handler) MessageList(state *ahttp.State, req *GetMessageRequest) error 
 		Data:     data,
 	}).Success()
 }
+
+// AnalysisGrowthReport 分析用户成长报告
+func (h *Handler) AnalysisGrowthReport(state *ahttp.State, req *AnalysisGrowthReportRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.AnalysisGrowthReport")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	err = h.UserServer.AnalysisGrowthReport(ctx, uid, req.DeviceID, req.StartTime, req.EndTime)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success()
+}
+
+// GetGrowthReportList 获取用户成长报告列表
+func (h *Handler) GetGrowthReportList(state *ahttp.State, req *GetGrowthReportListRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.GetGrowthReportList")
+	defer span.End()
+
+	data, total, err := h.UserServer.GetGrowthReportList(ctx, req.DeviceID, req.Page, req.PageSize)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().SetData(GrowthReportListResponse{
+		Page:     req.Page,
+		PageSize: req.PageSize,
+		Total:    total,
+		Data:     data,
+	}).Success()
+}

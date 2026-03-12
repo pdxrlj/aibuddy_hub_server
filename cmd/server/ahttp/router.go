@@ -110,6 +110,10 @@ func RegisterRoutes(base *ahttp.Base) {
 			// 发送解绑消息给设备
 			userGroup.POST("/unbind", h.Unbind)
 
+			// 分析用户成长报告
+			userGroup.GET("/analysis_growth_report", h.AnalysisGrowthReport)
+			userGroup.GET("/get_growth_report_list", h.GetGrowthReportList)
+
 			// 小程序留言
 			userGroup.POST("/message", h.LeavaMessage)
 			userGroup.GET("/message_list", h.MessageList)

@@ -23,9 +23,14 @@ const (
 
 	// FrameTypeRoleGenerateFailure 角色生成失败帧
 	FrameTypeRoleGenerateFailure FrameType = "role_generate_failure"
+
+	// FrameTypeGrowthReportSuccess 成长报告生成成功
+	FrameTypeGrowthReportSuccess FrameType = "growth_report_success"
+	// FrameTypeGrowthReportFailure 成长报告生成失败
+	FrameTypeGrowthReportFailure FrameType = "growth_report_failure"
 )
 
-// Frame 帧接口
+// Frame 帧接口，定义消息帧的基本行为
 type Frame interface {
 	Encode() ([]byte, error)
 	Decode(data []byte) error
@@ -133,5 +138,22 @@ func (f *RoleGenerateReportFrame) Encode() ([]byte, error) {
 
 // Decode 解码角色生成成功通知
 func (f *RoleGenerateReportFrame) Decode(data []byte) error {
+	return json.Unmarshal(data, f)
+}
+
+// GrowthReportFrame 成长报告生成完毕/或者失败
+type GrowthReportFrame struct {
+	Type     FrameType       `json:"type"`
+	DeviceID string          `json:"device_id"`
+	Message  json.RawMessage `json:"message"`
+}
+
+// Encode 编码成长报告生成完毕/或者失败
+func (f *GrowthReportFrame) Encode() ([]byte, error) {
+	return json.Marshal(f)
+}
+
+// Decode 解码成长报告生成完毕/或者失败
+func (f *GrowthReportFrame) Decode(data []byte) error {
 	return json.Unmarshal(data, f)
 }

@@ -27,6 +27,7 @@ var (
 	DeviceRelationship  *deviceRelationship
 	DeviceSN            *deviceSN
 	Emotion             *emotion
+	GrowthReport        *growthReport
 	NFC                 *nFC
 	OtaResource         *otaResource
 	PomodoroClock       *pomodoroClock
@@ -47,6 +48,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	DeviceRelationship = &Q.DeviceRelationship
 	DeviceSN = &Q.DeviceSN
 	Emotion = &Q.Emotion
+	GrowthReport = &Q.GrowthReport
 	NFC = &Q.NFC
 	OtaResource = &Q.OtaResource
 	PomodoroClock = &Q.PomodoroClock
@@ -68,6 +70,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		DeviceRelationship:  newDeviceRelationship(db, opts...),
 		DeviceSN:            newDeviceSN(db, opts...),
 		Emotion:             newEmotion(db, opts...),
+		GrowthReport:        newGrowthReport(db, opts...),
 		NFC:                 newNFC(db, opts...),
 		OtaResource:         newOtaResource(db, opts...),
 		PomodoroClock:       newPomodoroClock(db, opts...),
@@ -90,6 +93,7 @@ type Query struct {
 	DeviceRelationship  deviceRelationship
 	DeviceSN            deviceSN
 	Emotion             emotion
+	GrowthReport        growthReport
 	NFC                 nFC
 	OtaResource         otaResource
 	PomodoroClock       pomodoroClock
@@ -113,6 +117,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		DeviceRelationship:  q.DeviceRelationship.clone(db),
 		DeviceSN:            q.DeviceSN.clone(db),
 		Emotion:             q.Emotion.clone(db),
+		GrowthReport:        q.GrowthReport.clone(db),
 		NFC:                 q.NFC.clone(db),
 		OtaResource:         q.OtaResource.clone(db),
 		PomodoroClock:       q.PomodoroClock.clone(db),
@@ -143,6 +148,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		DeviceRelationship:  q.DeviceRelationship.replaceDB(db),
 		DeviceSN:            q.DeviceSN.replaceDB(db),
 		Emotion:             q.Emotion.replaceDB(db),
+		GrowthReport:        q.GrowthReport.replaceDB(db),
 		NFC:                 q.NFC.replaceDB(db),
 		OtaResource:         q.OtaResource.replaceDB(db),
 		PomodoroClock:       q.PomodoroClock.replaceDB(db),
@@ -163,6 +169,7 @@ type queryCtx struct {
 	DeviceRelationship  IDeviceRelationshipDo
 	DeviceSN            IDeviceSNDo
 	Emotion             IEmotionDo
+	GrowthReport        IGrowthReportDo
 	NFC                 INFCDo
 	OtaResource         IOtaResourceDo
 	PomodoroClock       IPomodoroClockDo
@@ -183,6 +190,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		DeviceRelationship:  q.DeviceRelationship.WithContext(ctx),
 		DeviceSN:            q.DeviceSN.WithContext(ctx),
 		Emotion:             q.Emotion.WithContext(ctx),
+		GrowthReport:        q.GrowthReport.WithContext(ctx),
 		NFC:                 q.NFC.WithContext(ctx),
 		OtaResource:         q.OtaResource.WithContext(ctx),
 		PomodoroClock:       q.PomodoroClock.WithContext(ctx),

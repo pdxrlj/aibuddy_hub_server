@@ -80,6 +80,8 @@ func (d *DB) GenerateQuery() {
 		Emotion{},
 
 		PomodoroClock{},
+
+		GrowthReport{},
 	}
 
 	_ = d.db.AutoMigrate(models...)

@@ -1,7 +1,10 @@
 // Package userhandler 提供用户相关的 HTTP 处理器
 package userhandler
 
-import "aibuddy/internal/model"
+import (
+	"aibuddy/internal/model"
+	"time"
+)
 
 // LoginRequest 登录请求
 type LoginRequest struct {
@@ -121,4 +124,27 @@ type MsgListResponse struct {
 	PageSize int                    `json:"page_size"`
 	Total    int64                  `json:"total"`
 	Data     []*model.DeviceMessage `json:"data"`
+}
+
+// AnalysisGrowthReportRequest 分析用户成长报告请求
+type AnalysisGrowthReportRequest struct {
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+
+	StartTime time.Time `json:"start_time" form:"start_time" param:"start_time" query:"start_time" validate:"required" msg:"required:开始时间不能为空"`
+	EndTime   time.Time `json:"end_time" form:"end_time" param:"end_time" query:"end_time" validate:"required" msg:"required:结束时间不能为空"`
+}
+
+// GetGrowthReportListRequest 获取用户成长报告列表请求
+type GetGrowthReportListRequest struct {
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+	Page     int    `json:"page" form:"page" param:"page" query:"page" validate:"required,min=1" msg:"required:页码不能为空|min:页码不能小于1"`
+	PageSize int    `json:"page_size" form:"page_size" param:"page_size" query:"page_size" validate:"required,min=1" msg:"required:每页条数不能为空|min:每页条数不能小于1"`
+}
+
+// GrowthReportListResponse 成长报告列表响应
+type GrowthReportListResponse struct {
+	Page     int   `json:"page"`
+	PageSize int   `json:"page_size"`
+	Total    int64 `json:"total"`
+	Data     any   `json:"data"`
 }

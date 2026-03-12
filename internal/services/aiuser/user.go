@@ -6,6 +6,7 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"aibuddy/internal/repository"
+	"aibuddy/internal/services/agent"
 	"aibuddy/internal/services/cache"
 	"aibuddy/internal/services/device"
 	"aibuddy/internal/services/websocket"
@@ -47,11 +48,14 @@ type Service struct {
 	DeviceRepo       *repository.DeviceRepo
 	BindDeviceSnRepo *repository.BindDeviceSnRepo
 	DeviceMsgRepo    *repository.DeviceMessageRepo
+	GrowthReportRepo *repository.GrowthReportRepo
 
 	sms   *sms.AliyunSMS
 	cache flash.Flash
 
 	deviceService *device.Service
+
+	growthReportService *agent.GrowthReport
 }
 
 var tracer = func() trace.Tracer {
@@ -80,6 +84,9 @@ func New() *Service {
 		cache:            cache.Flash(),
 		deviceService:    device.NewService(),
 		DeviceMsgRepo:    repository.NewDeviceMessageRepo(),
+		GrowthReportRepo: repository.NewGrowthReportRepo(),
+
+		growthReportService: agent.NewGroupReport(),
 	}
 }
 
@@ -520,4 +527,133 @@ func (s *Service) GetMessage(ctx context.Context, uid int64, deviceID string, pa
 	}
 
 	return s.DeviceMsgRepo.GetMessageBetweenUser(ctx, deviceID, strconv.Itoa(int(uid)), page, pageSize)
+}
+
+// AnalysisGrowthReport 分析用户成长报告
+func (s *Service) AnalysisGrowthReport(ctx context.Context, uid int64, deviceID string, startTime, endTime time.Time) error {
+	_, span := tracer().Start(ctx, "AnalysisGrowthReport")
+	defer span.End()
+
+	uidStr := cast.ToString(uid)
+
+	go func() {
+		ctx, span := tracer().Start(context.Background(), "AnalysisGrowthReport.RunGrowthReport")
+		defer span.End()
+
+		result := &struct {
+			err       error
+			msg       []byte
+			isSuccess bool
+		}{}
+
+		defer func() {
+			websocket.SendMessage(uidStr, &websocket.GrowthReportFrame{
+				Type:     helpers.Cond(result.isSuccess, websocket.FrameTypeGrowthReportSuccess, websocket.FrameTypeGrowthReportFailure),
+				DeviceID: deviceID,
+				Message:  result.msg,
+			})
+		}()
+
+		report, err := s.growthReportService.RunGrowthReport(ctx, deviceID, startTime, endTime)
+		if err != nil {
+			span.RecordError(err)
+			slog.Error("[AnalysisGrowthReport] RunGrowthReport failed", "device_id", deviceID, "error", err)
+			result.err = err
+			return
+		}
+
+		if report == nil {
+			err := errors.New("report is nil")
+			span.RecordError(err)
+			slog.Error("[AnalysisGrowthReport] report is nil", "device_id", deviceID)
+			result.err = err
+			return
+		}
+
+		growthReport, err := s.ConvertToGrowthReport(deviceID, startTime, endTime, report)
+		if err != nil {
+			span.RecordError(err)
+			slog.Error("[AnalysisGrowthReport] convertToGrowthReport failed", "device_id", deviceID, "error", err)
+			result.err = err
+			return
+		}
+
+		if err := s.GrowthReportRepo.Create(ctx, growthReport); err != nil {
+			span.RecordError(err)
+			slog.Error("[AnalysisGrowthReport] Create failed", "device_id", deviceID, "error", err)
+			result.err = err
+			return
+		}
+
+		result.msg = growthReport.MustString()
+		result.isSuccess = true
+		slog.Info("[AnalysisGrowthReport] success", "device_id", deviceID)
+	}()
+
+	return nil
+}
+
+// ConvertToGrowthReport 将 StageTwoReport 转换为 model.GrowthReport
+func (s *Service) ConvertToGrowthReport(deviceID string, startTime, endTime time.Time, report *agent.StageTwoReport) (*model.GrowthReport, error) {
+	statusCards := mustMarshal(report.StatusCards)
+	interactionSummary := mustMarshal(report.InteractionSummary)
+	socialSummary := mustMarshal(report.SocialSummary)
+	memoryCapsuleSummary := mustMarshal(report.MemoryCapsuleSummary)
+	childPortrait := mustMarshal(report.ChildPortrait)
+	keyMoments := mustMarshal(report.KeyMoments)
+	emotionTrend := mustMarshal(report.EmotionTrend)
+	audioSummary := mustMarshal(report.AudioSummary)
+	pomodoroSummary := mustMarshal(report.PomodoroSummary)
+	safetyAlert := mustMarshal(report.SafetyAlert)
+	nextWeekSuggestions := mustMarshal(report.NextWeekSuggestions)
+	parentScripts := mustMarshal(report.ParentScripts)
+
+	return &model.GrowthReport{
+		DeviceID:             deviceID,
+		StartTime:            startTime,
+		EndTime:              endTime,
+		SummaryText:          report.SummaryText,
+		StatusCards:          statusCards,
+		InteractionSummary:   interactionSummary,
+		SocialSummary:        socialSummary,
+		MemoryCapsuleSummary: memoryCapsuleSummary,
+		ChildPortrait:        childPortrait,
+		KeyMoments:           keyMoments,
+		EmotionTrend:         emotionTrend,
+		AudioSummary:         audioSummary,
+		PomodoroSummary:      pomodoroSummary,
+		SafetyAlert:          safetyAlert,
+		NextWeekSuggestions:  nextWeekSuggestions,
+		ParentScripts:        parentScripts,
+		ClosingText:          report.ClosingText,
+	}, nil
+}
+
+// mustMarshal 将任意类型序列化为 JSON，失败时返回 nil
+func mustMarshal(v any) []byte {
+	data, _ := json.Marshal(v)
+	return data
+}
+
+// GetGrowthReportList 获取用户成长报告列表
+func (s *Service) GetGrowthReportList(ctx context.Context, deviceID string, page, pageSize int) ([]*GrowthReportResponse, int64, error) {
+	_, span := tracer().Start(ctx, "GetGrowthReportList")
+	defer span.End()
+
+	reports, total, err := s.GrowthReportRepo.GetListByDeviceID(ctx, deviceID, page, pageSize)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	formatReports := make([]*GrowthReportResponse, 0, len(reports))
+
+	for i := range reports {
+		growthReport, err := s.FormatGrowthReport(ctx, reports[i])
+		if err != nil {
+			return nil, 0, err
+		}
+		formatReports = append(formatReports, growthReport)
+	}
+
+	return formatReports, total, nil
 }

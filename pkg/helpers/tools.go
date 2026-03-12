@@ -214,3 +214,11 @@ func ValidateMobile(phone string) error {
 
 	return nil
 }
+
+// Cond 三元运算辅助函数
+func Cond[T any](condition bool, trueVal, falseVal T) T {
+	if condition {
+		return trueVal
+	}
+	return falseVal
+}

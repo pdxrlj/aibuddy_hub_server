@@ -44,7 +44,6 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 		appID = config.Instance.Baidu.AppID
 	}
 
-	// 调用百度云API - 直接传递原始config字符串，避免双重序列化
 	resp, err := h.aiAgent.GenerateAIAgentCall(&baidu.GenerateAIAgentCallRequest{
 		AppID:        appID,
 		InstanceType: baidu.InstanceType(req.InstanceType),
@@ -55,7 +54,6 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 		return state.Resposne().Error(err)
 	}
 
-	// 直接返回原始JSON，不包装（SDK期望的格式）
 	return state.Resposne().Raw(&GenerateAIAgentCallResponse{
 		AiAgentInstanceID: resp.AiAgentInstanceID,
 		InstanceType:      resp.InstanceType,
@@ -85,14 +83,11 @@ func (h *RtcHandler) StopAIAgentInstance(state *ahttp.State, req *StopAIAgentIns
 }
 
 // InstanceGenerate 创建AI智能体互动实例，返回token和实例上下文
-// 使用请求中的AK/SK进行鉴权
 func (h *RtcHandler) InstanceGenerate(state *ahttp.State, req *AiAgentGenerateRequest) error {
 	slog.Info("Interface /userserver/instance/generate Start generating AIAgentInstance", "request", req)
 
-	// 使用请求中的AK/SK创建客户端
 	aiAgent := baidu.NewAIAgentWithAKSK(req.AK, req.SK)
 
-	// 调用百度云API - 直接传递原始config字符串
 	resp, err := aiAgent.GenerateAIAgentCall(&baidu.GenerateAIAgentCallRequest{
 		AppID:        req.AppID,
 		InstanceType: baidu.InstanceType(req.InstanceType),
@@ -103,7 +98,6 @@ func (h *RtcHandler) InstanceGenerate(state *ahttp.State, req *AiAgentGenerateRe
 		return state.Resposne().Error(err)
 	}
 
-	// 直接返回原始JSON，不包装（SDK期望的格式）
 	return state.Resposne().Raw(&AiAgentGenerateResponse{
 		InstanceID:   resp.AiAgentInstanceID,
 		InstanceType: resp.InstanceType,
@@ -112,11 +106,9 @@ func (h *RtcHandler) InstanceGenerate(state *ahttp.State, req *AiAgentGenerateRe
 }
 
 // InstanceStop 销毁AI智能体互动实例
-// 使用请求中的AK/SK进行鉴权
 func (h *RtcHandler) InstanceStop(state *ahttp.State, req *AiAgentDestroyRequest) error {
 	slog.Info("Interface /userserver/instance/stop Start stopping AIAgentInstance", "request", req)
 
-	// 使用请求中的AK/SK创建客户端
 	aiAgent := baidu.NewAIAgentWithAKSK(req.AK, req.SK)
 
 	err := aiAgent.StopAIAgentInstance(&baidu.StopAIAgentInstanceRequest{
@@ -142,7 +134,6 @@ func (h *RtcHandler) AuthGenerate(state *ahttp.State, req *AuthGenerateRequest) 
 		return state.Resposne().Error(err)
 	}
 
-	// 直接返回原始JSON，不包装
 	return state.Resposne().Raw(&AuthGenerateResponse{
 		Authorization: authorization,
 	})
@@ -152,7 +143,6 @@ func (h *RtcHandler) AuthGenerate(state *ahttp.State, req *AuthGenerateRequest) 
 func (h *RtcHandler) InstanceBaidu(state *ahttp.State, req *RtcGenerateRequest) error {
 	slog.Info("Interface /userserver/instance/baidu Start generating AIAgentInstance", "request", req)
 
-	// 使用请求中的AK/SK创建客户端
 	aiAgent := baidu.NewAIAgentWithAKSK(req.AK, req.SK)
 
 	// 构建千帆配置
@@ -172,7 +162,6 @@ func (h *RtcHandler) InstanceBaidu(state *ahttp.State, req *RtcGenerateRequest) 
 	}
 	configBytes, _ := json.Marshal(configMap)
 
-	// 调用百度云API (不设置instance_type，使用默认值)
 	resp, err := aiAgent.GenerateAIAgentCall(&baidu.GenerateAIAgentCallRequest{
 		AppID:  req.AppID,
 		Config: string(configBytes),
@@ -188,12 +177,10 @@ func (h *RtcHandler) InstanceBaidu(state *ahttp.State, req *RtcGenerateRequest) 
 		Context:           convertInstanceContext(resp.Context),
 	}
 
-	// 如果需要返回Web Demo URL
 	if req.WithWebDemoURL && resp.Context != nil {
 		response.TestURL = formatTestURL(req.AppID, resp.AiAgentInstanceID, resp.Context.Token)
 	}
 
-	// 直接返回原始JSON，不包装
 	return state.Resposne().Raw(response)
 }
 
@@ -201,10 +188,8 @@ func (h *RtcHandler) InstanceBaidu(state *ahttp.State, req *RtcGenerateRequest) 
 func (h *RtcHandler) InstanceQianwen(state *ahttp.State, req *RtcGenerateRequest) error {
 	slog.Info("Interface /userserver/instance/qianwen Start generating AIAgentInstance", "request", req)
 
-	// 使用请求中的AK/SK创建客户端
 	aiAgent := baidu.NewAIAgentWithAKSK(req.AK, req.SK)
 
-	// 构建千问配置
 	cfg := config.Instance.Baidu
 	model := req.Model
 	if model == "" && cfg.Qianwen != nil {
@@ -220,7 +205,6 @@ func (h *RtcHandler) InstanceQianwen(state *ahttp.State, req *RtcGenerateRequest
 	}
 	configBytes, _ := json.Marshal(configMap)
 
-	// 调用百度云API (不设置instance_type，使用默认值)
 	resp, err := aiAgent.GenerateAIAgentCall(&baidu.GenerateAIAgentCallRequest{
 		AppID:  req.AppID,
 		Config: string(configBytes),
@@ -236,12 +220,10 @@ func (h *RtcHandler) InstanceQianwen(state *ahttp.State, req *RtcGenerateRequest
 		Context:           convertInstanceContext(resp.Context),
 	}
 
-	// 如果需要返回Web Demo URL
 	if req.WithWebDemoURL && resp.Context != nil {
 		response.TestURL = formatTestURL(req.AppID, resp.AiAgentInstanceID, resp.Context.Token)
 	}
 
-	// 直接返回原始JSON，不包装
 	return state.Resposne().Raw(response)
 }
 
@@ -249,10 +231,8 @@ func (h *RtcHandler) InstanceQianwen(state *ahttp.State, req *RtcGenerateRequest
 func (h *RtcHandler) InstanceVolc(state *ahttp.State, req *RtcGenerateRequest) error {
 	slog.Info("Interface /userserver/instance/volc Start generating AIAgentInstance", "request", req)
 
-	// 使用请求中的AK/SK创建客户端
 	aiAgent := baidu.NewAIAgentWithAKSK(req.AK, req.SK)
 
-	// 构建VOLC TTS配置
 	cfg := config.Instance.Baidu
 	vcn := volcVcn
 	vol := volcVol
@@ -285,7 +265,6 @@ func (h *RtcHandler) InstanceVolc(state *ahttp.State, req *RtcGenerateRequest) e
 	}
 	configBytes, _ := json.Marshal(configMap)
 
-	// 调用百度云API (不设置instance_type，使用默认值)
 	resp, err := aiAgent.GenerateAIAgentCall(&baidu.GenerateAIAgentCallRequest{
 		AppID:  req.AppID,
 		Config: string(configBytes),
@@ -301,12 +280,10 @@ func (h *RtcHandler) InstanceVolc(state *ahttp.State, req *RtcGenerateRequest) e
 		Context:           convertInstanceContext(resp.Context),
 	}
 
-	// 如果需要返回Web Demo URL
 	if req.WithWebDemoURL && resp.Context != nil {
 		response.TestURL = formatTestURL(req.AppID, resp.AiAgentInstanceID, resp.Context.Token)
 	}
 
-	// 直接返回原始JSON，不包装
 	return state.Resposne().Raw(response)
 }
 
