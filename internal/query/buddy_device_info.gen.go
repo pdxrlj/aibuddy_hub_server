@@ -32,7 +32,7 @@ func newDeviceInfo(db *gorm.DB, opts ...gen.DOOption) deviceInfo {
 	_deviceInfo.DeviceID = field.NewString(tableName, "device_id")
 	_deviceInfo.NickName = field.NewString(tableName, "nickname")
 	_deviceInfo.Avatar = field.NewString(tableName, "avatar")
-	_deviceInfo.Gender = field.NewInt8(tableName, "gender")
+	_deviceInfo.Gender = field.NewString(tableName, "gender")
 	_deviceInfo.Birthday = field.NewTime(tableName, "birthday")
 	_deviceInfo.Hobbies = field.NewField(tableName, "hobbies")
 	_deviceInfo.Values = field.NewField(tableName, "values")
@@ -54,7 +54,7 @@ type deviceInfo struct {
 	DeviceID    field.String // 设备ID
 	NickName    field.String // 设备昵称
 	Avatar      field.String // 头像
-	Gender      field.Int8   // 性别
+	Gender      field.String // 性别 未知 男性 女性
 	Birthday    field.Time   // 生日
 	Hobbies     field.Field  // 兴趣
 	Values      field.Field  // 价值观
@@ -82,7 +82,7 @@ func (d *deviceInfo) updateTableName(table string) *deviceInfo {
 	d.DeviceID = field.NewString(table, "device_id")
 	d.NickName = field.NewString(table, "nickname")
 	d.Avatar = field.NewString(table, "avatar")
-	d.Gender = field.NewInt8(table, "gender")
+	d.Gender = field.NewString(table, "gender")
 	d.Birthday = field.NewTime(table, "birthday")
 	d.Hobbies = field.NewField(table, "hobbies")
 	d.Values = field.NewField(table, "values")

@@ -41,7 +41,7 @@ func (d *Device) FirstOnline(state *ahttp.State, req *FirstOnlineRequest) error 
 	ctx, span := tracer().Start(state.Context(), "Device.FirstOnline")
 	defer span.End()
 
-	configInfo, err := d.Service.FirstOnline(ctx, req.DeviceID, req.ICCID, req.Version)
+	configInfo, err := d.Service.FirstOnline(ctx, req.DeviceID, req.SIMCard, req.Version)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))

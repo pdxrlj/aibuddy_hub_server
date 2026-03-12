@@ -39,6 +39,27 @@ func newDeviceMessage(db *gorm.DB, opts ...gen.DOOption) deviceMessage {
 	_deviceMessage.Read = field.NewBool(tableName, "read")
 	_deviceMessage.CreatedAt = field.NewTime(tableName, "created_at")
 	_deviceMessage.UpdatedAt = field.NewTime(tableName, "updated_at")
+	_deviceMessage.Device = deviceMessageBelongsToDevice{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("Device", "model.Device"),
+		User: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("Device.User", "model.User"),
+		},
+		DeviceInfo: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("Device.DeviceInfo", "model.DeviceInfo"),
+		},
+	}
+
+	_deviceMessage.ToDevice = deviceMessageBelongsToToDevice{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("ToDevice", "model.Device"),
+	}
 
 	_deviceMessage.fillFieldMap()
 
@@ -60,6 +81,9 @@ type deviceMessage struct {
 	Read         field.Bool
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
+	Device       deviceMessageBelongsToDevice
+
+	ToDevice deviceMessageBelongsToToDevice
 
 	fieldMap map[string]field.Expr
 }
@@ -103,7 +127,7 @@ func (d *deviceMessage) GetFieldByName(fieldName string) (field.OrderExpr, bool)
 }
 
 func (d *deviceMessage) fillFieldMap() {
-	d.fieldMap = make(map[string]field.Expr, 11)
+	d.fieldMap = make(map[string]field.Expr, 13)
 	d.fieldMap["id"] = d.ID
 	d.fieldMap["msg_id"] = d.MsgID
 	d.fieldMap["from_device_id"] = d.FromDeviceID
@@ -115,16 +139,192 @@ func (d *deviceMessage) fillFieldMap() {
 	d.fieldMap["read"] = d.Read
 	d.fieldMap["created_at"] = d.CreatedAt
 	d.fieldMap["updated_at"] = d.UpdatedAt
+
 }
 
 func (d deviceMessage) clone(db *gorm.DB) deviceMessage {
 	d.deviceMessageDo.ReplaceConnPool(db.Statement.ConnPool)
+	d.Device.db = db.Session(&gorm.Session{Initialized: true})
+	d.Device.db.Statement.ConnPool = db.Statement.ConnPool
+	d.ToDevice.db = db.Session(&gorm.Session{Initialized: true})
+	d.ToDevice.db.Statement.ConnPool = db.Statement.ConnPool
 	return d
 }
 
 func (d deviceMessage) replaceDB(db *gorm.DB) deviceMessage {
 	d.deviceMessageDo.ReplaceDB(db)
+	d.Device.db = db.Session(&gorm.Session{})
+	d.ToDevice.db = db.Session(&gorm.Session{})
 	return d
+}
+
+type deviceMessageBelongsToDevice struct {
+	db *gorm.DB
+
+	field.RelationField
+
+	User struct {
+		field.RelationField
+	}
+	DeviceInfo struct {
+		field.RelationField
+	}
+}
+
+func (a deviceMessageBelongsToDevice) Where(conds ...field.Expr) *deviceMessageBelongsToDevice {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a deviceMessageBelongsToDevice) WithContext(ctx context.Context) *deviceMessageBelongsToDevice {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a deviceMessageBelongsToDevice) Session(session *gorm.Session) *deviceMessageBelongsToDevice {
+	a.db = a.db.Session(session)
+	return &a
+}
+
+func (a deviceMessageBelongsToDevice) Model(m *model.DeviceMessage) *deviceMessageBelongsToDeviceTx {
+	return &deviceMessageBelongsToDeviceTx{a.db.Model(m).Association(a.Name())}
+}
+
+func (a deviceMessageBelongsToDevice) Unscoped() *deviceMessageBelongsToDevice {
+	a.db = a.db.Unscoped()
+	return &a
+}
+
+type deviceMessageBelongsToDeviceTx struct{ tx *gorm.Association }
+
+func (a deviceMessageBelongsToDeviceTx) Find() (result *model.Device, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a deviceMessageBelongsToDeviceTx) Append(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a deviceMessageBelongsToDeviceTx) Replace(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a deviceMessageBelongsToDeviceTx) Delete(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a deviceMessageBelongsToDeviceTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a deviceMessageBelongsToDeviceTx) Count() int64 {
+	return a.tx.Count()
+}
+
+func (a deviceMessageBelongsToDeviceTx) Unscoped() *deviceMessageBelongsToDeviceTx {
+	a.tx = a.tx.Unscoped()
+	return &a
+}
+
+type deviceMessageBelongsToToDevice struct {
+	db *gorm.DB
+
+	field.RelationField
+}
+
+func (a deviceMessageBelongsToToDevice) Where(conds ...field.Expr) *deviceMessageBelongsToToDevice {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a deviceMessageBelongsToToDevice) WithContext(ctx context.Context) *deviceMessageBelongsToToDevice {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a deviceMessageBelongsToToDevice) Session(session *gorm.Session) *deviceMessageBelongsToToDevice {
+	a.db = a.db.Session(session)
+	return &a
+}
+
+func (a deviceMessageBelongsToToDevice) Model(m *model.DeviceMessage) *deviceMessageBelongsToToDeviceTx {
+	return &deviceMessageBelongsToToDeviceTx{a.db.Model(m).Association(a.Name())}
+}
+
+func (a deviceMessageBelongsToToDevice) Unscoped() *deviceMessageBelongsToToDevice {
+	a.db = a.db.Unscoped()
+	return &a
+}
+
+type deviceMessageBelongsToToDeviceTx struct{ tx *gorm.Association }
+
+func (a deviceMessageBelongsToToDeviceTx) Find() (result *model.Device, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a deviceMessageBelongsToToDeviceTx) Append(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a deviceMessageBelongsToToDeviceTx) Replace(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a deviceMessageBelongsToToDeviceTx) Delete(values ...*model.Device) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a deviceMessageBelongsToToDeviceTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a deviceMessageBelongsToToDeviceTx) Count() int64 {
+	return a.tx.Count()
+}
+
+func (a deviceMessageBelongsToToDeviceTx) Unscoped() *deviceMessageBelongsToToDeviceTx {
+	a.tx = a.tx.Unscoped()
+	return &a
 }
 
 type deviceMessageDo struct{ gen.DO }

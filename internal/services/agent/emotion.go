@@ -16,6 +16,11 @@ import (
 	"trpc.group/trpc-go/trpc-agent-go/runner"
 )
 
+// WarningTriggerResult 预警触发结果
+type WarningTriggerResult struct {
+	TriggerWarning bool `json:"trigger_warning"`
+}
+
 // WarningResult 预警结果
 type WarningResult struct {
 	TriggerWarning     bool          `json:"trigger_warning"`
@@ -156,6 +161,27 @@ func (s *EmotionWarningService) BuildWarningPrompt(chatHistory string) (string, 
 	return buf.String(), nil
 }
 
+// BuildWarningTriggerPrompt 构建预警触发判断提示词
+func (s *EmotionWarningService) BuildWarningTriggerPrompt(chatHistory string) (string, error) {
+	tmpl, err := template.New("emotion").Parse(WarningPrompt)
+	if err != nil {
+		return "", fmt.Errorf("parse template failed: %w", err)
+	}
+
+	data := struct {
+		ChatHistory string
+	}{
+		ChatHistory: chatHistory,
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("execute template failed: %w", err)
+	}
+
+	return buf.String(), nil
+}
+
 // NewWarningResult 创建空预警结果
 func NewWarningResult() *WarningResult {
 	return &WarningResult{
@@ -218,6 +244,96 @@ func (s *EmotionWarningService) AgentOutputFormat() *WarningResult {
 	return &WarningResult{}
 }
 
+// AgentTriggerOutputFormat 返回预警触发判断的输出格式定义
+func (s *EmotionWarningService) AgentTriggerOutputFormat() *WarningTriggerResult {
+	return &WarningTriggerResult{}
+}
+
+// CheckWarningTrigger 检查是否需要触发预警
+// 先调用门控模型判断是否需要触发预警
+func (s *EmotionWarningService) CheckWarningTrigger(chatHistory string) (*WarningTriggerResult, error) {
+	prompt, err := s.BuildWarningTriggerPrompt(chatHistory)
+	if err != nil {
+		return nil, err
+	}
+
+	agentModel := NewAgentModel(
+		s.AgentTriggerOutputFormat(),
+		"请严格按照需求输出",
+	)
+
+	r := runner.NewRunner("emotion_warning_trigger", agentModel)
+
+	eventCh, err := r.Run(context.Background(),
+		"emotion_warning_trigger",
+		"emotion_warning_trigger",
+		agentmodel.Message{
+			Role:    agentmodel.RoleUser,
+			Content: prompt,
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var result *WarningTriggerResult
+	for evt := range eventCh {
+		if evt.IsError() {
+			return nil, fmt.Errorf("agent error: %v", evt.Error)
+		}
+
+		if evt.StructuredOutput != nil {
+			if trigger, ok := evt.StructuredOutput.(*WarningTriggerResult); ok {
+				result = trigger
+			}
+		}
+	}
+
+	return result, nil
+}
+
+// GenerateDetailedWarning 生成详细预警数据
+func (s *EmotionWarningService) GenerateDetailedWarning(content string) (*WarningResult, error) {
+	prompt, err := s.BuildWarningPrompt(content)
+	if err != nil {
+		return nil, err
+	}
+
+	agentModel := NewAgentModel(
+		s.AgentOutputFormat(),
+		"请严格按照需求输出",
+	)
+
+	r := runner.NewRunner("emotion_warning", agentModel)
+
+	eventCh, err := r.Run(context.Background(), "emotion_warning", "emotion_warning", agentmodel.Message{
+		Role:    agentmodel.RoleUser,
+		Content: prompt,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var result *WarningResult
+	for evt := range eventCh {
+		if evt.IsError() {
+			return nil, fmt.Errorf("agent error: %v", evt.Error)
+		}
+
+		if evt.StructuredOutput != nil {
+			if warning, ok := evt.StructuredOutput.(*WarningResult); ok {
+				result = warning
+			}
+		}
+	}
+
+	if result != nil {
+		result.TriggerWarning = true
+	}
+
+	return result, nil
+}
+
 // GenerateWarning 生成预警结果
 // dialogues 聊天记录
 // 使用模型分析聊天记录，生成预警结果
@@ -232,41 +348,16 @@ func (s *EmotionWarningService) GenerateWarning(dialogues []*model.ChatDialogue)
 			return nil, err
 		}
 
-		prompt, err := s.BuildWarningPrompt(content)
+		triggerResult, err := s.CheckWarningTrigger(content)
 		if err != nil {
 			return nil, err
 		}
 
-		agentModel := NewAgentModel(
-			s.AgentOutputFormat(),
-			"请严格按照需求输出",
-		)
-
-		r := runner.NewRunner("emotion_warning", agentModel)
-
-		eventCh, err := r.Run(context.Background(), "emotion_warning", "emotion_warning", agentmodel.Message{
-			Role:    agentmodel.RoleUser,
-			Content: prompt,
-		})
-
-		if err != nil {
-			return nil, err
+		if triggerResult == nil || !triggerResult.TriggerWarning {
+			return NewWarningResult(), nil
 		}
 
-		var result *WarningResult
-		for evt := range eventCh {
-			if evt.IsError() {
-				return nil, fmt.Errorf("agent error: %v", evt.Error)
-			}
-
-			if evt.StructuredOutput != nil {
-				if warning, ok := evt.StructuredOutput.(*WarningResult); ok {
-					result = warning
-				}
-			}
-		}
-
-		return result, nil
+		return s.GenerateDetailedWarning(content)
 	})
 }
 

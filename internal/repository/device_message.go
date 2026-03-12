@@ -69,5 +69,7 @@ func (r *DeviceMessageRepo) GetMessageListByDeviceID(ctx context.Context, device
 		Where(query.DeviceMessage.ToDeviceID.Eq(deviceID)).
 		Or(query.DeviceMessage.FromDeviceID.Eq(deviceID)).
 		Where(query.DeviceMessage.CreatedAt.Between(startTime, endTime)).
+		Preload(query.DeviceMessage.Device).
+		Preload(query.DeviceMessage.ToDevice).
 		Find()
 }

@@ -33,9 +33,10 @@ func (s DeviceStatus) String() string {
 
 // Device represents a device in the system.
 type Device struct {
-	ID        int64  `gorm:"primaryKey;autoIncrement;column:id;"`
-	DeviceID  string `gorm:"column:device_id;index;type:varchar(255);not null;uniqueIndex;comment:设备ID;"`
-	ICCID     string `gorm:"column:iccid;index;type:varchar(20);not null;uniqueIndex;comment:ICCID;comment:手机卡ICCID;"`
+	ID       int64  `gorm:"primaryKey;autoIncrement;column:id;"`
+	DeviceID string `gorm:"column:device_id;index;type:varchar(255);not null;uniqueIndex;comment:设备ID;"`
+	SIMCard  string `gorm:"column:sim_card;index;type:varchar(500);uniqueIndex;comment:SIM卡号;comment:手机卡SIM卡号;ICCID:xxxxxIMEI:xxxxxIMSI:xxxxx"`
+
 	BoardType string `gorm:"column:board_type;type:varchar(255);not null;comment:板子类型;"`
 	Version   string `gorm:"column:version;type:varchar(255);not null;comment:板子版本;"`
 
