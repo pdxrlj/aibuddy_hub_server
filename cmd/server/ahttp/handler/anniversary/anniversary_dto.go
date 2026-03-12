@@ -21,9 +21,9 @@ type InfoRequest struct {
 
 // ListRequest 列表请求数据
 type ListRequest struct {
-	DeviceID string `json:"device_id"  validate:"required" msg:"required:设备ID不能为空"`
-	Page     int    `json:"page"`
-	Size     int    `json:"size"  validate:"required" msg:"required:size不能为空"`
+	DeviceID string `json:"device_id" query:"device_id" validate:"required" msg:"required:设备ID不能为空"`
+	Page     int    `json:"page" query:"page"`
+	Size     int    `json:"size" query:"size" validate:"required" msg:"required:size不能为空"`
 }
 
 // ListReponse 列表响应
