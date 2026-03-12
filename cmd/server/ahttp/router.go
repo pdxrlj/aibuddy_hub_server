@@ -51,7 +51,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			deviceGroup.POST("/:device_id/send_message", device.SendMessage)
 
 			// 获取设备消息列表
-			deviceGroup.POST("/:device_id/message_list", device.MessageList)
+			deviceGroup.GET("/:device_id/message_list", device.MessageList)
 
 			// 大模型互动实例
 			deviceGroup.Group("/aiagent", nil, func(rtcGroup *ahttp.Group) {

@@ -63,6 +63,7 @@ func NewWebsocket() *Service {
 		s.HandleMessage(session, msg)
 	})
 
+	go s.StartMessageHandler() // 处理消息转发
 	return s
 }
 
