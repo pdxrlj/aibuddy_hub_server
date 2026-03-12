@@ -4,12 +4,14 @@ package emotion
 import (
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
+	"errors"
 
 	emotion "aibuddy/internal/services/emotion"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"gorm.io/gorm"
 )
 
 var tracer = func() trace.Tracer {
@@ -53,7 +55,7 @@ func (h *Handler) GetLatestEmotion(state *ahttp.State, req *GetLatestEmotionRequ
 	defer span.End()
 
 	emotion, err := h.EmotionService.GetLatestEmotion(ctx, req.DeviceID)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
 		return state.Resposne().Error(err)
