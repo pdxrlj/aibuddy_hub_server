@@ -85,6 +85,7 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, simCard, version st
 
 	mqttConfig := config.Instance.Aliyun
 	clientID := d.ClientIDPrefix + deviceID
+	slog.Info("[FirstOnline]", "client_id", clientID, "sim_card", simCard, "version", version)
 	username, password, err := mqtt.GenerateAliyunMQTTAuth(clientID, mqttConfig.Ak, mqttConfig.Sk, mqttConfig.Mqtt.InstanceID)
 	if err != nil {
 		span.RecordError(err)
@@ -103,8 +104,11 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, simCard, version st
 		return nil, err
 	}
 
+	mqttURL := mqttConfig.Mqtt.URL
+	mqttURL = strings.Replace(mqttURL, "tcp", "mqtt", 1)
+
 	return &ConfigInfo{
-		MQTTURL:      mqttConfig.Mqtt.URL,
+		MQTTURL:      mqttURL,
 		InstanceID:   mqttConfig.Mqtt.InstanceID,
 		MQTTUsername: username,
 		MQTTPassword: password,
