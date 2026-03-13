@@ -167,8 +167,8 @@ type GrowthReportListResponse struct {
 
 // InfoRequest 用户信息请求
 type InfoRequest struct {
-	NickName string `json:"nickname" validate:"required"`
-	Avatar   string `json:"avatar" validate:"required"`
+	NickName string `json:"nickname" validate:"required,min=2,max=8" msg:"required:昵称不能为空|min:昵称长度不能小于2|max:昵称最长长度为8"`
+	Avatar   string `json:"avatar" validate:"omitempty"`
 }
 
 // InfoResponse 用户信息响应

@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"slices"
 	"strconv"
 	"time"
@@ -148,6 +149,15 @@ func (s *Service) UpdateUser(ctx context.Context, uid int64, user *model.User, o
 func (s *Service) UpdateUserInfo(ctx context.Context, uid int64, nickname string, avatar string) error {
 	_, span := tracer().Start(ctx, "UpdateUserInfo")
 	defer span.End()
+
+	if avatar != "" {
+		re := regexp.MustCompile(`(?i)\.(jpg|jpeg|png)$`)
+		if !re.MatchString(avatar) {
+			span.SetAttributes(attribute.String("avatar", avatar))
+			return errors.New("图像参数异常")
+		}
+	}
+
 	_, err := s.UserRepo.UpdateUser(uid, &model.User{
 		Nickname: nickname,
 		Avatar:   avatar,
