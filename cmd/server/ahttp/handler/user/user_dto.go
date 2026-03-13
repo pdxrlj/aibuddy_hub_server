@@ -106,10 +106,10 @@ type DeviceInfoListItem struct {
 
 // SendMsgRequest 创建留言数据
 type SendMsgRequest struct {
-	DeviceID string `json:"device_id"`
-	Fmt      string `json:"fmt"`
-	Content  string `json:"content"`
-	Dur      int    `json:"dur"`
+	DeviceID string `json:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+	Fmt      string `json:"fmt" validate:"required" msg:"required:信息格式不能为空"`
+	Content  string `json:"content" validate:"required" msg:"required:信息内容不能为空"`
+	Dur      int    `json:"dur" validate:"required_if_gt=Fmt=voice" msg:"required_if_gt:语音消息时长必须大于0"`
 }
 
 // GetMessageRequest 获取留言列表数据
