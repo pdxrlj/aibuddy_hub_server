@@ -168,6 +168,12 @@ func validateHandler(handler any) (reflect.Value, int) {
 	return handlerValue, handlerType.NumIn()
 }
 
+// SkipBodyBinder 跳过 body 绑定的接口
+// 实现 this 接口的请求结构体将不会尝试从 body 绑定数据
+type SkipBodyBinder interface {
+	SkipBodyBind()
+}
+
 // createHandler 创建 echo.HandlerFunc
 func (b *Base) createHandler(handlerValue reflect.Value, inputNumber int) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
@@ -184,7 +190,14 @@ func (b *Base) createHandler(handlerValue reflect.Value, inputNumber int) echo.H
 
 		instance := reflect.New(requestType).Interface()
 
-		if err := ctx.Bind(instance); err != nil {
+		if _, ok := instance.(SkipBodyBinder); ok {
+			if err := bindPathAndQuery(ctx, instance); err != nil {
+				return NewResponse(ctx).
+					SetStatus(buddyerror.GetBuddyErrorCode(buddyerror.ErrParamError)).
+					SetMessage("参数格式错误").
+					Error(err)
+			}
+		} else if err := ctx.Bind(instance); err != nil {
 			msg := "参数格式错误"
 			var typeErr *json.UnmarshalTypeError
 			if errors.As(err, &typeErr) {
@@ -417,4 +430,16 @@ func (s *State) Resposne() *Response {
 // Context 获取请求上下文
 func (s *State) Context() context.Context {
 	return s.Ctx.Request().Context()
+}
+
+// bindPathAndQuery 只绑定 path 和 query 参数
+func bindPathAndQuery(ctx echo.Context, i interface{}) error {
+	b := new(echo.DefaultBinder)
+	if err := b.BindQueryParams(ctx, i); err != nil {
+		return err
+	}
+	if err := b.BindPathParams(ctx, i); err != nil {
+		return err
+	}
+	return nil
 }

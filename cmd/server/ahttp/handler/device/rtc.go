@@ -5,11 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"aibuddy/internal/services/cache"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
-	"aibuddy/pkg/helpers"
+	"aibuddy/pkg/flash"
 	"log/slog"
+
+	"github.com/spf13/cast"
 )
 
 const (
@@ -26,6 +29,7 @@ const (
 type RtcHandler struct {
 	aiAgent    *baidu.AIAgent
 	switchRole *baidu.SwitchRole
+	Cache      flash.Flash
 }
 
 // NewRtcHandler creates a new RtcHandler.
@@ -33,13 +37,12 @@ func NewRtcHandler() *RtcHandler {
 	return &RtcHandler{
 		aiAgent:    baidu.NewAIAgent(),
 		switchRole: baidu.NewSwitchRole(),
+		Cache:      cache.Flash(),
 	}
 }
 
 // GenerateAIAgentCall 与端侧SDK交互，创建AIAgentInstance
 func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgentCallRequest) error {
-	slog.Info("Interface /generateAIAgentCall Start generating AIAgentInstance", "request", req)
-
 	appID := req.AppID
 	if appID == "" {
 		appID = config.Instance.Baidu.AppID
@@ -50,23 +53,16 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 		InstanceType: baidu.InstanceType(req.InstanceType),
 		Config:       req.Config,
 	}
-	helpers.PP(request)
 	resp, err := h.aiAgent.GenerateAIAgentCall(request)
 	if err != nil {
 		slog.Error("Failed to create AIAgentInstance", "error", err)
 		return state.Resposne().Error(err)
 	}
 
+	// 这里是保存了，当前会话RTC实例ID
+	_ = cache.StoreRTCInstanceID(appID, cast.ToString(resp.AiAgentInstanceID))
+
 	return state.Resposne().
-		// SetHeader("Content-Type", "application/json;charset=UTF-8").
-		// SetHeader("x-bce-request-id", resp.XBCERequestID).
-		// SetHeader("X-Protected-By", "OpenRASP 2.0").
-		// SetHeader("Cache-Control", "no-cache").
-		// SetHeader("Access-Control-Allow-Origin", "*").
-		// SetHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS").
-		// SetHeader("Access-Control-Allow-Headers", "*").
-		// SetHeader("Access-Control-Allow-Credentials", "true").
-		// SetHeader("Access-Control-Max-Age", "1728000").
 		Raw(&GenerateAIAgentCallResponse{
 			Code:              0,
 			AiAgentInstanceID: resp.AiAgentInstanceID,
@@ -77,8 +73,6 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 
 // StopAIAgentInstance 与端侧SDK交互，停止AIAgentInstance
 func (h *RtcHandler) StopAIAgentInstance(state *ahttp.State, req *StopAIAgentInstanceRequest) error {
-	slog.Info("Interface /stopAIAgentInstance destroy AIAgentInstance", "request", req)
-
 	appID := req.AppID
 	if appID == "" {
 		appID = config.Instance.Baidu.AppID
@@ -98,8 +92,6 @@ func (h *RtcHandler) StopAIAgentInstance(state *ahttp.State, req *StopAIAgentIns
 
 // InstanceGenerate 创建AI智能体互动实例，返回token和实例上下文
 func (h *RtcHandler) InstanceGenerate(state *ahttp.State, req *AiAgentGenerateRequest) error {
-	slog.Info("Interface /userserver/instance/generate Start generating AIAgentInstance", "request", req)
-
 	aiAgent := baidu.NewAIAgentWithAKSK(req.AK, req.SK)
 
 	resp, err := aiAgent.GenerateAIAgentCall(&baidu.GenerateAIAgentCallRequest{
@@ -121,8 +113,6 @@ func (h *RtcHandler) InstanceGenerate(state *ahttp.State, req *AiAgentGenerateRe
 
 // InstanceStop 销毁AI智能体互动实例
 func (h *RtcHandler) InstanceStop(state *ahttp.State, req *AiAgentDestroyRequest) error {
-	slog.Info("Interface /userserver/instance/stop Start stopping AIAgentInstance", "request", req)
-
 	aiAgent := baidu.NewAIAgentWithAKSK(req.AK, req.SK)
 
 	err := aiAgent.StopAIAgentInstance(&baidu.StopAIAgentInstanceRequest{
@@ -139,8 +129,6 @@ func (h *RtcHandler) InstanceStop(state *ahttp.State, req *AiAgentDestroyRequest
 
 // AuthGenerate 获取RTC服务的Token
 func (h *RtcHandler) AuthGenerate(state *ahttp.State, req *AuthGenerateRequest) error {
-	slog.Info("Interface /userserver/auth/generate Start generating Authorization", "request", req)
-
 	client := baidu.NewClientWithAKSK(req.AK, req.SK)
 	authorization, err := client.BuildAuthorization("POST", req.URL)
 	if err != nil {
@@ -155,8 +143,6 @@ func (h *RtcHandler) AuthGenerate(state *ahttp.State, req *AuthGenerateRequest) 
 
 // InstanceBaidu 使用百度千帆大模型创建RTC实例
 func (h *RtcHandler) InstanceBaidu(state *ahttp.State, req *RtcGenerateRequest) error {
-	slog.Info("Interface /userserver/instance/baidu Start generating AIAgentInstance", "request", req)
-
 	aiAgent := baidu.NewAIAgentWithAKSK(req.AK, req.SK)
 
 	// 构建千帆配置
@@ -200,8 +186,6 @@ func (h *RtcHandler) InstanceBaidu(state *ahttp.State, req *RtcGenerateRequest) 
 
 // InstanceQianwen 使用千问大模型创建RTC实例
 func (h *RtcHandler) InstanceQianwen(state *ahttp.State, req *RtcGenerateRequest) error {
-	slog.Info("Interface /userserver/instance/qianwen Start generating AIAgentInstance", "request", req)
-
 	aiAgent := baidu.NewAIAgentWithAKSK(req.AK, req.SK)
 
 	cfg := config.Instance.Baidu
@@ -243,8 +227,6 @@ func (h *RtcHandler) InstanceQianwen(state *ahttp.State, req *RtcGenerateRequest
 
 // InstanceVolc 使用VOLC TTS创建RTC实例
 func (h *RtcHandler) InstanceVolc(state *ahttp.State, req *RtcGenerateRequest) error {
-	slog.Info("Interface /userserver/instance/volc Start generating AIAgentInstance", "request", req)
-
 	aiAgent := baidu.NewAIAgentWithAKSK(req.AK, req.SK)
 
 	cfg := config.Instance.Baidu
@@ -303,8 +285,6 @@ func (h *RtcHandler) InstanceVolc(state *ahttp.State, req *RtcGenerateRequest) e
 
 // SwitchSceneRole 切换角色（音色）
 func (h *RtcHandler) SwitchSceneRole(state *ahttp.State, req *AgentSwitchConfigRequest) error {
-	slog.Info("Interface /switchSceneRole Start switching scene role", "request", req)
-
 	appID := req.AppID
 	if appID == "" {
 		appID = config.Instance.Baidu.AppID

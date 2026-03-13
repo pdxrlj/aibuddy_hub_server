@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"aibuddy/pkg/config"
-	"aibuddy/pkg/helpers"
 )
 
 // AIAgent 大模型互动实例API
@@ -112,10 +111,8 @@ func (a *AIAgent) GenerateAIAgentCall(req *GenerateAIAgentCallRequest) (*Generat
 	if req.Config != nil {
 		switch cfg := req.Config.(type) {
 		case string:
-			// 如果已经是字符串，直接传递（原始JSON字符串）
 			body["config"] = cfg
 		case *AIAgentConfig:
-			// 如果是结构体，需要序列化
 			configBytes, err := json.Marshal(cfg)
 			if err != nil {
 				return nil, fmt.Errorf("序列化配置失败: %w", err)
@@ -123,8 +120,7 @@ func (a *AIAgent) GenerateAIAgentCall(req *GenerateAIAgentCallRequest) (*Generat
 			body["config"] = string(configBytes)
 		}
 	}
-	fmt.Println("=========AIAgent=========")
-	helpers.PP(body)
+
 	var result GenerateAIAgentCallResponse
 	requestID, err := a.client.RequestWithHeader("POST", path, nil, body, &result, "x-bce-request-id")
 	if err != nil {

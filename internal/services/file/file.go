@@ -61,10 +61,10 @@ func (f *Service) UploadFile(ctx context.Context, deviceID string, file *multipa
 	defer func() {
 		_ = stream.Close()
 	}()
-
-	fileName := fmt.Sprintf("%s/%s", deviceID, file.Filename)
+	ext := path.Ext(file.Filename)
+	NewFilename := helpers.GenerateNumber(10) + ext
+	fileName := fmt.Sprintf("%s/%s", deviceID, NewFilename)
 	if enableAudioTranscode {
-		ext := path.Ext(file.Filename)
 		PcmParams := helpers.Cond(ext == ".pcm", defaultPCMParams(), nil)
 		stream, err = f.AudioTranscode(ctx, stream, destAudioFormat, PcmParams)
 		if err != nil {
@@ -73,7 +73,7 @@ func (f *Service) UploadFile(ctx context.Context, deviceID string, file *multipa
 			return "", "", err
 		}
 
-		baseName := file.Filename[:len(file.Filename)-len(ext)]
+		baseName := NewFilename[:len(NewFilename)-len(ext)]
 		fileName = fmt.Sprintf("%s/%s.%s", deviceID, baseName, destAudioFormat)
 	}
 
@@ -106,6 +106,43 @@ func (f *Service) FileProxy(ctx context.Context, deviceID, filename string) (io.
 		return nil, err
 	}
 	return file, nil
+}
+
+// UploadStream 流式上传文件
+func (f *Service) UploadStream(ctx context.Context, deviceID, ext string, stream io.Reader, enableAudioTranscode bool, destAudioFormat string) (filename, presignedURL string, err error) {
+	_, span := tracer().Start(ctx, "FileService.UploadStream")
+	defer span.End()
+
+	newFilename := helpers.GenerateNumber(10) + ext
+	fileName := fmt.Sprintf("%s/%s", deviceID, newFilename)
+
+	if enableAudioTranscode {
+		pcmParams := helpers.Cond(ext == ".pcm", defaultPCMParams(), nil)
+		transcodeStream, err := f.AudioTranscode(ctx, io.NopCloser(stream), destAudioFormat, pcmParams)
+		if err != nil {
+			span.RecordError(err)
+			return "", "", fmt.Errorf("音频转码失败: %w", err)
+		}
+		stream = transcodeStream
+		baseName := newFilename[:len(newFilename)-len(ext)]
+		fileName = fmt.Sprintf("%s/%s.%s", deviceID, baseName, destAudioFormat)
+	}
+
+	if err = f.FileStorage.Storage(ctx, fileName, io.NopCloser(stream)); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return "", "", fmt.Errorf("上传文件失败: %w", err)
+	}
+
+	presignedURL, err = f.FileStorage.PresignURL(ctx, fileName, 15*time.Minute)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return "", "", fmt.Errorf("生成预签名URL失败: %w", err)
+	}
+
+	slog.Info("[UploadStream]", "device_id", deviceID, "filename", fileName)
+	return fileName, presignedURL, nil
 }
 
 func defaultPCMParams() map[string]any {
