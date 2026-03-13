@@ -31,6 +31,7 @@ type LoginResponse struct {
 	OpenID   string `json:"open_id,omitempty"`
 	Nickname string `json:"nickname,omitempty"`
 	Phone    string `json:"phone,omitempty"`
+	Avatar   string `json:"avatar"`
 }
 
 // SendCodeRequest 验证码请求
@@ -147,4 +148,17 @@ type GrowthReportListResponse struct {
 	PageSize int   `json:"page_size"`
 	Total    int64 `json:"total"`
 	Data     any   `json:"data"`
+}
+
+// InfoRequest 用户信息请求
+type InfoRequest struct {
+	NickName string `json:"nickname" validate:"required"`
+	Avatar   string `json:"avatar" validate:"required"`
+}
+
+// InfoResponse 用户信息响应
+type InfoResponse struct {
+	UID      int    `json:"uid"`
+	NickName string `json:"nickname"`
+	Avatar   string `json:"avatar"`
 }

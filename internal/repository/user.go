@@ -79,3 +79,8 @@ func (u *UserRepo) Upsert(ctx context.Context, user *model.User) error {
 	}
 	return nil
 }
+
+// GetUserByUID 查询用户信息
+func (u *UserRepo) GetUserByUID(ctx context.Context, uid int64) (*model.User, error) {
+	return query.User.WithContext(ctx).Where(query.User.ID.Eq(uid)).First()
+}

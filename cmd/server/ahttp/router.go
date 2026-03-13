@@ -87,10 +87,12 @@ func RegisterRoutes(base *ahttp.Base) {
 
 		group.Group("/user", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(userGroup *ahttp.Group) {
 			h := userhandler.New()
-			userGroup.POST("/send_code", h.SendCode)
-			userGroup.POST("/login", h.Login)
-			userGroup.POST("/refresh_token", h.RefreshToken)
-			userGroup.POST("/logout", h.Logout)
+			userGroup.POST("/send_code", h.SendCode)         // 发送验证码
+			userGroup.POST("/login", h.Login)                // 登录接口
+			userGroup.POST("/refresh_token", h.RefreshToken) // 刷新token
+			userGroup.POST("/info", h.GetUserInfo)           // 获取用户信息
+			userGroup.POST("/update", h.UpdateInfo)          // 修改用户信息
+			userGroup.POST("/logout", h.Logout)              // 退出接口
 
 			// 完善用户信息，扫描绑定后完善用户信息
 			userGroup.POST("/profile", h.CompleteProfile)

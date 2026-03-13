@@ -88,6 +88,7 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 		UID:      userInfo.ID,
 		OpenID:   userInfo.OpenID,
 		Nickname: userInfo.Nickname,
+		Avatar:   userInfo.Avatar,
 		Phone:    userInfo.Phone,
 	}).Success()
 }
@@ -361,5 +362,46 @@ func (h *Handler) GetGrowthReportList(state *ahttp.State, req *GetGrowthReportLi
 		PageSize: req.PageSize,
 		Total:    total,
 		Data:     data,
+	}).Success()
+}
+
+// UpdateInfo 更新用户信息
+func (h *Handler) UpdateInfo(state *ahttp.State, req *InfoRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.GetGrowthReportList")
+	defer span.End()
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	if err := h.UserServer.UpdateUserInfo(ctx, uid, req.NickName, req.Avatar); err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success()
+}
+
+// GetUserInfo 获取用户信息
+func (h *Handler) GetUserInfo(state *ahttp.State) error {
+	ctx, span := tracer().Start(state.Context(), "User.GetGrowthReportList")
+	defer span.End()
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	user, err := h.UserServer.GetUserInfoByUID(ctx, uid)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().SetData(InfoResponse{
+		UID:      int(uid),
+		NickName: user.Nickname,
+		Avatar:   user.Avatar,
 	}).Success()
 }

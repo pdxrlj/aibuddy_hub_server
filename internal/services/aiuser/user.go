@@ -114,6 +114,14 @@ func (s *Service) CreateUser(ctx context.Context, user *model.User) (int64, erro
 	return s.UserRepo.CreateUser(user)
 }
 
+// GetUserInfoByUID 获取用户详细信息
+func (s *Service) GetUserInfoByUID(ctx context.Context, uid int64) (*model.User, error) {
+	ctx, span := tracer().Start(ctx, "CreateUser")
+	defer span.End()
+
+	return s.UserRepo.GetUserByUID(ctx, uid)
+}
+
 // UpdateUser 更新用户信息
 func (s *Service) UpdateUser(ctx context.Context, uid int64, user *model.User, oldUser *model.User) error {
 	_, span := tracer().Start(ctx, "UpdateUser")
@@ -130,6 +138,20 @@ func (s *Service) UpdateUser(ctx context.Context, uid int64, user *model.User, o
 	}
 
 	_, err := s.UserRepo.UpdateUser(uid, user)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateUserInfo 更新用户信息
+func (s *Service) UpdateUserInfo(ctx context.Context, uid int64, nickname string, avatar string) error {
+	_, span := tracer().Start(ctx, "UpdateUserInfo")
+	defer span.End()
+	_, err := s.UserRepo.UpdateUser(uid, &model.User{
+		Nickname: nickname,
+		Avatar:   avatar,
+	})
 	if err != nil {
 		return err
 	}
