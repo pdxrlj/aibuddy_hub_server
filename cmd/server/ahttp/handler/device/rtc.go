@@ -8,6 +8,7 @@ import (
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
+	"aibuddy/pkg/helpers"
 	"log/slog"
 )
 
@@ -44,21 +45,34 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 		appID = config.Instance.Baidu.AppID
 	}
 
-	resp, err := h.aiAgent.GenerateAIAgentCall(&baidu.GenerateAIAgentCallRequest{
+	request := &baidu.GenerateAIAgentCallRequest{
 		AppID:        appID,
 		InstanceType: baidu.InstanceType(req.InstanceType),
 		Config:       req.Config,
-	})
+	}
+	helpers.PP(request)
+	resp, err := h.aiAgent.GenerateAIAgentCall(request)
 	if err != nil {
 		slog.Error("Failed to create AIAgentInstance", "error", err)
 		return state.Resposne().Error(err)
 	}
 
-	return state.Resposne().Raw(&GenerateAIAgentCallResponse{
-		AiAgentInstanceID: resp.AiAgentInstanceID,
-		InstanceType:      resp.InstanceType,
-		Context:           convertInstanceContext(resp.Context),
-	})
+	return state.Resposne().
+		// SetHeader("Content-Type", "application/json;charset=UTF-8").
+		// SetHeader("x-bce-request-id", resp.XBCERequestID).
+		// SetHeader("X-Protected-By", "OpenRASP 2.0").
+		// SetHeader("Cache-Control", "no-cache").
+		// SetHeader("Access-Control-Allow-Origin", "*").
+		// SetHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS").
+		// SetHeader("Access-Control-Allow-Headers", "*").
+		// SetHeader("Access-Control-Allow-Credentials", "true").
+		// SetHeader("Access-Control-Max-Age", "1728000").
+		Raw(&GenerateAIAgentCallResponse{
+			Code:              0,
+			AiAgentInstanceID: resp.AiAgentInstanceID,
+			ForwardPort:       0,
+			Context:           convertInstanceContext(resp.Context),
+		})
 }
 
 // StopAIAgentInstance 与端侧SDK交互，停止AIAgentInstance

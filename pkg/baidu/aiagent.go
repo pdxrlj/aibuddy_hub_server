@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"aibuddy/pkg/config"
+	"aibuddy/pkg/helpers"
 )
 
 // AIAgent 大模型互动实例API
@@ -73,9 +74,9 @@ type AIAgentConfig struct {
 
 // GenerateAIAgentCallRequest 创建大模型互动实例请求
 type GenerateAIAgentCallRequest struct {
-	AppID        string
-	InstanceType InstanceType   `json:"instance_type,omitempty"`
-	Config       any `json:"config,omitempty"` // 支持 *AIAgentConfig 或 string
+	AppID        string       `json:"app_id"`
+	InstanceType InstanceType `json:"instance_type,omitempty"`
+	Config       any          `json:"config,omitempty"` // 支持 *AIAgentConfig 或 string
 }
 
 // AIAgentContext 大模型互动实例上下文
@@ -89,6 +90,7 @@ type GenerateAIAgentCallResponse struct {
 	AiAgentInstanceID uint64          `json:"ai_agent_instance_id"`
 	InstanceType      string          `json:"instance_type"`
 	Context           *AIAgentContext `json:"context,omitempty"`
+	XBCERequestID     string          `json:"-"`
 }
 
 // GenerateAIAgentCall 创建并启动大模型互动实例
@@ -121,11 +123,14 @@ func (a *AIAgent) GenerateAIAgentCall(req *GenerateAIAgentCallRequest) (*Generat
 			body["config"] = string(configBytes)
 		}
 	}
-
+	fmt.Println("=========AIAgent=========")
+	helpers.PP(body)
 	var result GenerateAIAgentCallResponse
-	if err := a.client.Request("POST", path, nil, body, &result); err != nil {
+	requestID, err := a.client.RequestWithHeader("POST", path, nil, body, &result, "x-bce-request-id")
+	if err != nil {
 		return nil, fmt.Errorf("创建大模型互动实例失败: %w", err)
 	}
+	result.XBCERequestID = requestID
 
 	return &result, nil
 }

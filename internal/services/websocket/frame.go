@@ -7,6 +7,11 @@ import "encoding/json"
 type FrameType string
 
 const (
+	// FrameTypePing 心跳请求帧
+	FrameTypePing FrameType = "ping"
+	// FrameTypePong 心跳响应帧
+	FrameTypePong FrameType = "pong"
+
 	// FrameTypeOnline 设备在线状态帧
 	FrameTypeOnline FrameType = "online"
 	// FrameTypeOffline 设备离线状态帧

@@ -98,6 +98,14 @@ func (s *Service) HandleMessage(session *melody.Session, msg []byte) {
 	}
 
 	switch frame.Type {
+	case FrameTypePing:
+		// 心跳消息，返回 pong
+		pong := map[string]any{"type": "pong", "timestamp": frame.Message}
+		if data, err := json.Marshal(pong); err == nil {
+			if err := session.Write(data); err != nil {
+				slog.Error("failed to write pong", "error", err)
+			}
+		}
 	case FrameTypeUserMsg:
 		// 收到用户消息，转发给设备
 		// TODO: 实现转发逻辑

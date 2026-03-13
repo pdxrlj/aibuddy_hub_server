@@ -39,7 +39,7 @@ func (f *File) UploadFile(state *ahttp.State, req *UploadFileRequest) error {
 		return state.Resposne().Error(errors.New("文件大小不能超过3MB"))
 	}
 
-	filename, presignedURL, err := f.Service.UploadFile(ctx, req.DeviceID, req.File)
+	filename, presignedURL, err := f.Service.UploadFile(ctx, req.DeviceID, req.File, req.EnableAudioTranscode, req.DestAudioFormat)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))

@@ -1,6 +1,7 @@
 package ahttp
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -41,6 +42,12 @@ func (r *Response) SetMessage(message string) *Response {
 // SetData 设置数据
 func (r *Response) SetData(data any) *Response {
 	r.Data = data
+	return r
+}
+
+// SetHeader 设置响应头
+func (r *Response) SetHeader(key, value string) *Response {
+	r.Ctx.Response().Header().Set(key, value)
 	return r
 }
 
@@ -90,12 +97,29 @@ func (r *Response) Error(err error) error {
 	return r.Ctx.JSON(http.StatusOK, r)
 }
 
-// Raw 直接返回原始JSON响应，不包装
+// Raw 直接返回原始JSON响应
 func (r *Response) Raw(data any) error {
 	if r.Ctx.Response().Committed {
 		return nil
 	}
-	return r.Ctx.JSON(http.StatusOK, data)
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	r.Ctx.Response().Header().Set("Content-Type", "application/json;charset=UTF-8")
+
+	r.Ctx.Response().WriteHeader(http.StatusOK)
+	if _, err := r.Ctx.Response().Writer.Write(jsonData); err != nil {
+		return err
+	}
+
+	if flusher, ok := r.Ctx.Response().Writer.(http.Flusher); ok {
+		flusher.Flush()
+	}
+
+	return nil
 }
 
 // File 返回文件响应（流式）

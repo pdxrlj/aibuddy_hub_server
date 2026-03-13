@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/cespare/xxhash/v2"
+	"github.com/spf13/cast"
 )
 
 // AiChatHandler AI对话处理器
@@ -62,7 +63,7 @@ func (h *AiChatHandler) Chat(ctx *mqtt.Context) {
 		var startTime int64
 		startKey := fmt.Sprintf("ai_chat:%s:%s:%s", deviceID, msg.Sid, ai.ChatTypeStart)
 		if val, err := h.cache.Get(startKey); err == nil {
-			startTime = val.(int64)
+			startTime = cast.ToInt64(val)
 		} else {
 			// 没有开始时间，默认使用当前时间减去对话时长
 			// startTime = time.Now().Add(-time.Duration(msg.Dur) * time.Second).Unix()
