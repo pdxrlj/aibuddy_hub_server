@@ -63,8 +63,8 @@ func (r *Service) SubmitRemind(ctx context.Context, uid int64, data *model.Remin
 		if data.RepeatType == model.RepeatTypeNone {
 			scheduled = false
 		}
-		payload := []byte(fmt.Sprintf(`{"scheduled":%v,"id":%d}`, scheduled, data.ID))
-		task := asynq.NewTask("scheduled_task", payload)
+		payload := []byte(fmt.Sprintf(`{"scheduled":%v,"remind_id":%d}`, scheduled, data.ID))
+		task := asynq.NewTask("reminder", payload)
 		info, err := r.TaskClient.EnqueueAt(task, data.ReminderTime, asynq.TaskID(taskID))
 		if err != nil {
 			span.RecordError(err)

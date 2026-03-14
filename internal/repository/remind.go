@@ -105,3 +105,17 @@ func (r *RemindRepo) GetListByDeviceID(ctx context.Context, deviceID string, pag
 func (r *RemindRepo) UpdateEntryID(id int64, entryID string) (gen.ResultInfo, error) {
 	return query.Reminder.Where(query.Reminder.ID.Eq(id)).Update(query.Reminder.EntryID, entryID)
 }
+
+// GetRemindByID 更新定时任务ID
+func (r *RemindRepo) GetRemindByID(id int64) (*model.Reminder, error) {
+	return query.Reminder.Where(query.Reminder.ID.Eq(id)).First()
+}
+
+// UpdateRemindTask 更新定时任务信息
+func (r *RemindRepo) UpdateRemindTask(id int64, entryID string, nextReminderTime time.Time, status string) (gen.ResultInfo, error) {
+	return query.Reminder.Where(query.Reminder.ID.Eq(id)).Updates(map[string]any{
+		query.Reminder.EntryID.ColumnName().String():          entryID,
+		query.Reminder.NextReminderTime.ColumnName().String(): nextReminderTime,
+		query.Reminder.Status.ColumnName().String():           status,
+	})
+}

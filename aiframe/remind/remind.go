@@ -17,20 +17,20 @@ type Msg struct {
 	Type    string `json:"type"`
 	Mid     string `json:"mid"`
 	Fmt     string `json:"fmt"`
-	Sender  string `json:"sender"`
-	From    string `json:"from"`
+	Title   string `json:"title"`
 	Content string `json:"content"`
+	Remarks string `json:"remarks"`
 }
 
 // SendMessage 发送消息
-func SendMessage(mid, fmt, sender, content, from, targetDeviceID string) error {
+func SendMessage(msgType, mid, fmt, title, content, targetDeviceID, remarks string) error {
 	msg := &Msg{
-		Type:    MsgTypeRemind,
+		Type:    msgType,
 		Mid:     mid,
 		Fmt:     fmt,
-		Sender:  sender,
-		From:    from,
+		Title:   title,
 		Content: content,
+		Remarks: remarks,
 	}
 
 	payload, err := json.Marshal(msg)
