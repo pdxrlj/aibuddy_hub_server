@@ -13,13 +13,13 @@ const (
 )
 
 // StoreRTCInstanceID 存储实例ID
-func StoreRTCInstanceID(appID string, instanceID string) error {
-	return flashInstance.Set(fmt.Sprintf(RTCInstanceID, appID), instanceID)
+func StoreRTCInstanceID(deviceID string, instanceID string) error {
+	return flashInstance.Set(fmt.Sprintf(RTCInstanceID, deviceID), instanceID)
 }
 
 // GetRTCInstanceID 获取实例ID
-func GetRTCInstanceID(appID string) (string, error) {
-	instanceID, err := flashInstance.Get(fmt.Sprintf(RTCInstanceID, appID))
+func GetRTCInstanceID(deviceID string) (string, error) {
+	instanceID, err := flashInstance.Get(fmt.Sprintf(RTCInstanceID, deviceID))
 	if err != nil {
 		return "", err
 	}

@@ -14,7 +14,7 @@ storage:
     host: "112.132.224.74"
     port: 6379
     password: ""
-    db: 0
+    db: 1
   flash:
     use: "redis"
 agent:
