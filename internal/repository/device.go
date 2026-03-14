@@ -235,13 +235,14 @@ func (d *DeviceRepo) GetUserDeviceList(ctx context.Context, uid int64) ([]*model
 	_, span := tracer.Start(ctx, "DeviceService.GetUserDeviceList")
 	defer span.End()
 
-	devices, err := query.Device.
+	devices, err := query.Device.Debug().
 		Where(query.Device.UID.Eq(uid)).
 		Preload(query.Device.DeviceInfo).
 		Find()
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.Int64("uid", uid))
+		slog.Error("[DeviceRepo] GetUserDeviceList", "uid", uid, "error", err.Error())
 		return nil, err
 	}
 	return devices, nil
