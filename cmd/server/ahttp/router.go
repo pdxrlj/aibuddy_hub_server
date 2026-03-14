@@ -9,9 +9,11 @@ import (
 	"aibuddy/cmd/server/ahttp/handler/nfc"
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
 	remindhandler "aibuddy/cmd/server/ahttp/handler/remind"
+
 	rolehandler "aibuddy/cmd/server/ahttp/handler/role"
 	shophandler "aibuddy/cmd/server/ahttp/handler/shop"
 	ttsvoicehandler "aibuddy/cmd/server/ahttp/handler/tts_voice"
+
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
 	websockethandler "aibuddy/cmd/server/ahttp/handler/websocket"
 	"aibuddy/cmd/server/ahttp/middleware"
@@ -95,7 +97,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			userGroup.POST("/send_code", h.SendCode)         // 发送验证码
 			userGroup.POST("/login", h.Login)                // 登录接口
 			userGroup.POST("/refresh_token", h.RefreshToken) // 刷新token
-			userGroup.POST("/info", h.GetUserInfo)           // 获取用户信息
+			userGroup.GET("/info", h.GetUserInfo)            // 获取用户信息
 			userGroup.POST("/update", h.UpdateInfo)          // 修改用户信息
 			userGroup.POST("/logout", h.Logout)              // 退出接口
 
