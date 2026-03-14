@@ -30,6 +30,7 @@ func newNFC(db *gorm.DB, opts ...gen.DOOption) nFC {
 	_nFC.ALL = field.NewAsterisk(tableName)
 	_nFC.ID = field.NewInt64(tableName, "id")
 	_nFC.DeviceID = field.NewString(tableName, "device_id")
+	_nFC.UID = field.NewInt64(tableName, "uid")
 	_nFC.Cid = field.NewString(tableName, "cid")
 	_nFC.Ctype = field.NewString(tableName, "ctype")
 	_nFC.NFCID = field.NewString(tableName, "nfc_id")
@@ -50,6 +51,7 @@ type nFC struct {
 	ALL       field.Asterisk
 	ID        field.Int64
 	DeviceID  field.String
+	UID       field.Int64
 	Cid       field.String
 	Ctype     field.String
 	NFCID     field.String
@@ -76,6 +78,7 @@ func (n *nFC) updateTableName(table string) *nFC {
 	n.ALL = field.NewAsterisk(table)
 	n.ID = field.NewInt64(table, "id")
 	n.DeviceID = field.NewString(table, "device_id")
+	n.UID = field.NewInt64(table, "uid")
 	n.Cid = field.NewString(table, "cid")
 	n.Ctype = field.NewString(table, "ctype")
 	n.NFCID = field.NewString(table, "nfc_id")
@@ -100,9 +103,10 @@ func (n *nFC) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (n *nFC) fillFieldMap() {
-	n.fieldMap = make(map[string]field.Expr, 10)
+	n.fieldMap = make(map[string]field.Expr, 11)
 	n.fieldMap["id"] = n.ID
 	n.fieldMap["device_id"] = n.DeviceID
+	n.fieldMap["uid"] = n.UID
 	n.fieldMap["cid"] = n.Cid
 	n.fieldMap["ctype"] = n.Ctype
 	n.fieldMap["nfc_id"] = n.NFCID

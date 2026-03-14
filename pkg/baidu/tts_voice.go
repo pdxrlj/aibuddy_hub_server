@@ -2,6 +2,7 @@ package baidu
 
 import (
 	"fmt"
+	"log/slog"
 	"net/url"
 
 	"aibuddy/pkg/config"
@@ -50,6 +51,7 @@ func (t *TTSVoice) CreateCloneVoice(req *CreateCloneVoiceRequest) (*CreateCloneV
 	var result CreateCloneVoiceResponse
 
 	if err := t.client.Request("POST", path, nil, req, &result); err != nil {
+		slog.Error("[TTSVoice] CreateCloneVoice failed", "err", err)
 		return nil, err
 	}
 
