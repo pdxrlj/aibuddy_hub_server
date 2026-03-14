@@ -98,7 +98,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			userGroup.POST("/send_code", h.SendCode)         // 发送验证码
 			userGroup.POST("/login", h.Login)                // 登录接口
 			userGroup.POST("/refresh_token", h.RefreshToken) // 刷新token
-			userGroup.POST("/info", h.GetUserInfo)           // 获取用户信息
+			userGroup.GET("/info", h.GetUserInfo)            // 获取用户信息
 			userGroup.POST("/update", h.UpdateInfo)          // 修改用户信息
 			userGroup.POST("/logout", h.Logout)              // 退出接口
 
