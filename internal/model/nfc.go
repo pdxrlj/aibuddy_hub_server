@@ -21,8 +21,9 @@ func (s NFCStatus) String() string {
 
 // NFC 模型
 type NFC struct {
-	ID       int64  `gorm:"column:id;type:bigint(20);autoIncrement;primaryKey" json:"id"`
+	ID       int64  `gorm:"column:id;type:bigint;autoIncrement;primaryKey" json:"id"`
 	DeviceID string `gorm:"column:device_id;type:varchar(255);not null" json:"device_id"`
+	UID      int64  `gorm:"column:uid;type:bigint;" json:"-"`
 	Cid      string `gorm:"column:cid;type:varchar(255);not null" json:"cid"`
 	Ctype    string `gorm:"column:ctype;type:varchar(255);not null" json:"ctype"`
 	NFCID    string `gorm:"column:nfc_id;type:varchar(255);not null" json:"nfc_id"`

@@ -180,9 +180,7 @@ func (b *Base) createHandler(handlerValue reflect.Value, inputNumber int) echo.H
 		if inputNumber == 1 {
 			return b.ResoverHandler(ctx, handlerValue)
 		}
-		// 获取 handler 原始参数类型
 		handlerParamType := handlerValue.Type().In(1)
-		// 如果参数是指针类型，解引用获取基础类型用于创建实例
 		requestType := handlerParamType
 		if requestType.Kind() == reflect.Ptr {
 			requestType = requestType.Elem()
@@ -213,16 +211,13 @@ func (b *Base) createHandler(handlerValue reflect.Value, inputNumber int) echo.H
 			return err
 		}
 
-		// 验证失败时响应已被写入
 		if ctx.Response().Committed {
 			return nil
 		}
 
-		// 如果 handler 期望指针，则传指针；否则传值
 		if handlerParamType.Kind() == reflect.Ptr {
 			return b.ResoverHandler(ctx, handlerValue, instance)
 		}
-		// 解引用获取值
 		return b.ResoverHandler(ctx, handlerValue, reflect.ValueOf(instance).Elem().Interface())
 	}
 }

@@ -11,6 +11,7 @@ import (
 	remindhandler "aibuddy/cmd/server/ahttp/handler/remind"
 	rolehandler "aibuddy/cmd/server/ahttp/handler/role"
 	shophandler "aibuddy/cmd/server/ahttp/handler/shop"
+	ttsvoicehandler "aibuddy/cmd/server/ahttp/handler/tts_voice"
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
 	websockethandler "aibuddy/cmd/server/ahttp/handler/websocket"
 	"aibuddy/cmd/server/ahttp/middleware"
@@ -165,6 +166,24 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 获取NFC信息
 			group.GET("/:nfc_id/info", nfcHandler.GetNFCInfo)
+
+			// 获取NFC列表
+			group.GET("/list/:device_id", nfcHandler.GetNFCList, middleware.UnifiedAuthMiddleware())
+
+			// 更新NFC
+			group.PUT("/:cid", nfcHandler.UpdateNFC, middleware.UnifiedAuthMiddleware())
+
+			// 删除NFC
+			group.DELETE("/:cid", nfcHandler.DeleteNFC, middleware.UnifiedAuthMiddleware())
+		})
+
+		// TTS语音复刻
+		group.Group("/tts_voice", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
+			tts := ttsvoicehandler.New()
+			group.POST("/create", tts.CreateCloneVoice)               // 创建复刻音色
+			group.PUT("/:voice_id/retrain", tts.RetrainCloneVoice)    // 重新训练复刻音色
+			group.GET("/list", tts.GetCloneVoiceList)                 // 获取音色列表
+			group.DELETE("/:uniq_id/:voice_id", tts.DeleteCloneVoice) // 删除音色
 		})
 
 		group.Group("/shop", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {

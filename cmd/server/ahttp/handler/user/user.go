@@ -225,6 +225,8 @@ func (h *Handler) HaveDevice(state *ahttp.State) error {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
+	slog.Info("[User] HaveDevice", "uid", uid)
+
 	haveDevice, err := h.UserServer.HaveDevice(ctx, uid)
 	if err != nil {
 		span.RecordError(err)

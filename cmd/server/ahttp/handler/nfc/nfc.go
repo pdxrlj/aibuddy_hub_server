@@ -2,8 +2,10 @@
 package nfc
 
 import (
+	aiuserService "aibuddy/internal/services/aiuser"
 	"aibuddy/internal/services/nfc"
 	"aibuddy/pkg/ahttp"
+	"log/slog"
 	"net/http"
 )
 
@@ -21,9 +23,14 @@ func NewHandler() *Handler {
 
 // CreateNFC 创建NFC
 func (h *Handler) CreateNFC(state *ahttp.State, req *CreateNFCRequest) error {
-	err := h.Service.CreateNFC(req.Ctype, req.Title, req.Content)
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return err
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+	slog.Info("[NFC] CreateNFC", "uid", uid, "device_id", req.DeviceID, "ctype", req.Ctype, "title", req.Title, "content", req.Content)
+	err = h.Service.CreateNFC(uid, req.DeviceID, req.Ctype, req.Title, req.Content)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	return state.Resposne().Success()
@@ -43,4 +50,50 @@ func (h *Handler) GetNFCInfo(state *ahttp.State, req *GetNFCInfoRequest) error {
 		Title:   nfc.Title,
 		Content: nfc.Content,
 	})
+}
+
+// GetNFCList 获取NFC列表
+func (h *Handler) GetNFCList(state *ahttp.State, req *GetNFCListRequest) error {
+	list, total, err := h.Service.GetNFCListByDeviceID(req.DeviceID, req.Page, req.PageSize)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	items := make([]ListItem, len(list))
+	for i, item := range list {
+		items[i] = ListItem{
+			CID:     item.Cid,
+			Ctype:   item.Ctype,
+			Title:   item.Title,
+			Content: item.Content,
+			Status:  string(item.Status),
+		}
+	}
+
+	return state.Resposne().Success(&GetNFCListResponse{
+		Page:     req.Page,
+		PageSize: req.PageSize,
+		Total:    total,
+		List:     items,
+	})
+}
+
+// UpdateNFC 更新NFC
+func (h *Handler) UpdateNFC(state *ahttp.State, req *UpdateNFCRequest) error {
+	err := h.Service.UpdateNFC(req.CID, req.Ctype, req.Title, req.Content)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success()
+}
+
+// DeleteNFC 删除NFC
+func (h *Handler) DeleteNFC(state *ahttp.State, req *DeleteNFCRequest) error {
+	err := h.Service.DeleteNFC(req.CID)
+	if err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success()
 }
