@@ -9,7 +9,8 @@ import (
 	"aibuddy/cmd/server/ahttp/handler/nfc"
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
 	remindhandler "aibuddy/cmd/server/ahttp/handler/remind"
-	rolehandleer "aibuddy/cmd/server/ahttp/handler/role"
+	rolehandler "aibuddy/cmd/server/ahttp/handler/role"
+	shophandler "aibuddy/cmd/server/ahttp/handler/shop"
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
 	websockethandler "aibuddy/cmd/server/ahttp/handler/websocket"
 	"aibuddy/cmd/server/ahttp/middleware"
@@ -132,7 +133,7 @@ func RegisterRoutes(base *ahttp.Base) {
 		})
 
 		group.Group("/role", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(role *ahttp.Group) {
-			r := rolehandleer.NewRoleHandler()
+			r := rolehandler.NewRoleHandler()
 			role.GET("/list", r.RoleList)
 			role.POST("/change", r.ChangeRole) // 切换角色
 
@@ -164,6 +165,11 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 获取NFC信息
 			group.GET("/:nfc_id/info", nfcHandler.GetNFCInfo)
+		})
+
+		group.Group("/shop", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
+			s := shophandler.NewShopHandler()
+			group.GET("/goods_list", s.GoodsList)
 		})
 	})
 }
