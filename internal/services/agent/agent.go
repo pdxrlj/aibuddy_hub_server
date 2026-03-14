@@ -20,6 +20,11 @@ func NewAgentModel(output any, description string) *llmagent.LLMAgent {
 	modelInstance := openai.New(modelName,
 		openai.WithAPIKey(apiKey),
 		openai.WithBaseURL(baseURL),
+		openai.WithExtraFields(map[string]any{
+			"enable_search":    true,
+			"web_extractor":    true,
+			"code_interpreter": true,
+		}),
 	)
 	agent := llmagent.New(
 		"aibuddy_agent",

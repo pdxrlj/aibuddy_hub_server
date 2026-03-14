@@ -73,9 +73,9 @@ type AIAgentConfig struct {
 
 // GenerateAIAgentCallRequest 创建大模型互动实例请求
 type GenerateAIAgentCallRequest struct {
-	AppID        string
-	InstanceType InstanceType   `json:"instance_type,omitempty"`
-	Config       any `json:"config,omitempty"` // 支持 *AIAgentConfig 或 string
+	AppID        string       `json:"app_id"`
+	InstanceType InstanceType `json:"instance_type,omitempty"`
+	Config       any          `json:"config,omitempty"` // 支持 *AIAgentConfig 或 string
 }
 
 // AIAgentContext 大模型互动实例上下文
@@ -89,6 +89,7 @@ type GenerateAIAgentCallResponse struct {
 	AiAgentInstanceID uint64          `json:"ai_agent_instance_id"`
 	InstanceType      string          `json:"instance_type"`
 	Context           *AIAgentContext `json:"context,omitempty"`
+	XBCERequestID     string          `json:"-"`
 }
 
 // GenerateAIAgentCall 创建并启动大模型互动实例
@@ -110,10 +111,8 @@ func (a *AIAgent) GenerateAIAgentCall(req *GenerateAIAgentCallRequest) (*Generat
 	if req.Config != nil {
 		switch cfg := req.Config.(type) {
 		case string:
-			// 如果已经是字符串，直接传递（原始JSON字符串）
 			body["config"] = cfg
 		case *AIAgentConfig:
-			// 如果是结构体，需要序列化
 			configBytes, err := json.Marshal(cfg)
 			if err != nil {
 				return nil, fmt.Errorf("序列化配置失败: %w", err)
@@ -123,9 +122,11 @@ func (a *AIAgent) GenerateAIAgentCall(req *GenerateAIAgentCallRequest) (*Generat
 	}
 
 	var result GenerateAIAgentCallResponse
-	if err := a.client.Request("POST", path, nil, body, &result); err != nil {
+	requestID, err := a.client.RequestWithHeader("POST", path, nil, body, &result, "x-bce-request-id")
+	if err != nil {
 		return nil, fmt.Errorf("创建大模型互动实例失败: %w", err)
 	}
+	result.XBCERequestID = requestID
 
 	return &result, nil
 }

@@ -90,6 +90,25 @@ func (c *Client) Request(method, path string, query url.Values, body any, result
 	return c.handleResponse(resp, result)
 }
 
+// RequestWithHeader 发送带自动签名的请求，返回指定响应头
+func (c *Client) RequestWithHeader(method, path string, query url.Values, body any, result any, headerKey string) (string, error) {
+	auth := c.signer.GenerateAuth(method, path, query, map[string]string{
+		"host": c.host,
+	})
+
+	req := c.buildRequest(auth, query, body)
+	resp, err := c.executeRequest(req, method, baseURL+path)
+	if err != nil {
+		return "", err
+	}
+
+	if err := c.handleResponse(resp, result); err != nil {
+		return "", err
+	}
+
+	return resp.Header().Get(headerKey), nil
+}
+
 // buildRequest 构建请求
 func (c *Client) buildRequest(auth *AuthResult, query url.Values, body any) *resty.Request {
 	req := c.httpClient.R().

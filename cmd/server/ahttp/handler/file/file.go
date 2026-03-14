@@ -28,7 +28,7 @@ func NewFile() *File {
 	}
 }
 
-// UploadFile 上传文件
+// UploadFile 上传文件（表单方式）
 func (f *File) UploadFile(state *ahttp.State, req *UploadFileRequest) error {
 	ctx, span := tracer().Start(state.Context(), "File.UploadFile")
 	defer span.End()
@@ -39,7 +39,30 @@ func (f *File) UploadFile(state *ahttp.State, req *UploadFileRequest) error {
 		return state.Resposne().Error(errors.New("文件大小不能超过3MB"))
 	}
 
-	filename, presignedURL, err := f.Service.UploadFile(ctx, req.DeviceID, req.File)
+	filename, presignedURL, err := f.Service.UploadFile(ctx, req.DeviceID, req.File, req.EnableAudioTranscode, req.DestAudioFormat)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		return state.Resposne().Error(err)
+	}
+
+	return state.Resposne().Success(&UploadFileResponse{
+		Filename:     filename,
+		PresignedURL: presignedURL,
+	})
+}
+
+// UploadStream 流式上传文件
+func (f *File) UploadStream(state *ahttp.State, req *UploadStreamRequest) error {
+	ctx, span := tracer().Start(state.Context(), "File.UploadStream")
+	defer span.End()
+
+	body := state.Ctx.Request().Body
+	defer func() {
+		_ = body.Close()
+	}()
+
+	filename, presignedURL, err := f.Service.UploadStream(ctx, req.DeviceID, req.Ext, body, req.EnableAudioTranscode, req.DestAudioFormat)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))

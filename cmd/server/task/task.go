@@ -159,6 +159,8 @@ func StartTaskServer(ctx context.Context) error {
 	)
 	tm.server = srv
 
+	InitHandlers()
+
 	mux := asynq.NewServeMux()
 	for taskType, handler := range handlers {
 		mux.HandleFunc(taskType, handler)
@@ -179,4 +181,9 @@ func StartTaskServer(ctx context.Context) error {
 	}()
 
 	return srv.Run(mux)
+}
+
+// InitHandlers 初始化任务处理器
+func InitHandlers() {
+	RegisterHandler(TaskTypeReminder, ReminderHandler)
 }

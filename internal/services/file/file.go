@@ -3,14 +3,18 @@ package file
 
 import (
 	"aibuddy/pkg/config"
+	"aibuddy/pkg/helpers"
 	"aibuddy/pkg/storage"
 	"context"
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"mime/multipart"
+	"path"
 	"time"
 
+	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -43,10 +47,12 @@ func NewService() *Service {
 }
 
 // UploadFile 上传文件
-func (f *Service) UploadFile(ctx context.Context, deviceID string, file *multipart.FileHeader) (filename, presignedURL string, err error) {
+func (f *Service) UploadFile(ctx context.Context, deviceID string, file *multipart.FileHeader, enableAudioTranscode bool, destAudioFormat string) (filename, presignedURL string, err error) {
 	_, span := tracer().Start(ctx, "FileService.UploadFile")
 	defer span.End()
-	stream, err := file.Open()
+
+	var stream io.ReadCloser
+	stream, err = file.Open()
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
@@ -55,8 +61,22 @@ func (f *Service) UploadFile(ctx context.Context, deviceID string, file *multipa
 	defer func() {
 		_ = stream.Close()
 	}()
+	ext := path.Ext(file.Filename)
+	NewFilename := helpers.GenerateNumber(10) + ext
+	fileName := fmt.Sprintf("%s/%s", deviceID, NewFilename)
+	if enableAudioTranscode {
+		PcmParams := helpers.Cond(ext == ".pcm", defaultPCMParams(), nil)
+		stream, err = f.AudioTranscode(ctx, stream, destAudioFormat, PcmParams)
+		if err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", deviceID))
+			return "", "", err
+		}
 
-	fileName := fmt.Sprintf("%s/%s", deviceID, file.Filename)
+		baseName := NewFilename[:len(NewFilename)-len(ext)]
+		fileName = fmt.Sprintf("%s/%s.%s", deviceID, baseName, destAudioFormat)
+	}
+
 	if err = f.FileStorage.Storage(ctx, fileName, stream); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
@@ -86,4 +106,116 @@ func (f *Service) FileProxy(ctx context.Context, deviceID, filename string) (io.
 		return nil, err
 	}
 	return file, nil
+}
+
+// UploadStream 流式上传文件
+func (f *Service) UploadStream(ctx context.Context, deviceID, ext string, stream io.Reader, enableAudioTranscode bool, destAudioFormat string) (filename, presignedURL string, err error) {
+	_, span := tracer().Start(ctx, "FileService.UploadStream")
+	defer span.End()
+
+	newFilename := helpers.GenerateNumber(10) + ext
+	fileName := fmt.Sprintf("%s/%s", deviceID, newFilename)
+
+	if enableAudioTranscode {
+		pcmParams := helpers.Cond(ext == ".pcm", defaultPCMParams(), nil)
+		transcodeStream, err := f.AudioTranscode(ctx, io.NopCloser(stream), destAudioFormat, pcmParams)
+		if err != nil {
+			span.RecordError(err)
+			return "", "", fmt.Errorf("音频转码失败: %w", err)
+		}
+		stream = transcodeStream
+		baseName := newFilename[:len(newFilename)-len(ext)]
+		fileName = fmt.Sprintf("%s/%s.%s", deviceID, baseName, destAudioFormat)
+	}
+
+	if err = f.FileStorage.Storage(ctx, fileName, io.NopCloser(stream)); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return "", "", fmt.Errorf("上传文件失败: %w", err)
+	}
+
+	presignedURL, err = f.FileStorage.PresignURL(ctx, fileName, 15*time.Minute)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return "", "", fmt.Errorf("生成预签名URL失败: %w", err)
+	}
+
+	slog.Info("[UploadStream]", "device_id", deviceID, "filename", fileName)
+	return fileName, presignedURL, nil
+}
+
+func defaultPCMParams() map[string]any {
+	return map[string]any{
+		"ar":     "16000",     // 采样率
+		"ac":     "1",         // 声道数
+		"f":      "s16le",     // 格式
+		"acodec": "pcm_s16le", // 编码
+	}
+}
+
+// AudioTranscode 音频转码
+func (f *Service) AudioTranscode(
+	ctx context.Context,
+	src io.ReadCloser,
+	destFormat string,
+	pcmParams ...map[string]any,
+) (io.ReadCloser, error) {
+	_, span := tracer().Start(ctx, "FileService.AudioTranscode")
+	defer span.End()
+
+	pr, pw := io.Pipe()
+
+	inputArgs := ffmpeg.KwArgs{}
+
+	if len(pcmParams) > 0 {
+		defaultPCMParams := defaultPCMParams()
+		maps.Copy(defaultPCMParams, pcmParams[0])
+		maps.Copy(inputArgs, defaultPCMParams)
+	}
+
+	cmd := ffmpeg.Input("pipe:0", inputArgs).Output("pipe:1", ffmpeg.KwArgs{
+		"format":       destFormat,
+		"acodec":       getAudioCodec(destFormat),
+		"ar":           "16000",
+		"ac":           "1",
+		"loglevel":     "error",
+		"hide_banner":  "",
+		"map_metadata": "-1",
+		"movflags":     "+faststart",
+	}).WithInput(src).WithOutput(pw)
+
+	go func() {
+		defer func() {
+			_ = src.Close()
+			_ = pw.Close()
+		}()
+
+		if err := cmd.Run(); err != nil {
+			slog.Error("AudioTranscode failed", "error", err)
+			_ = pw.CloseWithError(fmt.Errorf("audio transcode failed: %w", err))
+		}
+	}()
+
+	return pr, nil
+}
+
+// getAudioCodec 根据格式获取音频编码器
+func getAudioCodec(format string) string {
+	switch format {
+	case "mp3":
+		return "libmp3lame"
+	case "aac", "m4a":
+		return "aac"
+	case "ogg":
+		return "libvorbis"
+	case "wav":
+		return "pcm_s16le"
+	case "flac":
+		return "flac"
+	case "opus":
+		return "libopus"
+	default:
+		return "copy"
+	}
 }

@@ -92,22 +92,26 @@ func (s *Service) FormatGrowthReport(ctx context.Context, report *model.GrowthRe
 		return nil, err
 	}
 
-	// 计算年龄
-	age := 0
-	if device.DeviceInfo != nil && !device.DeviceInfo.Birthday.IsZero() {
-		now := time.Now()
-		age = now.Year() - device.DeviceInfo.Birthday.Year()
-		if now.YearDay() < device.DeviceInfo.Birthday.YearDay() {
-			age--
+	var childName, childGender string
+	var age int
+
+	if device.DeviceInfo != nil {
+		childName = device.DeviceInfo.NickName
+		childGender = device.DeviceInfo.Gender
+		if !device.DeviceInfo.Birthday.IsZero() {
+			now := time.Now()
+			age = now.Year() - device.DeviceInfo.Birthday.Year()
+			if now.YearDay() < device.DeviceInfo.Birthday.YearDay() {
+				age--
+			}
 		}
 	}
 
-	// 构建响应
 	result := &GrowthReportResponse{
-		StartDate:   report.StartTime.Format("2006-01-02"),
-		EndDate:     report.EndTime.Format("2006-01-02"),
-		ChildName:   device.DeviceInfo.NickName,
-		ChildGender: device.DeviceInfo.Gender,
+		StartDate:   report.StartTime.Format(time.DateTime),
+		EndDate:     report.EndTime.Format(time.DateTime),
+		ChildName:   childName,
+		ChildGender: childGender,
 		ChildAge:    age,
 		DisplayContent: DisplayContentDTO{
 			CoverCard: CoverCardDTO{

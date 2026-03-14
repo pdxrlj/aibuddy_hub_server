@@ -1,26 +1,25 @@
-# 构建阶段
 FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
-# 安装依赖
 RUN go env -w GOPROXY=https://goproxy.cn,direct
 COPY go.mod go.sum ./
 RUN go mod download
 
-# 构建
+
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o aibuddy .
 
-# 运行阶段
 FROM alpine:3.23.3
 
 WORKDIR /app
 
-RUN apk --no-cache add ca-certificates tzdata
+RUN sed -i 's#https\?://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#g' /etc/apk/repositories
+
+RUN apk --no-cache add ca-certificates tzdata ffmpeg
 ENV TZ=Asia/Shanghai
 
-# 复制二进制文件和配置
+
 COPY --from=builder /app/aibuddy .
 COPY config ./config
 

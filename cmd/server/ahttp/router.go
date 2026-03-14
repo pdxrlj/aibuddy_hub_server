@@ -54,7 +54,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			deviceGroup.GET("/:device_id/message_list", device.MessageList)
 
 			// 大模型互动实例
-			deviceGroup.Group("/aiagent", nil, func(rtcGroup *ahttp.Group) {
+			deviceGroup.Group("/aiagent/:device_id", nil, func(rtcGroup *ahttp.Group) {
 				rtc := devicehandler.NewRtcHandler()
 				// 与端侧SDK交互的接口
 				rtcGroup.POST("/generateAIAgentCall", rtc.GenerateAIAgentCall)
@@ -73,8 +73,11 @@ func RegisterRoutes(base *ahttp.Base) {
 
 		group.Group("/file", nil, func(fileGroup *ahttp.Group) {
 			f := filehandler.NewFile()
-			// 上传文件
+			// 上传文件（表单方式）
 			fileGroup.POST("/:device_id/upload_file", f.UploadFile)
+
+			// 流式上传文件
+			fileGroup.POST("/:device_id/upload_stream", f.UploadStream)
 
 			// 文件代理
 			fileGroup.GET("/:device_id/file_proxy", f.FileProxy)
