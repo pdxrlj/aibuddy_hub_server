@@ -2,7 +2,7 @@ package anniversaryhandler
 
 // AnniversaryInfoRequest  获取列表请求
 type AnniversaryInfoRequest struct {
-	ID              int64  `json:"id"`
+	ID              int64  `json:"id"  validate:"required" `
 	DeviceID        string `json:"device_id"  validate:"required,aimac"  msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
 	AnniversaryType string `json:"anniversary_type" validate:"required" msg:"required:纪念日类型不能为空"`
 

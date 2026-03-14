@@ -34,6 +34,9 @@ storage:
 wechat:
   app_id: ""
   app_secret: ""
+mini_shop:
+  app_id: ""
+  app_secret: ""
 agent:
   model:
     chat_model:

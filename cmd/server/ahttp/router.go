@@ -9,8 +9,12 @@ import (
 	"aibuddy/cmd/server/ahttp/handler/nfc"
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
 	remindhandler "aibuddy/cmd/server/ahttp/handler/remind"
-	rolehandleer "aibuddy/cmd/server/ahttp/handler/role"
+
 	ttsvoicehandler "aibuddy/cmd/server/ahttp/handler/tts_voice"
+
+	rolehandler "aibuddy/cmd/server/ahttp/handler/role"
+	shophandler "aibuddy/cmd/server/ahttp/handler/shop"
+
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
 	websockethandler "aibuddy/cmd/server/ahttp/handler/websocket"
 	"aibuddy/cmd/server/ahttp/middleware"
@@ -133,7 +137,7 @@ func RegisterRoutes(base *ahttp.Base) {
 		})
 
 		group.Group("/role", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(role *ahttp.Group) {
-			r := rolehandleer.NewRoleHandler()
+			r := rolehandler.NewRoleHandler()
 			role.GET("/list", r.RoleList)
 			role.POST("/change", r.ChangeRole) // 切换角色
 
@@ -183,6 +187,11 @@ func RegisterRoutes(base *ahttp.Base) {
 			group.PUT("/:voice_id/retrain", tts.RetrainCloneVoice)    // 重新训练复刻音色
 			group.GET("/list", tts.GetCloneVoiceList)                 // 获取音色列表
 			group.DELETE("/:uniq_id/:voice_id", tts.DeleteCloneVoice) // 删除音色
+		})
+
+		group.Group("/shop", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
+			s := shophandler.NewShopHandler()
+			group.GET("/goods_list", s.GoodsList)
 		})
 	})
 }

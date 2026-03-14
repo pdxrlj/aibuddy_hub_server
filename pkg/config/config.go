@@ -18,13 +18,14 @@ var Instance *Config
 
 // Config 应用程序配置
 type Config struct {
-	App     *AppConfig     `json:"app" mapstructure:"app"`
-	Storage *StorageConfig `json:"storage" mapstructure:"storage"`
-	Agent   *AgentConfig   `json:"agent" mapstructure:"agent"`
-	Tracer  *TracerConfig  `json:"tracer" mapstructure:"tracer"`
-	Aliyun  *AliyunConfig  `json:"aliyun" mapstructure:"aliyun"`
-	Baidu   *BaiduConfig   `json:"baidu" mapstructure:"baidu"`
-	Wechat  *WechatConfig  `json:"wechat" mapstructure:"wechat"`
+	App      *AppConfig      `json:"app" mapstructure:"app"`
+	Storage  *StorageConfig  `json:"storage" mapstructure:"storage"`
+	Agent    *AgentConfig    `json:"agent" mapstructure:"agent"`
+	Tracer   *TracerConfig   `json:"tracer" mapstructure:"tracer"`
+	Aliyun   *AliyunConfig   `json:"aliyun" mapstructure:"aliyun"`
+	Baidu    *BaiduConfig    `json:"baidu" mapstructure:"baidu"`
+	Wechat   *WechatConfig   `json:"wechat" mapstructure:"wechat"`
+	MiniShop *MiniShopConfig `json:"mini_shop" mapstructure:"mini_shop"`
 }
 
 // AppConfig 应用配置
@@ -39,6 +40,12 @@ type AppConfig struct {
 
 // WechatConfig 微信配置
 type WechatConfig struct {
+	AppID     string `json:"app_id" mapstructure:"app_id"`
+	AppSecret string `json:"app_secret" mapstructure:"app_secret"`
+}
+
+// MiniShopConfig 微信配置
+type MiniShopConfig struct {
 	AppID     string `json:"app_id" mapstructure:"app_id"`
 	AppSecret string `json:"app_secret" mapstructure:"app_secret"`
 }
@@ -147,12 +154,12 @@ type ReconnectConfig struct {
 
 // BaiduConfig 百度云配置
 type BaiduConfig struct {
-	Ak       string            `json:"ak" mapstructure:"ak"`
-	Sk       string            `json:"sk" mapstructure:"sk"`
-	AppID    string            `json:"app_id" mapstructure:"app_id"`
-	Qianfan  *QianfanConfig    `json:"qianfan" mapstructure:"qianfan"`
-	Qianwen  *QianwenConfig    `json:"qianwen" mapstructure:"qianwen"`
-	Volc     *VolcConfig       `json:"volc" mapstructure:"volc"`
+	Ak      string         `json:"ak" mapstructure:"ak"`
+	Sk      string         `json:"sk" mapstructure:"sk"`
+	AppID   string         `json:"app_id" mapstructure:"app_id"`
+	Qianfan *QianfanConfig `json:"qianfan" mapstructure:"qianfan"`
+	Qianwen *QianwenConfig `json:"qianwen" mapstructure:"qianwen"`
+	Volc    *VolcConfig    `json:"volc" mapstructure:"volc"`
 }
 
 // QianfanConfig 千帆大模型配置
