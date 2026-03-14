@@ -6,7 +6,7 @@ import "aibuddy/pkg/shop"
 // GoodsListRequest 商品列表请求
 type GoodsListRequest struct {
 	PageSize int    `json:"page_size" form:"page_size" param:"page_size" query:"page_size" validate:"gte=1" default:"10"`
-	NextKey  string `json:"next_key" validate:"omitempty"`
+	NextKey  string `json:"next_key" form:"next_key" param:"next_key" query:"next_key"  validate:"omitempty"`
 }
 
 // GoodsListResponse 商品列表相应
