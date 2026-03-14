@@ -42,7 +42,8 @@ func (m *Remind) CreateRemind(state *ahttp.State, req *AddRemindRequest) error {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	reminderTime, err := time.Parse(time.DateTime, req.ReminderTime)
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	reminderTime, err := time.ParseInLocation(time.DateTime, req.ReminderTime, loc)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(errors.New("时间格式错误"))
 	}
@@ -69,7 +70,8 @@ func (m *Remind) UpdateRemind(state *ahttp.State, req *AddRemindRequest) error {
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
-	reminderTime, err := time.Parse(time.DateTime, req.ReminderTime)
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	reminderTime, err := time.ParseInLocation(time.DateTime, req.ReminderTime, loc)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(errors.New("时间格式错误"))
 	}

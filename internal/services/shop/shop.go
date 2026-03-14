@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -71,6 +72,7 @@ func (s *Service) GetShopAccessToken(ctx context.Context) (string, error) {
 	defer span.End()
 
 	key := fmt.Sprintf("wx_shop_%s", config.Instance.MiniShop.AppID)
+	slog.Info("[MiniShop] GetShopAccessToken", "key", key)
 	token, err := s.cache.Get(key)
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return "", err

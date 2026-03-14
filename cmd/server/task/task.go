@@ -32,6 +32,7 @@ func NewManager() *Manager {
 		Addr:     fmt.Sprintf("%s:%d", redisConfig.Host, redisConfig.Port),
 		Username: redisConfig.Username,
 		Password: redisConfig.Password,
+		DB:       redisConfig.DB,
 	}
 
 	client := asynq.NewClient(redisOpt)
@@ -76,12 +77,14 @@ func (m *Manager) Enqueue(task *asynq.Task, opts ...asynq.Option) (*asynq.TaskIn
 
 // EnqueueIn enqueues a task to be processed after the specified duration
 func (m *Manager) EnqueueIn(task *asynq.Task, d time.Duration, opts ...asynq.Option) (*asynq.TaskInfo, error) {
-	return m.client.Enqueue(task, append(opts, asynq.ProcessIn(d))...)
+	newOpts := append([]asynq.Option{asynq.ProcessIn(d)}, opts...)
+	return m.client.Enqueue(task, newOpts...)
 }
 
 // EnqueueAt enqueues a task to be processed at the specified time
 func (m *Manager) EnqueueAt(task *asynq.Task, t time.Time, opts ...asynq.Option) (*asynq.TaskInfo, error) {
-	return m.client.Enqueue(task, append(opts, asynq.ProcessAt(t))...)
+	newOpts := append([]asynq.Option{asynq.ProcessAt(t)}, opts...)
+	return m.client.Enqueue(task, newOpts...)
 }
 
 // RegisterPeriodicTask registers a periodic task with cron spec
@@ -104,6 +107,30 @@ func (m *Manager) CancelTask(queue, taskID string) error {
 // GetTaskInfoByID get task info by taskId
 func (m *Manager) GetTaskInfoByID(query, taskID string) (*asynq.TaskInfo, error) {
 	return m.inspector.GetTaskInfo(query, taskID)
+}
+
+// ClearQueue clears all tasks from a queue
+func (m *Manager) ClearQueue(queue string) error {
+	if m.inspector == nil {
+		return nil
+	}
+	// Delete all pending tasks
+	pendingTasks, err := m.inspector.ListPendingTasks(queue)
+	if err != nil {
+		return err
+	}
+	for _, task := range pendingTasks {
+		_ = m.inspector.DeleteTask(queue, task.ID)
+	}
+	// Delete all scheduled tasks
+	scheduledTasks, err := m.inspector.ListScheduledTasks(queue)
+	if err != nil {
+		return err
+	}
+	for _, task := range scheduledTasks {
+		_ = m.inspector.DeleteTask(queue, task.ID)
+	}
+	return nil
 }
 
 // Start starts the scheduler
@@ -185,5 +212,7 @@ func StartTaskServer(ctx context.Context) error {
 
 // InitHandlers 初始化任务处理器
 func InitHandlers() {
-	RegisterHandler(TaskTypeReminder, ReminderHandler)
+	if _, exists := handlers[TaskTypeReminder]; !exists {
+		RegisterHandler(TaskTypeReminder, ReminderHandler)
+	}
 }

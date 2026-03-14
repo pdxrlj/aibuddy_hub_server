@@ -15,7 +15,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/cespare/xxhash/v2"
 	"github.com/spf13/cast"
 )
 
@@ -23,6 +22,7 @@ import (
 type AiChatHandler struct {
 	cache          flash.Flash
 	EmotionService *agent.EmotionWarningService
+	Cache          flash.Flash
 }
 
 // NewAiChatHandler 创建AI对话处理器
@@ -30,6 +30,7 @@ func NewAiChatHandler() *AiChatHandler {
 	return &AiChatHandler{
 		cache:          cache.Flash(),
 		EmotionService: agent.NewEmotionWarningService(),
+		Cache:          cache.Flash(),
 	}
 }
 
@@ -99,16 +100,27 @@ func (h *AiChatHandler) Chat(ctx *mqtt.Context) {
 
 // handleSwitchRole 处理角色切换
 func (h *AiChatHandler) handleSwitchRole(deviceID, role string) {
-	instanceID := xxhash.Sum64String(deviceID)
+	// instanceID := xxhash.Sum64String(deviceID)
+	instanceID, err := cache.GetRTCInstanceID(deviceID)
+	if err != nil {
+		slog.Error("[MQTT] Get instance id failed", "error", err)
+		return
+	}
+
+	if instanceID == "" {
+		slog.Error("[MQTT] Instance id is empty", "device_id", deviceID)
+		return
+	}
+
 	if err := baidu.NewSwitchRole().SwitchSceneRole(&baidu.SwitchRoleRequest{
-		AiAgentInstanceID: instanceID,
+		AiAgentInstanceID: cast.ToUint64(instanceID),
 		SceneRole:         role,
 	}); err != nil {
 		slog.Error("[MQTT] Switch role failed", "error", err)
 		return
 	}
 
-	_, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).Update(query.Device.AgentName, role)
+	_, err = query.Device.Where(query.Device.DeviceID.Eq(deviceID)).Update(query.Device.AgentName, role)
 	if err != nil {
 		slog.Error("[MQTT] Update device agent name failed", "error", err)
 	}

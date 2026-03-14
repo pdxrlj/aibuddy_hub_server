@@ -60,7 +60,7 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 	}
 
 	// 这里是保存了，当前会话RTC实例ID
-	_ = cache.StoreRTCInstanceID(appID, cast.ToString(resp.AiAgentInstanceID))
+	_ = cache.StoreRTCInstanceID(req.DeviceID, cast.ToString(resp.AiAgentInstanceID))
 
 	return state.Resposne().
 		Raw(&GenerateAIAgentCallResponse{

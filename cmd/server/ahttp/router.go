@@ -188,7 +188,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			group.DELETE("/:uniq_id/:voice_id", tts.DeleteCloneVoice) // 删除音色
 		})
 
-		group.Group("/shop", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
+		group.Group("/minishop", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
 			s := shophandler.NewShopHandler()
 			group.GET("/goods_list", s.GoodsList)
 		})

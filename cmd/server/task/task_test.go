@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -126,6 +127,8 @@ func handleDailyReport(ctx context.Context, t *asynq.Task) error {
 func resetTestState() {
 	executedTasks = sync.Map{}
 	atomic.StoreInt64(&taskCounter, 0)
+	// 清空 handlers，确保测试隔离
+	handlers = make(map[string]HandlerFunc)
 }
 
 // uniqueTaskID generates a unique task ID for testing
@@ -384,4 +387,67 @@ func TestManager_RedisOpt(t *testing.T) {
 	redisOpt := tm.RedisOpt()
 	assert.NotNil(t, redisOpt)
 	assert.NotEmpty(t, redisOpt.Addr)
+}
+
+func TestStartTaskServer_Reminder(t *testing.T) {
+	resetTestState()
+
+	// 加载配置
+	config.Setup("")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// 注册测试用的 reminder handler
+	var reminderExecuted atomic.Bool
+	testReminderHandler := func(_ context.Context, task *asynq.Task) error {
+		var payload ReminderTaskPayload
+		if err := json.Unmarshal(task.Payload(), &payload); err != nil {
+			return err
+		}
+		slog.Info("[Reminder] executed with ", "remind_id", payload.RemindID)
+		reminderExecuted.Store(true)
+		atomic.AddInt64(&taskCounter, 1)
+		return nil
+	}
+	handlers[TaskTypeReminder] = testReminderHandler
+
+	serverErrCh := make(chan error, 1)
+	go func() {
+		serverErrCh <- StartTaskServer(ctx)
+	}()
+
+	// 等待服务器启动
+	time.Sleep(1 * time.Second)
+
+	// 清理 Redis 队列中的残留任务
+	Instance.ClearQueue("default")
+
+	// 创建一个 5 秒后触发的 reminder 任务
+	remindID := 12345
+	payload, _ := json.Marshal(ReminderTaskPayload{RemindID: remindID})
+	task := asynq.NewTask(TaskTypeReminder, payload)
+	taskID := uniqueTaskID("reminder-test")
+
+	// 入队延迟任务 (5秒后执行) - 使用 ProcessIn 选项
+	info, err := Instance.Client().Enqueue(task, asynq.TaskID(taskID), asynq.ProcessIn(5*time.Second))
+	require.NoError(t, err)
+	require.NotNil(t, info)
+	assert.Equal(t, TaskTypeReminder, info.Type)
+	t.Logf("Task enqueued: %s, will execute in 5 seconds", info.ID)
+
+	// 检查任务状态
+	taskInfo, err := Instance.GetTaskInfoByID("default", taskID)
+	if err != nil {
+		t.Logf("Failed to get task info: %v", err)
+	} else {
+		t.Logf("Task state: %s", taskInfo.State)
+	}
+
+	// 等待任务执行 (最多等待 15 秒)
+	assert.Eventually(t, func() bool {
+		return reminderExecuted.Load()
+	}, 15*time.Second, 200*time.Millisecond, "Reminder 任务应该在 5 秒后执行")
+
+	t.Logf("Reminder task executed successfully!")
 }
