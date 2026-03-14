@@ -58,7 +58,9 @@ func (f *File) UploadStream(state *ahttp.State, req *UploadStreamRequest) error 
 	defer span.End()
 
 	body := state.Ctx.Request().Body
-	defer body.Close()
+	defer func() {
+		_ = body.Close()
+	}()
 
 	filename, presignedURL, err := f.Service.UploadStream(ctx, req.DeviceID, req.Ext, body, req.EnableAudioTranscode, req.DestAudioFormat)
 	if err != nil {
