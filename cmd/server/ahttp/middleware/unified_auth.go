@@ -4,7 +4,6 @@ package middleware
 import (
 	aiuserService "aibuddy/internal/services/aiuser"
 	"aibuddy/pkg/ahttp"
-	"aibuddy/pkg/config"
 	"errors"
 	"slices"
 	"strings"
@@ -18,7 +17,7 @@ var SkipPaths = []string{"/api/v1/user/login", "/api/v1/user/send_code"}
 // UnifiedAuthMiddleware 统一认证中间件，支持多种认证方式（如 JWT、API Key 等）
 func UnifiedAuthMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		cfg := config.Instance.App
+		// cfg := config.Instance.App
 		return func(c echo.Context) error {
 			// 跳过白名单路径
 			if slices.Contains(SkipPaths, c.Path()) {
@@ -36,19 +35,19 @@ func UnifiedAuthMiddleware() echo.MiddlewareFunc {
 			}
 
 			// 2.其他认证方式（如 Token）可以在这里添加
-			if token := c.Request().Header.Get("Token"); token != "" {
-				if aiuserService.ValidateSimpleToken(token, cfg.AppSecret) {
-					return next(c)
-				}
-			}
+			// if token := c.Request().Header.Get("Token"); token != "" {
+			// 	if aiuserService.ValidateSimpleToken(token, cfg.AppSecret) {
+			// 		return next(c)
+			// 	}
+			// }
 
 			// 3.尝试Bearer Token认证（兼容模式）
-			if token := c.Request().Header.Get("Authorization"); token != "" {
-				token = strings.TrimPrefix(token, "Bearer ")
-				if aiuserService.ValidateSimpleToken(token, cfg.AppSecret) {
-					return next(c)
-				}
-			}
+			// if token := c.Request().Header.Get("Authorization"); token != "" {
+			// 	token = strings.TrimPrefix(token, "Bearer ")
+			// 	if aiuserService.ValidateSimpleToken(token, cfg.AppSecret) {
+			// 		return next(c)
+			// 	}
+			// }
 
 			return ahttp.NewResponse(c).SetStatus(401).Error(errors.New("invalid token"))
 		}

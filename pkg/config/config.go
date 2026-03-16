@@ -36,6 +36,7 @@ type AppConfig struct {
 	LogLevel     string `json:"log_level" mapstructure:"log_level"`
 	AppSecret    string `json:"app_secret" mapstructure:"app_secret"`
 	MsgSendCount int    `json:"msg_send_count" mapstructure:"msg_send_count"`
+	DomainName   string `json:"domain_name" mapstructure:"domain_name"`
 }
 
 // WechatConfig 微信配置

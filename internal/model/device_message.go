@@ -1,7 +1,13 @@
 // Package model defines the models for the device message.
 package model
 
-import "time"
+import (
+	"aibuddy/pkg/config"
+	"fmt"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // MessageFmt 消息格式
 type MessageFmt string
@@ -48,4 +54,17 @@ type DeviceMessage struct {
 // TableName 返回数据库表名
 func (d *DeviceMessage) TableName() string {
 	return TableName("device_message")
+}
+
+// AfterFind 在查询到设备消息后，将语音消息URL转换为完整的URL
+func (d *DeviceMessage) AfterFind(_ *gorm.DB) error {
+	if d.Fmt == MessageFmtVoice {
+		domainname := DefaultDomainName
+		if config.Instance != nil && config.Instance.App != nil && config.Instance.App.DomainName != "" {
+			domainname = config.Instance.App.DomainName
+		}
+
+		d.Content = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, d.FromDeviceID, d.Content)
+	}
+	return nil
 }

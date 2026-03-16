@@ -8,7 +8,7 @@ type UploadFileRequest struct {
 	File     *multipart.FileHeader `json:"file" form:"file" validate:"required" msg:"required:文件不能为空"`
 
 	EnableAudioTranscode bool   `json:"enable_audio_transcode" form:"enable_audio_transcode"`
-	DestAudioFormat      string `json:"dest_audio_format" form:"dest_audio_format" validate:"required_if=EnableAudioTranscode true,oneof=mp3 wav aac flac ogg opus m4a" msg:"required_if:目标音频格式不能为空|oneof:音频格式无效"`
+	DestAudioFormat      string `json:"dest_audio_format" form:"dest_audio_format" validate:"required_if=EnableAudioTranscode true,omitempty,oneof=mp3 wav aac flac ogg opus m4a" msg:"required_if:目标音频格式不能为空|oneof:音频格式无效"`
 }
 
 // UploadFileResponse 上传文件响应
@@ -23,7 +23,7 @@ type UploadStreamRequest struct {
 	Ext      string `query:"ext" validate:"required,oneof=.wav .mp3 .pcm .aac .m4a .ogg .flac .opus" msg:"required:文件扩展名不能为空|oneof:不支持的文件格式"`
 
 	EnableAudioTranscode bool   `query:"enable_audio_transcode"`
-	DestAudioFormat      string `query:"dest_audio_format" validate:"required_if=EnableAudioTranscode true,oneof=mp3 wav aac flac ogg opus m4a" msg:"required_if:目标音频格式不能为空|oneof:音频格式无效"`
+	DestAudioFormat      string `query:"dest_audio_format" validate:"required_if=EnableAudioTranscode true,omitempty,oneof=mp3 wav aac flac ogg opus m4a" msg:"required_if:目标音频格式不能为空|oneof:音频格式无效"`
 }
 
 // SkipBodyBind 跳过 body 绑定

@@ -13,6 +13,9 @@ import (
 
 const defaultTableNamePrefix = "buddy_"
 
+// DefaultDomainName 默认域名
+const DefaultDomainName = "https://ai.ipai.fans"
+
 // TableName returns the table name with the default prefix.
 func TableName(name string) string {
 	return defaultTableNamePrefix + name

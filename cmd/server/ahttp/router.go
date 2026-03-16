@@ -3,6 +3,7 @@ package ahttp
 
 import (
 	anniversaryhandler "aibuddy/cmd/server/ahttp/handler/anniversary"
+	adebug "aibuddy/cmd/server/ahttp/handler/debug"
 	devicehandler "aibuddy/cmd/server/ahttp/handler/device"
 	emotionhandler "aibuddy/cmd/server/ahttp/handler/emotion"
 	filehandler "aibuddy/cmd/server/ahttp/handler/file"
@@ -142,13 +143,15 @@ func RegisterRoutes(base *ahttp.Base) {
 			emotionGroup.GET("/:device_id/latest", h.GetLatestEmotion)
 		})
 
-		group.Group("/role", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(role *ahttp.Group) {
+		group.Group("/role", nil, func(role *ahttp.Group) {
 			r := rolehandler.NewRoleHandler()
 			role.GET("/list", r.RoleList)
-			role.POST("/change", r.ChangeRole) // 切换角色
+			role.Group("", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
+				group.POST("/change", r.ChangeRole) // 切换角色
 
-			role.GET("/:device_id/get_chat_analysis", r.GetChatAnalysis)
-			role.GET("/:device_id/refresh_chat_analysis", r.RefreshChatAnalysis)
+				group.GET("/:device_id/get_chat_analysis", r.GetChatAnalysis)
+				group.GET("/:device_id/refresh_chat_analysis", r.RefreshChatAnalysis)
+			})
 		})
 
 		group.Group("/remind", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
@@ -199,5 +202,9 @@ func RegisterRoutes(base *ahttp.Base) {
 			s := shophandler.NewShopHandler()
 			group.GET("/goods_list", s.GoodsList)
 		})
+
+		debugHandler := adebug.NewHandler()
+		// Debug
+		group.GET("/debug/token", debugHandler.ParseToken)
 	})
 }

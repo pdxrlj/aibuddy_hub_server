@@ -1,10 +1,14 @@
 package model
 
 import (
+	"aibuddy/pkg/config"
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // JSONArray 自定义JSON数组类型，用于处理数组字段
@@ -54,4 +58,17 @@ type DeviceInfo struct {
 // TableName 表名
 func (DeviceInfo) TableName() string {
 	return TableName("device_info")
+}
+
+// AfterFind 在查询到设备信息后，将头像URL转换为完整的URL
+func (d *DeviceInfo) AfterFind(_ *gorm.DB) error {
+	domainname := DefaultDomainName
+	if config.Instance != nil && config.Instance.App != nil && config.Instance.App.DomainName != "" {
+		domainname = config.Instance.App.DomainName
+	}
+
+	if d.Avatar != "" {
+		d.Avatar = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, d.DeviceID, d.Avatar)
+	}
+	return nil
 }

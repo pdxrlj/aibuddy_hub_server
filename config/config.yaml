@@ -5,6 +5,7 @@ app:
   log_level: "info"
   app_sercet: ""
   msg_send_count: 5
+  domain_name: "https://ai.ipai.fans"
 storage:
   database:
     host: "8.153.82.116"
