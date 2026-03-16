@@ -32,7 +32,7 @@ func NewAnniversaryHandler() *Anniversary {
 }
 
 // CreateAnniversary 创建纪念日列表
-func (a *Anniversary) CreateAnniversary(state *ahttp.State, r *AnniversaryInfoRequest) error {
+func (a *Anniversary) CreateAnniversary(state *ahttp.State, r *AnniversaryInfoCreateRequest) error {
 	ctx, span := tracer().Start(state.Context(), "CreateAnniversary")
 	defer span.End()
 
@@ -62,7 +62,7 @@ func (a *Anniversary) CreateAnniversary(state *ahttp.State, r *AnniversaryInfoRe
 }
 
 // UpdateAnniversary 创建纪念日列表
-func (a *Anniversary) UpdateAnniversary(state *ahttp.State, r *AnniversaryInfoRequest) error {
+func (a *Anniversary) UpdateAnniversary(state *ahttp.State, r *AnniversaryInfoUpdateRequest) error {
 	ctx, span := tracer().Start(state.Context(), "UpdateAnniversary")
 	defer span.End()
 

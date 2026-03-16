@@ -82,6 +82,8 @@ func (d *DB) GenerateQuery() {
 		PomodoroClock{},
 
 		GrowthReport{},
+
+		Feedback{},
 	}
 
 	_ = d.db.AutoMigrate(models...)

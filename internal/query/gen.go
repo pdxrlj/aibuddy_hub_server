@@ -27,6 +27,7 @@ var (
 	DeviceRelationship  *deviceRelationship
 	DeviceSN            *deviceSN
 	Emotion             *emotion
+	Feedback            *feedback
 	GrowthReport        *growthReport
 	NFC                 *nFC
 	OtaResource         *otaResource
@@ -48,6 +49,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	DeviceRelationship = &Q.DeviceRelationship
 	DeviceSN = &Q.DeviceSN
 	Emotion = &Q.Emotion
+	Feedback = &Q.Feedback
 	GrowthReport = &Q.GrowthReport
 	NFC = &Q.NFC
 	OtaResource = &Q.OtaResource
@@ -70,6 +72,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		DeviceRelationship:  newDeviceRelationship(db, opts...),
 		DeviceSN:            newDeviceSN(db, opts...),
 		Emotion:             newEmotion(db, opts...),
+		Feedback:            newFeedback(db, opts...),
 		GrowthReport:        newGrowthReport(db, opts...),
 		NFC:                 newNFC(db, opts...),
 		OtaResource:         newOtaResource(db, opts...),
@@ -93,6 +96,7 @@ type Query struct {
 	DeviceRelationship  deviceRelationship
 	DeviceSN            deviceSN
 	Emotion             emotion
+	Feedback            feedback
 	GrowthReport        growthReport
 	NFC                 nFC
 	OtaResource         otaResource
@@ -117,6 +121,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		DeviceRelationship:  q.DeviceRelationship.clone(db),
 		DeviceSN:            q.DeviceSN.clone(db),
 		Emotion:             q.Emotion.clone(db),
+		Feedback:            q.Feedback.clone(db),
 		GrowthReport:        q.GrowthReport.clone(db),
 		NFC:                 q.NFC.clone(db),
 		OtaResource:         q.OtaResource.clone(db),
@@ -148,6 +153,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		DeviceRelationship:  q.DeviceRelationship.replaceDB(db),
 		DeviceSN:            q.DeviceSN.replaceDB(db),
 		Emotion:             q.Emotion.replaceDB(db),
+		Feedback:            q.Feedback.replaceDB(db),
 		GrowthReport:        q.GrowthReport.replaceDB(db),
 		NFC:                 q.NFC.replaceDB(db),
 		OtaResource:         q.OtaResource.replaceDB(db),
@@ -169,6 +175,7 @@ type queryCtx struct {
 	DeviceRelationship  IDeviceRelationshipDo
 	DeviceSN            IDeviceSNDo
 	Emotion             IEmotionDo
+	Feedback            IFeedbackDo
 	GrowthReport        IGrowthReportDo
 	NFC                 INFCDo
 	OtaResource         IOtaResourceDo
@@ -190,6 +197,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		DeviceRelationship:  q.DeviceRelationship.WithContext(ctx),
 		DeviceSN:            q.DeviceSN.WithContext(ctx),
 		Emotion:             q.Emotion.WithContext(ctx),
+		Feedback:            q.Feedback.WithContext(ctx),
 		GrowthReport:        q.GrowthReport.WithContext(ctx),
 		NFC:                 q.NFC.WithContext(ctx),
 		OtaResource:         q.OtaResource.WithContext(ctx),

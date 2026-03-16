@@ -10,9 +10,12 @@ import (
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
 	remindhandler "aibuddy/cmd/server/ahttp/handler/remind"
 
+	ttsvoicehandler "aibuddy/cmd/server/ahttp/handler/tts_voice"
+
+	feedbackhandler "aibuddy/cmd/server/ahttp/handler/feedback"
+
 	rolehandler "aibuddy/cmd/server/ahttp/handler/role"
 	shophandler "aibuddy/cmd/server/ahttp/handler/shop"
-	ttsvoicehandler "aibuddy/cmd/server/ahttp/handler/tts_voice"
 
 	userhandler "aibuddy/cmd/server/ahttp/handler/user"
 	websockethandler "aibuddy/cmd/server/ahttp/handler/websocket"
@@ -126,6 +129,10 @@ func RegisterRoutes(base *ahttp.Base) {
 			// 小程序留言
 			userGroup.POST("/message", h.LeavaMessage)
 			userGroup.GET("/message_list", h.MessageList)
+
+			feedbackHandler := feedbackhandler.NewHandler()
+			// 创建反馈
+			userGroup.POST("/feedback", feedbackHandler.Create)
 		})
 
 		// 情绪
