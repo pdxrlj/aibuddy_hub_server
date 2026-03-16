@@ -57,7 +57,10 @@ func (r *DeviceMessageRepo) BatchMessageRead(ctx context.Context, deviceID strin
 // GetMessageList 消息列表
 func (r *DeviceMessageRepo) GetMessageList(ctx context.Context, deviceID string, page int, size int) ([]*model.DeviceMessage, int64, error) {
 	offset := (page - 1) * size
-	return query.DeviceMessage.WithContext(ctx).Where(query.DeviceMessage.ToDeviceID.Eq(deviceID)).FindByPage(offset, size)
+	return query.DeviceMessage.WithContext(ctx).
+		Where(query.DeviceMessage.ToDeviceID.Eq(deviceID)).
+		Or(query.DeviceMessage.FromDeviceID.Eq(deviceID)).
+		FindByPage(offset, size)
 }
 
 // GetMessageListByDeviceID 获取设备在指定时间范围内的消息列表
@@ -75,12 +78,14 @@ func (r *DeviceMessageRepo) GetMessageListByDeviceID(ctx context.Context, device
 }
 
 // GetMessageBetweenUser 获取指定用户之间的留言
-func (r *DeviceMessageRepo) GetMessageBetweenUser(ctx context.Context, fromID string, toID string, page, size int) ([]*model.DeviceMessage, int64, error) {
-	_, span := tracer.Start(ctx, "DeviceMessageRepo.GetMessageListByDeviceID")
+func (r *DeviceMessageRepo) GetMessageBetweenUser(ctx context.Context, fromID string, page, size int) ([]*model.DeviceMessage, int64, error) {
+	_, span := tracer.Start(ctx, "DeviceMessageRepo.GetMessageBetweenUser")
 	defer span.End()
 	offset := (page - 1) * size
+
 	return query.DeviceMessage.WithContext(ctx).
-		Where(query.DeviceMessage.ToDeviceID.Eq(fromID), query.DeviceMessage.FromDeviceID.Eq(toID)).
-		Or(query.DeviceMessage.FromDeviceID.Eq(fromID), query.DeviceMessage.ToDeviceID.Eq(toID)).
+		Debug().
+		Or(query.DeviceMessage.FromDeviceID.Eq(fromID)).
+		Or(query.DeviceMessage.ToDeviceID.Eq(fromID)).
 		FindByPage(offset, size)
 }

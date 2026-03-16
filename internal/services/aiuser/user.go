@@ -540,7 +540,7 @@ func (s *Service) CreateMessage(ctx context.Context, uid int64, data *model.Devi
 func (s *Service) GetMessage(ctx context.Context, uid int64, deviceID string, page int, pageSize int) ([]*model.DeviceMessage, int64, error) {
 	_, span := tracer().Start(ctx, "CreateMessage")
 	defer span.End()
-
+	// slog.Info("GetMessage", "uid", uid, "device_id", deviceID, "page", page, "pageSize", pageSize)
 	if !s.DeviceRepo.CheckDeviceAuth(ctx, uid, deviceID) {
 		err := errors.New("设备ID参数错误")
 		span.RecordError(err)
@@ -548,7 +548,7 @@ func (s *Service) GetMessage(ctx context.Context, uid int64, deviceID string, pa
 		return nil, 0, err
 	}
 
-	return s.DeviceMsgRepo.GetMessageBetweenUser(ctx, deviceID, strconv.Itoa(int(uid)), page, pageSize)
+	return s.DeviceMsgRepo.GetMessageBetweenUser(ctx, deviceID, page, pageSize)
 }
 
 // AnalysisGrowthReport 分析用户成长报告
