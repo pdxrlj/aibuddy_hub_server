@@ -3,9 +3,11 @@ package devicehandler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"aibuddy/internal/services/cache"
+	"aibuddy/internal/services/role"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
@@ -27,17 +29,19 @@ const (
 
 // RtcHandler is the handler for the RTC service.
 type RtcHandler struct {
-	aiAgent    *baidu.AIAgent
-	switchRole *baidu.SwitchRole
-	Cache      flash.Flash
+	aiAgent     *baidu.AIAgent
+	switchRole  *baidu.SwitchRole
+	Cache       flash.Flash
+	RoleService *role.Service
 }
 
 // NewRtcHandler creates a new RtcHandler.
 func NewRtcHandler() *RtcHandler {
 	return &RtcHandler{
-		aiAgent:    baidu.NewAIAgent(),
-		switchRole: baidu.NewSwitchRole(),
-		Cache:      cache.Flash(),
+		aiAgent:     baidu.NewAIAgent(),
+		switchRole:  baidu.NewSwitchRole(),
+		Cache:       cache.Flash(),
+		RoleService: role.NewRoleService(),
 	}
 }
 
@@ -59,8 +63,20 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 		return state.Resposne().Error(err)
 	}
 
+	if req.CustomSelfCfg == nil || req.CustomSelfCfg.DeviceID == "" {
+		return state.Resposne().Error(errors.New("缺少自定义的设备的ID"))
+	}
+
 	// 这里是保存了，当前会话RTC实例ID
-	_ = cache.StoreRTCInstanceID(req.DeviceID, cast.ToString(resp.AiAgentInstanceID))
+	slog.Info("[RTC] Store RTC instance ID", "deviceID", req.CustomSelfCfg.DeviceID, "instanceID", resp.AiAgentInstanceID)
+	_ = cache.StoreRTCInstanceID(req.CustomSelfCfg.DeviceID, cast.ToString(resp.AiAgentInstanceID))
+
+	// 切换到小程序选择的角色
+	err = h.RoleService.DeviceInstanceSwitchDefRole(state.Ctx.Request().Context(), resp.AiAgentInstanceID, req.CustomSelfCfg.DeviceID)
+	if err != nil {
+		slog.Error("Failed to switch default role", "error", err)
+		return state.Resposne().Error(errors.New("切换默认角色失败:" + err.Error()))
+	}
 
 	return state.Resposne().
 		Raw(&GenerateAIAgentCallResponse{
