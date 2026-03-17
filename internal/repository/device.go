@@ -209,12 +209,48 @@ func (d *DeviceRepo) EraseDevice(ctx context.Context, deviceID string) error {
 			return err
 		}
 
+		// 纪念日
+		_, err = tx.AnniversaryReminder.Where(tx.AnniversaryReminder.DeviceID.Eq(deviceID)).Delete()
+		if err != nil {
+			return err
+		}
+
+		// 消息
+		_, err = tx.DeviceMessage.Where(tx.DeviceMessage.FromDeviceID.Eq(deviceID)).
+			Or(tx.DeviceMessage.ToDeviceID.Eq(deviceID)).
+			Delete()
+		if err != nil {
+			return err
+		}
+
+		// 事件提醒
+		_, err = tx.Reminder.Where(tx.Reminder.DeviceID.Eq(deviceID)).
+			Delete()
+		if err != nil {
+			return err
+		}
+
+		// 情绪
+		_, err = tx.Emotion.Where(tx.Emotion.DeviceID.Eq(deviceID)).
+			Delete()
+		if err != nil {
+			return err
+		}
+
+		// nfc
+		_, err = tx.NFC.Where(tx.NFC.DeviceID.Eq(deviceID)).
+			Delete()
+		if err != nil {
+			return err
+		}
+
 		_, err = tx.DeviceRelationship.Where(tx.DeviceRelationship.DeviceID.Eq(deviceID)).
 			Or(query.DeviceRelationship.TargetDeviceID.Eq(deviceID)).
 			Delete()
 		if err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
