@@ -3,6 +3,7 @@ package cache
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cast"
 )
@@ -14,11 +15,14 @@ const (
 
 // StoreRTCInstanceID 存储实例ID
 func StoreRTCInstanceID(deviceID string, instanceID string) error {
+	deviceID = strings.ReplaceAll(deviceID, ":", "-")
+
 	return flashInstance.Set(fmt.Sprintf(RTCInstanceID, deviceID), instanceID)
 }
 
 // GetRTCInstanceID 获取实例ID
 func GetRTCInstanceID(deviceID string) (string, error) {
+	deviceID = strings.ReplaceAll(deviceID, ":", "-")
 	instanceID, err := flashInstance.Get(fmt.Sprintf(RTCInstanceID, deviceID))
 	if err != nil {
 		return "", err
