@@ -212,7 +212,13 @@ func StartTaskServer(ctx context.Context) error {
 
 // InitHandlers 初始化任务处理器
 func InitHandlers() {
+	// 时间提醒
 	if _, exists := handlers[TaskTypeReminder]; !exists {
 		RegisterHandler(TaskTypeReminder, ReminderHandler)
+	}
+
+	// 纪念日提醒
+	if _, exists := handlers[TaskTypeAnniversary]; !exists {
+		RegisterHandler(TaskTypeAnniversary, AnniversaryHandler)
 	}
 }

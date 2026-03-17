@@ -79,3 +79,8 @@ func (a *AnniversaryRepo) GetListByPage(ctx context.Context, deviceID string, pa
 func (a *AnniversaryRepo) UpdateEntryID(id int64, entryID string) (gen.ResultInfo, error) {
 	return query.AnniversaryReminder.Where(query.AnniversaryReminder.ID.Eq(id)).Update(query.AnniversaryReminder.EntryID, entryID)
 }
+
+// GetAnniversaryByID 获取纪念日信息
+func (a *AnniversaryRepo) GetAnniversaryByID(id int64) (*model.AnniversaryReminder, error) {
+	return query.AnniversaryReminder.Where(query.AnniversaryReminder.ID.Eq(id)).First()
+}
