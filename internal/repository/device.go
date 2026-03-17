@@ -56,7 +56,11 @@ func (d *DeviceRepo) FirstAddDevice(ctx context.Context, deviceID string, uid in
 		UID:      uid,
 		IsAdmin:  true,
 	})
-	slog.Info("[DeviceRepo] FirstAddDevice", "device_id", deviceID, "uid", uid, "error", err.Error())
+	if err != nil {
+		slog.Error("[DeviceRepo] FirstAddDevice create error", "device_id", deviceID, "uid", uid, "error", err.Error())
+	} else {
+		slog.Info("[DeviceRepo] FirstAddDevice success", "device_id", deviceID, "uid", uid)
+	}
 	return err
 }
 
