@@ -66,7 +66,7 @@ func (s *Service) SubmitAnniversary(ctx context.Context, uid int64, deviceID str
 
 	remindTime := s.CalRemindTime(data.AnniversaryTime, string(data.ReminderWay))
 	payload := []byte(fmt.Sprintf(`{"scheduled":%v,"id":%d}`, true, data.ID))
-	task := asynq.NewTask("scheduled_task", payload)
+	task := asynq.NewTask("anniversary", payload)
 	info, err := s.TaskClient.EnqueueAt(task, remindTime, asynq.TaskID(taskID))
 	if err != nil {
 		span.RecordError(err)
