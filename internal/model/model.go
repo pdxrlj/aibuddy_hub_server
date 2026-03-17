@@ -2,6 +2,7 @@ package model
 
 import (
 	"aibuddy/pkg/config"
+	"database/sql/driver"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -15,6 +16,42 @@ const defaultTableNamePrefix = "buddy_"
 
 // DefaultDomainName 默认域名
 const DefaultDomainName = "https://ai.ipai.fans"
+
+// LocalTime 自定义时间类型，JSON序列化为 "2006-01-02 15:04:05" 格式
+type LocalTime time.Time
+
+// MarshalJSON 实现 json.Marshaler 接口
+func (t LocalTime) MarshalJSON() ([]byte, error) {
+	formatted := `"` + time.Time(t).Format("2006-01-02 15:04:05") + `"`
+	return []byte(formatted), nil
+}
+
+// Value 实现 driver.Valuer 接口，用于数据库写入
+func (t LocalTime) Value() (driver.Value, error) {
+	return time.Time(t), nil
+}
+
+// Scan 实现 sql.Scanner 接口，用于数据库读取
+func (t *LocalTime) Scan(value any) error {
+	if value == nil {
+		*t = LocalTime(time.Time{})
+		return nil
+	}
+	if v, ok := value.(time.Time); ok {
+		*t = LocalTime(v)
+	}
+	return nil
+}
+
+// Unix 返回 Unix 时间戳
+func (t LocalTime) Unix() int64 {
+	return time.Time(t).Unix()
+}
+
+// Time 返回标准 time.Time
+func (t LocalTime) Time() time.Time {
+	return time.Time(t)
+}
 
 // TableName returns the table name with the default prefix.
 func TableName(name string) string {
