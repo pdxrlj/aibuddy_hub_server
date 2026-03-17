@@ -5,6 +5,7 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/repository"
 	"aibuddy/internal/services/agent"
+	"aibuddy/internal/services/cache"
 	"aibuddy/internal/services/websocket"
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
@@ -16,11 +17,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cespare/xxhash/v2"
 	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"gorm.io/gorm"
 )
 
 var tracer = func() trace.Tracer {
@@ -81,10 +82,57 @@ func (r *Service) ChangeRoleName(ctx context.Context, uid int64, deviceID string
 	if err := r.DeviceRepo.ChangeDeviceRole(ctx, uid, deviceID, roleName); err != nil {
 		return errors.New("切换角色失败")
 	}
-	instanceID := xxhash.Sum64String(deviceID)
+	// instanceID := xxhash.Sum64String(deviceID)
+
+	instanceID, err := cache.GetRTCInstanceID(deviceID)
+	if err != nil {
+		return errors.New("获取实例ID失败")
+	}
+	slog.Info("[RoleService] 切换角色成功", "device_id", deviceID, "agent_name", roleName, "instance_id", instanceID)
+
 	if err := r.SwitchRole.SwitchSceneRole(&baidu.SwitchRoleRequest{
-		AiAgentInstanceID: instanceID, // 需要替换为有效的实例ID
+		AiAgentInstanceID: cast.ToUint64(instanceID), // 需要替换为有效的实例ID
 		SceneRole:         roleName,
+	}); err != nil {
+		return errors.New("切换角色失败:" + err.Error())
+	}
+
+	return nil
+}
+
+// GetDeviceAgentName 获取设备角色名称
+func (r *Service) GetDeviceAgentName(ctx context.Context, deviceID string) (string, error) {
+	ctx, span := tracer().Start(ctx, "GetDeviceAgentName")
+	defer span.End()
+
+	device, err := r.DeviceRepo.GetDeviceInfo(ctx, deviceID)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		slog.Error("[RoleService] 获取设备失败", "error", err)
+		return "", errors.New("获取设备失败")
+	}
+	if device == nil {
+		// slog.Error("[RoleService] 设备不存在", "device_id", deviceID)
+		return "", errors.New("设备不存在")
+	}
+
+	return device.AgentName, nil
+}
+
+// DeviceInstanceSwitchDefRole 切换设备实例到默认角色
+func (r *Service) DeviceInstanceSwitchDefRole(ctx context.Context, instanceID uint64, deviceID string) error {
+	ctx, span := tracer().Start(ctx, "DeviceInstanceSwitchDefRole")
+	defer span.End()
+
+	agentName, err := r.GetDeviceAgentName(ctx, deviceID)
+	if err != nil {
+		slog.Info("[RoleService] 设备角色不存在，不进行角色切换", "device_id", deviceID)
+		return nil
+	}
+
+	if err := r.SwitchRole.SwitchSceneRole(&baidu.SwitchRoleRequest{
+		AiAgentInstanceID: instanceID,
+		SceneRole:         agentName,
+		TTS:               `DEFAULT{"vcn":"1000454"}`,
 	}); err != nil {
 		return errors.New("切换角色失败:" + err.Error())
 	}

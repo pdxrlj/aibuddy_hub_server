@@ -29,13 +29,25 @@ func (d *DeviceRepo) FirstAddDevice(ctx context.Context, deviceID string, uid in
 	if len(tx) > 0 {
 		db = tx[0]
 	}
-
-	data, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID), db.Device.UID.Eq(uid)).First()
+	slog.Info("[DeviceRepo] FirstAddDevice", "device_id", deviceID, "uid", uid)
+	device, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID)).First()
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		span.SetAttributes(attribute.Int64("uid", uid))
+		span.SetAttributes(attribute.String("error", err.Error()))
+		slog.Error("[DeviceRepo] FirstAddDevice error", "device_id", deviceID, "uid", uid, "error", err.Error())
 		return err
 	}
 
-	if data != nil {
+	if device != nil && device.UID != uid {
+		return errors.New("设备已绑定其他用户")
+	}
+
+	if device != nil {
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		span.SetAttributes(attribute.Int64("uid", uid))
+		slog.Info("[DeviceRepo] FirstAddDevice device already exists", "device_id", deviceID, "uid", uid)
 		return nil
 	}
 
@@ -44,6 +56,7 @@ func (d *DeviceRepo) FirstAddDevice(ctx context.Context, deviceID string, uid in
 		UID:      uid,
 		IsAdmin:  true,
 	})
+	slog.Info("[DeviceRepo] FirstAddDevice", "device_id", deviceID, "uid", uid, "error", err.Error())
 	return err
 }
 
