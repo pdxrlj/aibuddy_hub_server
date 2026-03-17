@@ -7,6 +7,7 @@ import (
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 	logger "aibuddy/pkg/log"
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -380,7 +381,24 @@ func (h *Handler) UpdateInfo(state *ahttp.State, req *InfoRequest) error {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	if err := h.UserServer.UpdateUserInfo(ctx, uid, req.NickName, req.Avatar); err != nil {
+	user := &model.User{
+		Nickname: req.NickName,
+		Avatar:   req.Avatar,
+		Phone:    req.Phone,
+		Email:    req.Email,
+		Username: req.Username,
+		Gender:   *req.Grender,
+	}
+	if req.Birthday != "" {
+		birthday, err := time.Parse(time.DateOnly, req.Birthday)
+		if err != nil {
+			span.SetAttributes(attribute.String("Birthday", req.Birthday))
+			return state.Resposne().SetStatus(http.StatusBadRequest).Error(errors.New("生日日期参数格式错误"))
+		}
+		user.Birthday = birthday
+	}
+
+	if err := h.UserServer.UpdateUserInfo(ctx, uid, user); err != nil {
 		span.RecordError(err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
@@ -404,8 +422,17 @@ func (h *Handler) GetUserInfo(state *ahttp.State) error {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
+	birthday := ""
+	if !user.Birthday.IsZero() {
+		birthday = user.Birthday.Format(time.DateOnly)
+	}
+
 	return state.Resposne().SetData(InfoResponse{
-		UID:      int(uid),
+		UID:      uid,
+		Useranem: user.Username,
+		Email:    user.Email,
+		Gender:   user.Gender,
+		Birthday: birthday,
 		NickName: user.Nickname,
 		Avatar:   user.Avatar,
 	}).Success()

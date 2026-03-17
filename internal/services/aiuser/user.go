@@ -146,21 +146,26 @@ func (s *Service) UpdateUser(ctx context.Context, uid int64, user *model.User, o
 }
 
 // UpdateUserInfo 更新用户信息
-func (s *Service) UpdateUserInfo(ctx context.Context, uid int64, nickname string, avatar string) error {
+func (s *Service) UpdateUserInfo(ctx context.Context, uid int64, data *model.User) error {
 	_, span := tracer().Start(ctx, "UpdateUserInfo")
 	defer span.End()
 
-	if avatar != "" {
+	if data.Avatar != "" {
 		re := regexp.MustCompile(`(?i)\.(jpg|jpeg|png)$`)
-		if !re.MatchString(avatar) {
-			span.SetAttributes(attribute.String("avatar", avatar))
+		if !re.MatchString(data.Avatar) {
+			span.SetAttributes(attribute.String("avatar", data.Avatar))
 			return errors.New("图像参数异常")
 		}
 	}
 
 	_, err := s.UserRepo.UpdateUser(uid, &model.User{
-		Nickname: nickname,
-		Avatar:   avatar,
+		Nickname: data.Nickname,
+		Avatar:   data.Avatar,
+		Phone:    data.Phone,
+		Email:    data.Email,
+		Birthday: data.Birthday,
+		Username: data.Username,
+		Gender:   data.Gender,
 	})
 	if err != nil {
 		return err

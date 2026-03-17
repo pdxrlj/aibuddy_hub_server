@@ -14,6 +14,11 @@ type User struct {
 
 	Avatar string `gorm:"column:avatar;type:varchar(255);not null;"`
 
+	Email    string    `gorm:"column:email;type:varchar(128);"`
+	Username string    `gorm:"column:username;type:varchar(32);"`
+	Gender   int       `gorm:"sex:gender;type:int;default:0"`
+	Birthday time.Time `gorm:"column:birthday;type:date;comment:生日;"`
+
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;"`
 }
