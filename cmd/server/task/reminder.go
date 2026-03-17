@@ -61,7 +61,7 @@ func ReminderHandler(_ context.Context, t *asynq.Task) error {
 	info.ComputedNextReminderTime()
 
 	manager := NewManager()
-	taskID := fmt.Sprintf("remind_%d_%d", info.ID, rand.IntN(10))
+	taskID := fmt.Sprintf("remind_%d_%d", info.ID, rand.IntN(100))
 	newTask := asynq.NewTask("reminder", t.Payload())
 	result, err := manager.EnqueueAt(newTask, info.NextReminderTime, asynq.TaskID(taskID))
 	if err != nil {
