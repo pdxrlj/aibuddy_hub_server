@@ -41,7 +41,7 @@ func (a *Anniversary) CreateAnniversary(state *ahttp.State, r *AnniversaryInfoCr
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	anniversaryTime, err := time.Parse(time.DateOnly, r.AnniversaryTime)
+	anniversaryTime, err := time.Parse(time.DateTime, r.AnniversaryTime)
 	if err != nil {
 		return state.Resposne().Error(errors.New("纪念日时间格式错误"))
 	}
@@ -71,7 +71,7 @@ func (a *Anniversary) UpdateAnniversary(state *ahttp.State, r *AnniversaryInfoUp
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	anniversaryTime, err := time.Parse(time.DateOnly, r.AnniversaryTime)
+	anniversaryTime, err := time.Parse(time.DateTime, r.AnniversaryTime)
 	if err != nil {
 		return state.Resposne().Error(errors.New("纪念日时间格式错误"))
 	}

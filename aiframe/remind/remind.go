@@ -40,5 +40,5 @@ func SendMessage(msgType, mid, fmt, title, content, targetDeviceID, remarks stri
 
 	topic := aiframe.MQTTSendMessageTopic(targetDeviceID)
 
-	return mqtt.Instance.Publish(topic, 1, false, payload)
+	return mqtt.Instance.Publish(topic, 1, true, payload)
 }
