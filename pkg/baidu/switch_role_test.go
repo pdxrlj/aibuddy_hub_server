@@ -31,8 +31,8 @@ func TestSwitchRole_SwitchSceneRole_WithTTS(t *testing.T) {
 
 	// 测试切换角色并指定TTS配置
 	err := sr.SwitchSceneRole(&SwitchRoleRequest{
-		AiAgentInstanceID: 2756220471541760, // 需要替换为有效的实例ID
-		SceneRole:         "阳光元气型奶龙",
+		AiAgentInstanceID: 2756588110675968, // 需要替换为有效的实例ID
+		SceneRole:         "奶龙李白形态",
 		TTS:               `DEFAULT{"vcn":"1000454"}`,
 		TTSSayHi:          "你好，我是一名英语口语老师",
 	})
