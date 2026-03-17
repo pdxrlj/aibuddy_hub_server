@@ -62,7 +62,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			deviceGroup.GET("/:device_id/message_list", device.MessageList)
 
 			// 大模型互动实例
-			deviceGroup.Group("/aiagent/:device_id", nil, func(rtcGroup *ahttp.Group) {
+			deviceGroup.Group("/aiagent", nil, func(rtcGroup *ahttp.Group) {
 				rtc := devicehandler.NewRtcHandler()
 				// 与端侧SDK交互的接口
 				rtcGroup.POST("/generateAIAgentCall", rtc.GenerateAIAgentCall)

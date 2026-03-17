@@ -37,8 +37,8 @@ func newDeviceMessage(db *gorm.DB, opts ...gen.DOOption) deviceMessage {
 	_deviceMessage.Fmt = field.NewString(tableName, "fmt")
 	_deviceMessage.Dur = field.NewInt(tableName, "dur")
 	_deviceMessage.Read = field.NewBool(tableName, "read")
-	_deviceMessage.CreatedAt = field.NewTime(tableName, "created_at")
-	_deviceMessage.UpdatedAt = field.NewTime(tableName, "updated_at")
+	_deviceMessage.CreatedAt = field.NewField(tableName, "created_at")
+	_deviceMessage.UpdatedAt = field.NewField(tableName, "updated_at")
 	_deviceMessage.Device = deviceMessageBelongsToDevice{
 		db: db.Session(&gorm.Session{}),
 
@@ -79,8 +79,8 @@ type deviceMessage struct {
 	Fmt          field.String
 	Dur          field.Int
 	Read         field.Bool
-	CreatedAt    field.Time
-	UpdatedAt    field.Time
+	CreatedAt    field.Field
+	UpdatedAt    field.Field
 	Device       deviceMessageBelongsToDevice
 
 	ToDevice deviceMessageBelongsToToDevice
@@ -109,8 +109,8 @@ func (d *deviceMessage) updateTableName(table string) *deviceMessage {
 	d.Fmt = field.NewString(table, "fmt")
 	d.Dur = field.NewInt(table, "dur")
 	d.Read = field.NewBool(table, "read")
-	d.CreatedAt = field.NewTime(table, "created_at")
-	d.UpdatedAt = field.NewTime(table, "updated_at")
+	d.CreatedAt = field.NewField(table, "created_at")
+	d.UpdatedAt = field.NewField(table, "updated_at")
 
 	d.fillFieldMap()
 

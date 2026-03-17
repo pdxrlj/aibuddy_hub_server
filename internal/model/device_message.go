@@ -4,7 +4,6 @@ package model
 import (
 	"aibuddy/pkg/config"
 	"fmt"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -40,15 +39,15 @@ type DeviceMessage struct {
 
 	ToDeviceID string `gorm:"column:to_device_id;not null" json:"to_device_id"`
 
-	Device   *Device `gorm:"foreignKey:FromDeviceID;references:DeviceID" json:"device"`
-	ToDevice *Device `gorm:"foreignKey:ToDeviceID;references:DeviceID" json:"to_device"`
+	Device   *Device `gorm:"foreignKey:FromDeviceID;references:DeviceID" json:"device,omitempty"`
+	ToDevice *Device `gorm:"foreignKey:ToDeviceID;references:DeviceID" json:"to_device,omitempty"`
 
 	Content   string     `gorm:"column:content;" json:"content"`
 	Fmt       MessageFmt `gorm:"column:fmt;not null" json:"fmt"`
 	Dur       int        `gorm:"column:dur;" json:"dur"`
 	Read      bool       `gorm:"column:read;not null;default:false" json:"read"`
-	CreatedAt time.Time  `gorm:"column:created_at;not null" json:"created_at"`
-	UpdatedAt time.Time  `gorm:"column:updated_at;not null" json:"updated_at"`
+	CreatedAt LocalTime  `gorm:"column:created_at;not null" json:"created_at"`
+	UpdatedAt LocalTime  `gorm:"column:updated_at;not null" json:"updated_at"`
 }
 
 // TableName 返回数据库表名

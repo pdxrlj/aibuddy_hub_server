@@ -51,10 +51,11 @@ type InstanceContext struct {
 
 // GenerateAIAgentCallRequest 前端创建Agent的请求参数
 type GenerateAIAgentCallRequest struct {
-	DeviceID     string `param:"device_id" json:"device_id"`
-	Config       string `json:"config"`        // 大模型互动实例级别配置，格式是json对象序列化后的string类型
-	QuickStart   bool   `json:"quick_start"`   // 快速启动
-	AppID        string `json:"app_id"`        // 大模型互动应用ID
+	DeviceID   string `json:"custom_device_id"`
+	Config     string `json:"config"`      // 大模型互动实例级别配置，格式是json对象序列化后的string类型
+	QuickStart bool   `json:"quick_start"` // 快速启动
+	AppID      string `json:"app_id"`      // 大模型互动应用ID
+	// CustomDeviceID string `json:"custom_device_id"` // 自定义设备ID
 	InstanceType string `json:"instance_type"` // 实例类型
 }
 
