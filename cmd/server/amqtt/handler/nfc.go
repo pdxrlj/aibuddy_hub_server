@@ -4,6 +4,7 @@ package handler
 import (
 	"aibuddy/aiframe/nfc"
 	"aibuddy/internal/model"
+	"aibuddy/internal/query"
 	"aibuddy/internal/repository"
 	"aibuddy/internal/services/websocket"
 	"aibuddy/pkg/mqtt"
@@ -58,7 +59,15 @@ func (h *NFCHandler) Handle(ctx *mqtt.Context) {
 	nfc.Status = model.NFCPaid
 	nfc.NFCID = msg.NFCID
 	nfc.DeviceID = deviceID
-	if err := h.nfcRepository.Update(nfc); err != nil {
+
+	if err := query.Q.Transaction(func(tx *query.Query) error {
+		// 之前的设置为失效
+		if err := h.nfcRepository.UpdateNFCStatusInvalidByNFCID(nfc.NFCID, tx); err != nil {
+			return err
+		}
+
+		return h.nfcRepository.Update(nfc, tx)
+	}); err != nil {
 		slog.Error("[MQTT] NFC", "device_id", deviceID, "error", err)
 		return
 	}

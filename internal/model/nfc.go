@@ -1,7 +1,12 @@
 // Package model provides the model for the NFC card
 package model
 
-import "time"
+import (
+	"strings"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // NFCStatus NFC状态
 type NFCStatus string
@@ -12,6 +17,9 @@ const (
 
 	// NFCPaid 制作完成
 	NFCPaid NFCStatus = "制作完成"
+
+	// NFCInvalid 已失效
+	NFCInvalid NFCStatus = "已失效"
 )
 
 // String 返回NFC状态字符串
@@ -40,4 +48,10 @@ type NFC struct {
 // TableName 返回NFC表名
 func (n *NFC) TableName() string {
 	return TableName("nfc")
+}
+
+// BeforeCreate 在存储的时候DeviceID变成大写
+func (n *NFC) BeforeCreate(_ *gorm.DB) (err error) {
+	n.DeviceID = strings.ToUpper(n.DeviceID)
+	return nil
 }
