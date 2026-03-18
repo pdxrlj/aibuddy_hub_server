@@ -243,7 +243,20 @@ func (d *Service) GetDeviceInfo(ctx context.Context, deviceID string) (*model.De
 func (d *Service) AddFriend(ctx context.Context, deviceID, targetDeviceID string) (*model.Device, error) {
 	_, span := tracer().Start(ctx, "DeviceService.AddFriend")
 	defer span.End()
+	targetDevice, err := d.DeviceRepo.GetDeviceInfo(ctx, targetDeviceID)
+	if err != nil {
+		slog.Error("[AddFriend]", "device_id", deviceID, "target_device_id", targetDeviceID, "error", err)
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return nil, err
+	}
 
+	if targetDevice.DeviceInfo == nil {
+		slog.Error("[AddFriend]", "device_id", deviceID, "target_device_id", targetDeviceID, "error", "目标设备信息不存在")
+		span.RecordError(errors.New("目标设备信息不存在"))
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return nil, errors.New("目标设备信息不存在")
+	}
 	// 判断是否已经是好友了
 	isFriend, err := d.IsFriend(ctx, deviceID, targetDeviceID)
 	if err != nil {
@@ -264,22 +277,6 @@ func (d *Service) AddFriend(ctx context.Context, deviceID, targetDeviceID string
 		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
 		return nil, err
 	}
-
-	targetDevice, err := d.DeviceRepo.GetDeviceInfo(ctx, targetDeviceID)
-	if err != nil {
-		slog.Error("[AddFriend]", "device_id", deviceID, "target_device_id", targetDeviceID, "error", err)
-		span.RecordError(err)
-		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
-		return nil, err
-	}
-
-	if targetDevice.DeviceInfo == nil {
-		slog.Error("[AddFriend]", "device_id", deviceID, "target_device_id", targetDeviceID, "error", "目标设备信息不存在")
-		span.RecordError(errors.New("目标设备信息不存在"))
-		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
-		return nil, errors.New("目标设备信息不存在")
-	}
-
 	return targetDevice, nil
 }
 
