@@ -437,3 +437,5 @@ func (h *Handler) GetUserInfo(state *ahttp.State) error {
 		Avatar:   user.Avatar,
 	}).Success()
 }
+
+// convertMessagesToDTO 将 DeviceMessage 列表转换为 MessageDTO 列表

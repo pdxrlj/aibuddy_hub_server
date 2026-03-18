@@ -12,6 +12,7 @@ import (
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
+	"aibuddy/pkg/helpers"
 	"log/slog"
 
 	"github.com/spf13/cast"
@@ -57,6 +58,9 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 		InstanceType: baidu.InstanceType(req.InstanceType),
 		Config:       req.Config,
 	}
+
+	helpers.PP(request)
+
 	resp, err := h.aiAgent.GenerateAIAgentCall(request)
 	if err != nil {
 		slog.Error("Failed to create AIAgentInstance", "error", err)

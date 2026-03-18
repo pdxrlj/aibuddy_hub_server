@@ -8,6 +8,8 @@ replace go.etcd.io/etcd/server/v3 => go.etcd.io/etcd/server/v3 v3.6.8
 
 replace trpc.group/trpc-go/trpc-agent-go => github.com/trpc-group/trpc-agent-go v1.6.1-0.20260309035616-eff76d7aebc3
 
+replace gorm.io/gen => github.com/pdxrlj/gen v0.0.0-20260318020141-301c2fb8c6d9
+
 require (
 	github.com/RichardKnop/machinery/v2 v2.0.16
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.15
@@ -38,6 +40,7 @@ require (
 	github.com/spf13/cast v1.10.0
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
+	github.com/u2takey/ffmpeg-go v0.5.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.65.0
 	go.opentelemetry.io/otel v1.40.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.40.0
@@ -105,9 +108,6 @@ require (
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
 	github.com/getsentry/sentry-go v0.12.0 // indirect
-	github.com/go-audio/audio v1.0.0 // indirect
-	github.com/go-audio/riff v1.0.0 // indirect
-	github.com/go-audio/wav v1.1.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -198,7 +198,6 @@ require (
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/twpayne/go-geom v1.6.1 // indirect
-	github.com/u2takey/ffmpeg-go v0.5.0 // indirect
 	github.com/u2takey/go-utils v0.3.1 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

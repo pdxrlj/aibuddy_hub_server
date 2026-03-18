@@ -60,6 +60,7 @@ func (r *DeviceMessageRepo) GetMessageList(ctx context.Context, deviceID string,
 	return query.DeviceMessage.WithContext(ctx).
 		Where(query.DeviceMessage.ToDeviceID.Eq(deviceID)).
 		Or(query.DeviceMessage.FromDeviceID.Eq(deviceID)).
+		// Preload()
 		FindByPage(offset, size)
 }
 
@@ -80,15 +81,18 @@ func (r *DeviceMessageRepo) GetMessageListByDeviceID(ctx context.Context, device
 		Find()
 }
 
-// GetMessageBetweenUser 获取指定用户之间的留言
-func (r *DeviceMessageRepo) GetMessageBetweenUser(ctx context.Context, fromID string, page, size int) ([]*model.DeviceMessage, int64, error) {
-	_, span := tracer.Start(ctx, "DeviceMessageRepo.GetMessageBetweenUser")
+// GetMessageFromUser 获取指定用户之间的留言
+func (r *DeviceMessageRepo) GetMessageFromUser(ctx context.Context, fromID string, page, size int) ([]*model.DeviceMessage, int64, error) {
+	_, span := tracer.Start(ctx, "DeviceMessageRepo.GetMessageFromUser")
 	defer span.End()
+
 	offset := (page - 1) * size
 
 	return query.DeviceMessage.WithContext(ctx).
 		Debug().
 		Or(query.DeviceMessage.FromDeviceID.Eq(fromID)).
 		Or(query.DeviceMessage.ToDeviceID.Eq(fromID)).
+		Preload(query.DeviceMessage.Device.DeviceInfo).
+		Preload(query.DeviceMessage.ToDevice.DeviceInfo).
 		FindByPage(offset, size)
 }

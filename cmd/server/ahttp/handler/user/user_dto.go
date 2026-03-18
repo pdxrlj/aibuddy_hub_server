@@ -2,7 +2,6 @@
 package userhandler
 
 import (
-	"aibuddy/internal/model"
 	"fmt"
 	"time"
 )
@@ -122,10 +121,10 @@ type GetMessageRequest struct {
 
 // MsgListResponse 留言列表响应
 type MsgListResponse struct {
-	Page     int                    `json:"page"`
-	PageSize int                    `json:"page_size"`
-	Total    int64                  `json:"total"`
-	Data     []*model.DeviceMessage `json:"data"`
+	Page     int   `json:"page"`
+	PageSize int   `json:"page_size"`
+	Total    int64 `json:"total"`
+	Data     any   `json:"data"`
 }
 
 // AnalysisGrowthReportRequest 分析用户成长报告请求

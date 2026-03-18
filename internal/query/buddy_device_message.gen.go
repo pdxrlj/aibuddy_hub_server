@@ -59,6 +59,16 @@ func newDeviceMessage(db *gorm.DB, opts ...gen.DOOption) deviceMessage {
 		db: db.Session(&gorm.Session{}),
 
 		RelationField: field.NewRelation("ToDevice", "model.Device"),
+		User: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("ToDevice.User", "model.User"),
+		},
+		DeviceInfo: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("ToDevice.DeviceInfo", "model.DeviceInfo"),
+		},
 	}
 
 	_deviceMessage.fillFieldMap()
@@ -250,6 +260,13 @@ type deviceMessageBelongsToToDevice struct {
 	db *gorm.DB
 
 	field.RelationField
+
+	User struct {
+		field.RelationField
+	}
+	DeviceInfo struct {
+		field.RelationField
+	}
 }
 
 func (a deviceMessageBelongsToToDevice) Where(conds ...field.Expr) *deviceMessageBelongsToToDevice {

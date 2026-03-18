@@ -128,13 +128,14 @@ func (r *Service) DeviceInstanceSwitchDefRole(ctx context.Context, instanceID ui
 		slog.Info("[RoleService] 设备角色不存在，不进行角色切换", "device_id", deviceID)
 		return nil
 	}
-
-	if err := r.SwitchRole.SwitchSceneRole(&baidu.SwitchRoleRequest{
-		AiAgentInstanceID: instanceID,
-		SceneRole:         agentName,
-		TTS:               `DEFAULT{"vcn":"1000454"}`,
-	}); err != nil {
-		return errors.New("切换角色失败:" + err.Error())
+	if agentName != "" {
+		if err := r.SwitchRole.SwitchSceneRole(&baidu.SwitchRoleRequest{
+			AiAgentInstanceID: instanceID,
+			SceneRole:         agentName,
+			TTS:               `DEFAULT{"vcn":"1000454"}`,
+		}); err != nil {
+			return errors.New("切换角色失败:" + err.Error())
+		}
 	}
 
 	return nil

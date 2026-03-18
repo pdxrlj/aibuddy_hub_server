@@ -1,8 +1,13 @@
 package model
 
 import (
+	"aibuddy/pkg/config"
 	"fmt"
+	"log/slog"
+	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // User represents a user in the system.
@@ -30,4 +35,20 @@ func (User) TableName() string {
 
 func (u *User) String() string {
 	return fmt.Sprintf("ID: %d, OpenID: %s, Nickname: %s, Phone: %s, Avatar: %s", u.ID, u.OpenID, u.Nickname, u.Phone, u.Avatar)
+}
+
+// AfterFind 在查询到用户后，将头像URL转换为完整的URL
+func (u *User) AfterFind(_ *gorm.DB) (err error) {
+	domainname := DefaultDomainName
+	if config.Instance != nil && config.Instance.App != nil && config.Instance.App.DomainName != "" {
+		domainname = config.Instance.App.DomainName
+	}
+	slog.Info("[User] AfterFind", "avatar", u.Avatar)
+	if u.Avatar != "" {
+		deviceID, _, found := strings.Cut(u.Avatar, "/")
+		if found {
+			u.Avatar = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, u.Avatar)
+		}
+	}
+	return nil
 }
