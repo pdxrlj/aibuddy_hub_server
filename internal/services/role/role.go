@@ -5,7 +5,6 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/repository"
 	"aibuddy/internal/services/agent"
-	"aibuddy/internal/services/cache"
 	"aibuddy/internal/services/websocket"
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
@@ -82,20 +81,6 @@ func (r *Service) ChangeRoleName(ctx context.Context, uid int64, deviceID string
 	if err := r.DeviceRepo.ChangeDeviceRole(ctx, uid, deviceID, roleName); err != nil {
 		return errors.New("切换角色失败")
 	}
-	// instanceID := xxhash.Sum64String(deviceID)
-
-	instanceID, err := cache.GetRTCInstanceID(deviceID)
-	if err != nil {
-		return errors.New("获取实例ID失败")
-	}
-	slog.Info("[RoleService] 切换角色成功", "device_id", deviceID, "agent_name", roleName, "instance_id", instanceID)
-
-	if err := r.SwitchRole.SwitchSceneRole(&baidu.SwitchRoleRequest{
-		AiAgentInstanceID: cast.ToUint64(instanceID), // 需要替换为有效的实例ID
-		SceneRole:         roleName,
-	}); err != nil {
-		return errors.New("切换角色失败:" + err.Error())
-	}
 
 	return nil
 }
@@ -128,6 +113,7 @@ func (r *Service) DeviceInstanceSwitchDefRole(ctx context.Context, instanceID ui
 		slog.Info("[RoleService] 设备角色不存在，不进行角色切换", "device_id", deviceID)
 		return nil
 	}
+
 	if agentName != "" {
 		if err := r.SwitchRole.SwitchSceneRole(&baidu.SwitchRoleRequest{
 			AiAgentInstanceID: instanceID,

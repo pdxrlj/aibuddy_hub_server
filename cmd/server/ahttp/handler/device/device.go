@@ -240,30 +240,17 @@ func (d *Device) MessageList(state *ahttp.State, req *MessageListRequest) error 
 	ctx, span := tracer().Start(state.Context(), "Device.MessageList")
 	defer span.End()
 
-	data, total, err := d.DeviceMsgRepo.GetMessageList(ctx, req.DeviceID, req.Page, req.Size)
+	data, total, err := d.Service.GetMessage(ctx, req.DeviceID, req.Page, req.Size)
 	if err != nil {
 		span.RecordError(err)
-		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("device_id", req.DeviceID))
+		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.Int("page", req.Page), attribute.Int("size", req.Size))
 		return state.Resposne().Error(err)
 	}
 
-	result := make([]*MessageInfo, 0, len(data))
-	for _, v := range data {
-		result = append(result, &MessageInfo{
-			Mid:      v.MsgID,
-			Ts:       int(v.CreatedAt.Unix()),
-			From:     v.FromDeviceID,
-			FromName: v.FromUsername,
-			Fmt:      string(v.Fmt),
-			Content:  v.Content,
-			Dur:      v.Dur,
-		})
-	}
-
-	return state.Resposne().SetData(MessageListResponse{
+	return state.Resposne().Success(&MessageListResponse{
 		Page:  req.Page,
 		Size:  req.Size,
 		Total: total,
-		List:  result,
-	}).Success()
+		List:  data,
+	})
 }

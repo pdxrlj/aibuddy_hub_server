@@ -107,10 +107,10 @@ type MessageListRequest struct {
 
 // MessageListResponse 消息列表请求
 type MessageListResponse struct {
-	Page  int            `json:"page"`
-	Size  int            `json:"size"`
-	Total int64          `json:"total"`
-	List  []*MessageInfo `json:"list"`
+	Page  int   `json:"page"`
+	Size  int   `json:"size"`
+	Total int64 `json:"total"`
+	List  any   `json:"list"`
 }
 
 // MessageInfo 消息内容数据
