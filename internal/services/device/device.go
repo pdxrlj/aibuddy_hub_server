@@ -21,6 +21,7 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -417,4 +418,66 @@ func (d *Service) SendMessageToUser(ctx context.Context, deviceID string, uid in
 	})
 
 	return nil
+}
+
+// GetMessage 获取指定留言
+func (d *Service) GetMessage(ctx context.Context, deviceID string, page int, pageSize int) ([]*MessageDTO, int64, error) {
+	_, span := tracer().Start(ctx, "CreateMessage")
+	defer span.End()
+
+	messages, total, err := d.DeviceMessageRepo.GetMessageFromUser(ctx, deviceID, page, pageSize)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return nil, 0, err
+	}
+	dtoMessages := d.ToMessageDTO(messages)
+	return dtoMessages, total, nil
+}
+
+// MessageDTO 留言响应DTO
+type MessageDTO struct {
+	ID           int    `json:"id"`
+	MsgID        string `json:"msg_id"`
+	FromDeviceID string `json:"from_device_id"`
+	FromUsername string `json:"from_username"`
+	ToDeviceID   string `json:"to_device_id"`
+	FromAvatar   string `json:"from_avatar"`
+	ToAvatar     string `json:"to_avatar"`
+	Content      string `json:"content"`
+	Fmt          string `json:"fmt"`
+	Dur          int    `json:"dur"`
+	Read         bool   `json:"read"`
+	CreatedAt    string `json:"created_at"`
+	UpdatedAt    string `json:"updated_at"`
+}
+
+// ToMessageDTO 将 DeviceMessage 列表转换为 MessageDTO 列表
+func (s *Service) ToMessageDTO(messages []*model.DeviceMessage) []*MessageDTO {
+	result := make([]*MessageDTO, len(messages))
+	for i, msg := range messages {
+		dto := &MessageDTO{
+			ID:           msg.ID,
+			MsgID:        msg.MsgID,
+			FromDeviceID: msg.FromDeviceID,
+			FromUsername: msg.FromUsername,
+			ToDeviceID:   msg.ToDeviceID,
+			Content:      msg.Content,
+			Fmt:          msg.Fmt.String(),
+			Dur:          msg.Dur,
+			Read:         msg.Read,
+			CreatedAt:    time.Time(msg.CreatedAt).Format(time.DateTime),
+			UpdatedAt:    time.Time(msg.UpdatedAt).Format(time.DateTime),
+		}
+		// 从 Device.DeviceInfo 获取头像
+		if msg.Device != nil && msg.Device.DeviceInfo != nil {
+			dto.FromAvatar = msg.Device.DeviceInfo.Avatar
+		}
+		// 从 ToDevice.DeviceInfo 获取头像
+		if msg.ToDevice != nil && msg.ToDevice.DeviceInfo != nil {
+			dto.ToAvatar = msg.ToDevice.DeviceInfo.Avatar
+		}
+		result[i] = dto
+	}
+	return result
 }

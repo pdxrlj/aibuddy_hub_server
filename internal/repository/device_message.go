@@ -7,6 +7,8 @@ import (
 	"context"
 	"strings"
 	"time"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // DeviceMessageRepo 设备消息仓库
@@ -54,16 +56,6 @@ func (r *DeviceMessageRepo) BatchMessageRead(ctx context.Context, deviceID strin
 	return nil
 }
 
-// GetMessageList 消息列表
-func (r *DeviceMessageRepo) GetMessageList(ctx context.Context, deviceID string, page int, size int) ([]*model.DeviceMessage, int64, error) {
-	offset := (page - 1) * size
-	return query.DeviceMessage.WithContext(ctx).
-		Where(query.DeviceMessage.ToDeviceID.Eq(deviceID)).
-		Or(query.DeviceMessage.FromDeviceID.Eq(deviceID)).
-		// Preload()
-		FindByPage(offset, size)
-}
-
 // GetMessageListByDeviceID 获取设备在指定时间范围内的消息列表
 func (r *DeviceMessageRepo) GetMessageListByDeviceID(ctx context.Context, deviceID string, startTime, endTime time.Time) ([]*model.DeviceMessage, error) {
 	_, span := tracer.Start(ctx, "DeviceMessageRepo.GetMessageListByDeviceID")
@@ -88,11 +80,18 @@ func (r *DeviceMessageRepo) GetMessageFromUser(ctx context.Context, fromID strin
 
 	offset := (page - 1) * size
 
-	return query.DeviceMessage.WithContext(ctx).
+	messages, total, err := query.DeviceMessage.WithContext(ctx).
 		Debug().
 		Or(query.DeviceMessage.FromDeviceID.Eq(fromID)).
 		Or(query.DeviceMessage.ToDeviceID.Eq(fromID)).
 		Preload(query.DeviceMessage.Device.DeviceInfo).
 		Preload(query.DeviceMessage.ToDevice.DeviceInfo).
 		FindByPage(offset, size)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("from_id", fromID), attribute.Int("page", page), attribute.Int("size", size))
+		return nil, 0, err
+	}
+	return messages, total, nil
 }
