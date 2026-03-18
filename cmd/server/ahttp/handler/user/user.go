@@ -536,3 +536,22 @@ func (h *Handler) UpdateDeviceProfile(state *ahttp.State, req *UpdateDeviceInfoR
 
 	return state.Resposne().Success()
 }
+
+// Unregister 注销用户帐号
+func (h *Handler) Unregister(state *ahttp.State) error {
+	ctx, span := tracer().Start(state.Context(), "User.Unregister")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	if err := h.UserServer.ClearUserInfo(ctx, uid); err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success()
+}

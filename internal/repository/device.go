@@ -322,3 +322,123 @@ func (d *DeviceRepo) SetDeviceAgent(deviceID string, agentName string) error {
 	}
 	return nil
 }
+
+// GetUserDeviceIsAdmin 获取用户绑定设备
+func (d *DeviceRepo) GetUserDeviceIsAdmin(ctx context.Context, uid int64) ([]*model.Device, error) {
+	_, span := tracer.Start(ctx, "DeviceService.GetUserDeviceList")
+	defer span.End()
+
+	devices, err := query.Device.
+		Where(query.Device.UID.Eq(uid), query.Device.IsAdmin.Eq(true)).
+		Find()
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid))
+		slog.Error("[DeviceRepo] GetUserDeviceList", "uid", uid, "error", err.Error())
+		return nil, err
+	}
+	return devices, nil
+}
+
+// ClearDeviceInfo 清除用户数据
+func (d *DeviceRepo) ClearDeviceInfo(ctx context.Context, uid int64, deviceIDs []string) error {
+	ctx, span := tracer.Start(ctx, "DeviceService.ClearDeviceInfo")
+	defer span.End()
+
+	return query.Q.Transaction(func(tx *query.Query) error {
+		// 1. 定义一个统一的清理任务类型
+		type cleanupTask func() error
+
+		// 2. 将所有操作包装成统一的匿名函数
+		// 这样可以屏蔽不同 table 之间 Delete() 返回值和参数的微小差异
+		tasks := []cleanupTask{
+			func() error {
+				_, err := tx.AnniversaryReminder.WithContext(ctx).Where(tx.AnniversaryReminder.DeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+			func() error {
+				_, err := tx.ChatDialogue.WithContext(ctx).Where(tx.ChatDialogue.DeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+			func() error {
+				_, err := tx.Device.WithContext(ctx).Where(tx.Device.DeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+			func() error {
+				_, err := tx.DeviceInfo.WithContext(ctx).Where(tx.DeviceInfo.DeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+			func() error {
+				_, err := tx.DeviceOta.WithContext(ctx).Where(tx.DeviceOta.DeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+			func() error {
+				_, err := tx.Emotion.WithContext(ctx).Where(tx.Emotion.DeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+			func() error {
+				_, err := tx.NFC.WithContext(ctx).Where(tx.NFC.DeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+			func() error {
+				_, err := tx.PomodoroClock.WithContext(ctx).Where(tx.PomodoroClock.DeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+			func() error {
+				_, err := tx.Reminder.WithContext(ctx).Where(tx.Reminder.DeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+			func() error {
+				_, err := tx.UserAgent.WithContext(ctx).Where(tx.UserAgent.DeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+
+			// 逻辑稍微复杂的也可以塞进来
+			func() error {
+				_, err := tx.DeviceMessage.WithContext(ctx).Where(
+					tx.DeviceMessage.ToDeviceID.In(deviceIDs...),
+				).Or(tx.DeviceMessage.FromDeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+			func() error {
+				_, err := tx.DeviceRelationship.WithContext(ctx).Where(
+					tx.DeviceRelationship.DeviceID.In(deviceIDs...),
+				).Or(tx.DeviceRelationship.TargetDeviceID.In(deviceIDs...)).Delete()
+				return err
+			},
+
+			// 用户相关数据清理
+			func() error { return d.ClearUserInfo(ctx, uid) },
+		}
+
+		// 3. 循环执行。现在整个 Transaction 闭包的圈复杂度只有 2（一个循环判断）
+		for _, task := range tasks {
+			if err := task(); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+// ClearUserInfo 清除用户
+func (d *DeviceRepo) ClearUserInfo(ctx context.Context, uid int64) error {
+	ctx, span := tracer.Start(ctx, "DeviceService.ClearUserInfo")
+	defer span.End()
+	return query.Q.Transaction(func(tx *query.Query) error {
+		// 删除user
+		_, err := tx.User.WithContext(ctx).Where(tx.User.ID.Eq(uid)).Delete()
+		if err != nil {
+			return err
+		}
+
+		// 删除用户反馈表
+		_, err = tx.Feedback.WithContext(ctx).Where(tx.Feedback.UID.Eq(uid)).Delete()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}

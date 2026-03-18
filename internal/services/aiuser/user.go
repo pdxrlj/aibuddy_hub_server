@@ -747,6 +747,29 @@ func (s *Service) GetGrowthReportList(ctx context.Context, deviceID string, page
 	return formatReports, total, nil
 }
 
+// ClearUserInfo 清除用户全部数据
+func (s *Service) ClearUserInfo(ctx context.Context, uid int64) error {
+	ctx, span := tracer().Start(ctx, "ClearUserInfo")
+	defer span.End()
+	deviceList, err := s.DeviceRepo.GetUserDeviceIsAdmin(ctx, uid)
+	if err != nil {
+		return err
+	}
+
+	deviceIDs := make([]string, len(deviceList))
+	for _, v := range deviceList {
+		deviceIDs = append(deviceIDs, v.DeviceID)
+	}
+
+	if err := s.DeviceRepo.ClearDeviceInfo(ctx, uid, deviceIDs); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid))
+		return err
+	}
+
+	return nil
+}
+
 // MessageDTO 留言响应DTO
 type MessageDTO struct {
 	ID           int    `json:"id"`
