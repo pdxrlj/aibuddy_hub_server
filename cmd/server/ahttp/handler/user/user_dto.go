@@ -227,3 +227,39 @@ type DownloadChatRecordResponse struct {
 	Total    int `json:"total"`
 	Data     any `json:"data"`
 }
+
+// DeviceInfoRequest 设备信息请求
+type DeviceInfoRequest struct {
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+}
+
+// DeviceInfoResponse 设备信息响应
+type DeviceInfoResponse struct {
+	Version     string   `json:"version"`
+	BoardType   string   `json:"board_type"`
+	DeviceID    string   `json:"device_id"`
+	NickName    string   `json:"nickname"`
+	Avatar      string   `json:"avatar"`
+	Gender      string   `json:"gender"`
+	Birthday    string   `json:"birthday"`
+	Relation    string   `json:"relation"`
+	Hobbies     []string `json:"hobbies"`
+	Values      []string `json:"values"`
+	Skills      []string `json:"skills"`
+	Personality []string `json:"personality"`
+}
+
+// UpdateDeviceInfoRequest 更新设备信息请求
+type UpdateDeviceInfoRequest struct {
+	DeviceID string `json:"device_id" validate:"required"`
+	NickName string `json:"nickname" validate:"required"`
+	Avatar   string `json:"avatar"`
+	Gender   string `json:"gender" validate:"required,oneof=未知 男 女"`
+	Birthday string `json:"birthday" validate:"required"`
+	Relation string `json:"relation"`
+
+	Hobbies     string `json:"hobbies"`
+	Values      string `json:"values"`
+	Skills      string `json:"skills"`
+	Personality string `json:"personality"`
+}

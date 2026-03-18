@@ -47,3 +47,30 @@ func (d *DeviceInfoRepo) UpsertProfile(ctx context.Context, info *model.DeviceIn
 	}
 	return nil
 }
+
+// GetUserInfoByDeivceID 获取用户设备信息
+func (d *DeviceInfoRepo) GetUserInfoByDeivceID(ctx context.Context, deivceID string) (*model.DeviceInfo, error) {
+	ctx, span := tracer.Start(ctx, "GetUserInfoByDeivceID")
+	defer span.End()
+	return query.DeviceInfo.WithContext(ctx).Where(query.DeviceInfo.DeviceID.Eq(deivceID)).First()
+}
+
+// UpdateDeviceInfo  修改设备信息
+func (d *DeviceInfoRepo) UpdateDeviceInfo(ctx context.Context, data *model.DeviceInfo, uid int64, relation string) error {
+	_, span := tracer.Start(ctx, "UpdateDeviceInfo")
+	defer span.End()
+	return query.Q.Transaction(func(tx *query.Query) error {
+		_, err := tx.DeviceInfo.Where(query.DeviceInfo.DeviceID.Eq(data.DeviceID)).Updates(data)
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.Device.Where(tx.Device.UID.Eq(uid), tx.Device.DeviceID.Eq(data.DeviceID), tx.Device.IsAdmin.Eq(true)).
+			Update(tx.Device.Relation, relation)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}

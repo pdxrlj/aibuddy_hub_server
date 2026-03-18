@@ -105,8 +105,9 @@ func RegisterRoutes(base *ahttp.Base) {
 			userGroup.POST("/update", h.UpdateInfo)          // 修改用户信息
 			userGroup.POST("/logout", h.Logout)              // 退出接口
 
-			// 完善用户信息，扫描绑定后完善用户信息
-			userGroup.POST("/profile", h.CompleteProfile)
+			userGroup.POST("/profile", h.CompleteProfile) // 扫描绑定完善用户信息
+			userGroup.GET("/device_info", h.DeviceProfile)
+			userGroup.POST("/update_device", h.UpdateDeviceProfile)
 
 			// 用户是否已经绑定了设备
 			userGroup.GET("/have_device", h.HaveDevice)
@@ -186,7 +187,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			group.GET("/list/:device_id", nfcHandler.GetNFCList, middleware.UnifiedAuthMiddleware())
 
 			// 更新NFC
-			group.PUT("/:cid", nfcHandler.UpdateNFC, middleware.UnifiedAuthMiddleware())
+			group.POST("/:cid", nfcHandler.UpdateNFC, middleware.UnifiedAuthMiddleware())
 
 			// 删除NFC
 			group.DELETE("/:cid", nfcHandler.DeleteNFC, middleware.UnifiedAuthMiddleware())
@@ -196,7 +197,7 @@ func RegisterRoutes(base *ahttp.Base) {
 		group.Group("/tts_voice", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(group *ahttp.Group) {
 			tts := ttsvoicehandler.New()
 			group.POST("/create", tts.CreateCloneVoice)               // 创建复刻音色
-			group.PUT("/:voice_id/retrain", tts.RetrainCloneVoice)    // 重新训练复刻音色
+			group.POST("/:voice_id/retrain", tts.RetrainCloneVoice)   // 重新训练复刻音色
 			group.GET("/list", tts.GetCloneVoiceList)                 // 获取音色列表
 			group.DELETE("/:uniq_id/:voice_id", tts.DeleteCloneVoice) // 删除音色
 		})
