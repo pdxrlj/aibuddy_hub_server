@@ -104,6 +104,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			userGroup.GET("/info", h.GetUserInfo)            // 获取用户信息
 			userGroup.POST("/update", h.UpdateInfo)          // 修改用户信息
 			userGroup.POST("/logout", h.Logout)              // 退出接口
+			userGroup.GET("/unregister", h.Unregister)       // 注销用户
 
 			userGroup.POST("/profile", h.CompleteProfile)           // 扫描绑定完善用户信息
 			userGroup.GET("/device_info", h.DeviceProfile)          // 获取设备信息
