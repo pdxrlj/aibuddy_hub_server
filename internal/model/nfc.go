@@ -2,6 +2,9 @@
 package model
 
 import (
+	"aibuddy/pkg/config"
+	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -38,6 +41,7 @@ type NFC struct {
 
 	Title   string `gorm:"column:title;type:varchar(255);not null" json:"title"`
 	Content string `gorm:"column:content;type:text;not null" json:"content"`
+	Fmt     string `gorm:"column:fmt;type:varchar(32);default:'text';not null" json:"fmt"`
 
 	Status NFCStatus `gorm:"column:status;type:varchar(255);not null;default:'制作中'" json:"status"`
 
@@ -53,5 +57,21 @@ func (n *NFC) TableName() string {
 // BeforeCreate 在存储的时候DeviceID变成大写
 func (n *NFC) BeforeCreate(_ *gorm.DB) (err error) {
 	n.DeviceID = strings.ToUpper(n.DeviceID)
+	return nil
+}
+
+// AfterFind 判断nfc内容类型,返回实际地址
+func (n *NFC) AfterFind(_ *gorm.DB) (err error) {
+	domainname := DefaultDomainName
+	if config.Instance != nil && config.Instance.App != nil && config.Instance.App.DomainName != "" {
+		domainname = config.Instance.App.DomainName
+	}
+	slog.Info("[NFC] AfterFind", "content", n.Content)
+	if n.Content != "" && n.Fmt != "text" {
+		deviceID, _, found := strings.Cut(n.Content, "/")
+		if found {
+			n.Content = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Content)
+		}
+	}
 	return nil
 }

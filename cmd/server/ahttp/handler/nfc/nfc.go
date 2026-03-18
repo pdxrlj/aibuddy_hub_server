@@ -28,7 +28,7 @@ func (h *Handler) CreateNFC(state *ahttp.State, req *CreateNFCRequest) error {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	slog.Info("[NFC] CreateNFC", "uid", uid, "device_id", req.DeviceID, "ctype", req.Ctype, "title", req.Title, "content", req.Content)
-	err = h.Service.CreateNFC(uid, req.DeviceID, req.Ctype, req.Title, req.Content)
+	err = h.Service.CreateNFC(uid, req.DeviceID, req.Ctype, req.Fmt, req.Title, req.Content)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
@@ -47,6 +47,7 @@ func (h *Handler) GetNFCInfo(state *ahttp.State, req *GetNFCInfoRequest) error {
 		NFCID:   nfc.NFCID,
 		CID:     nfc.Cid,
 		Ctype:   nfc.Ctype,
+		Fmt:     nfc.Fmt,
 		Title:   nfc.Title,
 		Content: nfc.Content,
 	})
@@ -64,6 +65,7 @@ func (h *Handler) GetNFCList(state *ahttp.State, req *GetNFCListRequest) error {
 		items[i] = ListItem{
 			CID:     item.Cid,
 			Ctype:   item.Ctype,
+			Fmt:     item.Fmt,
 			Title:   item.Title,
 			Content: item.Content,
 			Status:  string(item.Status),
@@ -80,7 +82,7 @@ func (h *Handler) GetNFCList(state *ahttp.State, req *GetNFCListRequest) error {
 
 // UpdateNFC 更新NFC
 func (h *Handler) UpdateNFC(state *ahttp.State, req *UpdateNFCRequest) error {
-	err := h.Service.UpdateNFC(req.CID, req.Ctype, req.Title, req.Content)
+	err := h.Service.UpdateNFC(req.CID, req.Ctype, req.Fmt, req.Title, req.Content)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
