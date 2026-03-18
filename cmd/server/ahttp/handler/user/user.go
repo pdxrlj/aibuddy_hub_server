@@ -438,4 +438,68 @@ func (h *Handler) GetUserInfo(state *ahttp.State) error {
 	}).Success()
 }
 
+// DeviceProfile 获取设备详细信息
+func (h *Handler) DeviceProfile(state *ahttp.State, req *DeviceInfoRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.DeviceProfile")
+	defer span.End()
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	info, device, err := h.UserServer.GetUserDeviceInfo(ctx, uid, req.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().SetData(&DeviceInfoResponse{
+		Version:     device.Version,
+		BoardType:   device.BoardType,
+		DeviceID:    req.DeviceID,
+		NickName:    info.NickName,
+		Avatar:      info.Avatar,
+		Gender:      info.Gender,
+		Birthday:    info.Birthday.Format(time.DateOnly),
+		Hobbies:     info.Hobbies,
+		Values:      info.Values,
+		Relation:    device.Relation,
+		Skills:      info.Skills,
+		Personality: info.Personality,
+	}).Success()
+}
+
+// UpdateDeviceProfile 更新设备信息
+func (h *Handler) UpdateDeviceProfile(state *ahttp.State, req *UpdateDeviceInfoRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.UpdateDeviceProfile")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+	birthday, err := time.Parse(time.DateOnly, req.Birthday)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+	if err := h.UserServer.UpdateDeviceInfo(ctx, uid, &model.DeviceInfo{
+		DeviceID:    req.DeviceID,
+		NickName:    req.NickName,
+		Avatar:      req.Avatar,
+		Gender:      req.Gender,
+		Birthday:    birthday,
+		Hobbies:     []string{req.Hobbies},
+		Values:      []string{req.Values},
+		Skills:      []string{req.Skills},
+		Personality: []string{req.Personality},
+	}, req.Relation); err != nil {
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success()
+}
+
 // convertMessagesToDTO 将 DeviceMessage 列表转换为 MessageDTO 列表

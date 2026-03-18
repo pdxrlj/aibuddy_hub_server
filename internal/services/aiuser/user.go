@@ -664,6 +664,44 @@ func (s *Service) ConvertToGrowthReport(deviceID string, startTime, endTime time
 	}, nil
 }
 
+// GetUserDeviceInfo 获取用户设备信息
+func (s *Service) GetUserDeviceInfo(ctx context.Context, uid int64, deviceID string) (*model.DeviceInfo, *model.Device, error) {
+	ctx, span := tracer().Start(ctx, "GetUserDeviceInfo")
+	defer span.End()
+
+	if !s.DeviceRepo.CheckDeviceAuth(ctx, uid, deviceID) {
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", deviceID))
+		return nil, nil, errors.New("无法获取该设备的信息")
+	}
+
+	info, err := s.DeviceInfoRepo.GetUserInfoByDeivceID(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", deviceID))
+		return nil, nil, err
+	}
+
+	deviceInfo, err := s.DeviceRepo.GetDeviceInfo(ctx, deviceID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return info, deviceInfo, nil
+}
+
+// UpdateDeviceInfo 获取用户设备信息
+func (s *Service) UpdateDeviceInfo(ctx context.Context, uid int64, data *model.DeviceInfo, relation string) error {
+	ctx, span := tracer().Start(ctx, "UpdateDeviceInfo")
+	defer span.End()
+
+	if !s.DeviceRepo.CheckDeviceAuth(ctx, uid, data.DeviceID) {
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", data.DeviceID))
+		return errors.New("无法设置该设备的信息")
+	}
+
+	return s.DeviceInfoRepo.UpdateDeviceInfo(ctx, data, uid, relation)
+}
+
 // mustMarshal 将任意类型序列化为 JSON，失败时返回 nil
 func mustMarshal(v any) []byte {
 	data, _ := json.Marshal(v)
