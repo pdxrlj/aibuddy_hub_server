@@ -105,9 +105,9 @@ func RegisterRoutes(base *ahttp.Base) {
 			userGroup.POST("/update", h.UpdateInfo)          // 修改用户信息
 			userGroup.POST("/logout", h.Logout)              // 退出接口
 
-			userGroup.POST("/profile", h.CompleteProfile) // 扫描绑定完善用户信息
-			userGroup.GET("/device_info", h.DeviceProfile)
-			userGroup.POST("/update_device", h.UpdateDeviceProfile)
+			userGroup.POST("/profile", h.CompleteProfile)           // 扫描绑定完善用户信息
+			userGroup.GET("/device_info", h.DeviceProfile)          // 获取设备信息
+			userGroup.POST("/update_device", h.UpdateDeviceProfile) // 更新设备信息
 
 			// 用户是否已经绑定了设备
 			userGroup.GET("/have_device", h.HaveDevice)
