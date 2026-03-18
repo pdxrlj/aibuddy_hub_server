@@ -222,3 +222,44 @@ type UpdateDeviceInfoRequest struct {
 	Skills      string `json:"skills"`
 	Personality string `json:"personality"`
 }
+
+// DownloadChatRecordRequest 下载聊天记录请求
+type DownloadChatRecordRequest struct {
+	UserID    string `json:"user_id" form:"user_id" query:"user_id" validate:"required" msg:"required:用户ID不能为空"`
+	PageNo    int    `json:"page_no" form:"page_no" query:"page_no" validate:"omitempty,min=1" msg:"min:页码不能小于1"`
+	PageSize  int    `json:"page_size" form:"page_size" query:"page_size" validate:"omitempty,min=1,max=100" msg:"min:每页条数不能小于1|max:每页条数不能超过100"`
+	BeginTime string `json:"begin_time" form:"begin_time" query:"begin_time" validate:"omitempty" msg:"omitempty:开始时间不能为空"`
+	EndTime   string `json:"end_time" form:"end_time" query:"end_time" validate:"omitempty" msg:"omitempty:结束时间不能为空"`
+}
+
+// ToBeginTime 转换开始时间为时间戳
+func (r *DownloadChatRecordRequest) ToBeginTime() int64 {
+	if r.BeginTime == "" {
+		return 0
+	}
+	t, err := time.Parse("2006-01-02 15:04:05", r.BeginTime)
+	if err != nil {
+		return 0
+	}
+	return t.Unix()
+}
+
+// ToEndTime 转换结束时间为时间戳
+func (r *DownloadChatRecordRequest) ToEndTime() int64 {
+	if r.EndTime == "" {
+		return 0
+	}
+	t, err := time.Parse("2006-01-02 15:04:05", r.EndTime)
+	if err != nil {
+		return 0
+	}
+	return t.Unix()
+}
+
+// DownloadChatRecordResponse 下载聊天记录响应
+type DownloadChatRecordResponse struct {
+	PageNo   int `json:"page_no"`
+	PageSize int `json:"page_size"`
+	Total    int `json:"total"`
+	Data     any `json:"data"`
+}

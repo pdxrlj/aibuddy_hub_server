@@ -49,13 +49,27 @@ type InstanceContext struct {
 
 // ================== generateAIAgentCall 接口 ==================
 
+// ConfigRequest 配置请求参数
+type ConfigRequest struct {
+	LLM               string `json:"llm,omitempty"`       // 大模型配置
+	LLMToken          string `json:"llm_token,omitempty"` // 大模型Token
+	TTSURL            string `json:"tts_url,omitempty"`   // TTS配置详情
+	TTS               string `json:"tts,omitempty"`
+	RTCAC             string `json:"rtc_ac,omitempty"`              // RTC音频编码
+	Lang              string `json:"lang,omitempty"`                // 语言设置
+	RemoteMusicPlayer bool   `json:"remote_music_player,omitempty"` // 音乐播放是否支持云端播放
+	EnableVisual      string `json:"enable_visual,omitempty"`       // 是否启用视觉
+	DFDA              string `json:"dfda,omitempty"`                // DFDA配置
+	TTSEndDelayMS     int    `json:"tts_end_delay_ms,omitempty"`
+}
+
 // GenerateAIAgentCallRequest 前端创建Agent的请求参数
 type GenerateAIAgentCallRequest struct {
 	CustomSelfCfg *GenerateAIAgentCallCustomSelfTagRequest `json:"custom_self_cfg"`
-	Config        string                                   `json:"config"`        // 大模型互动实例级别配置，格式是json对象序列化后的string类型
-	QuickStart    bool                                     `json:"quick_start"`   // 快速启动
-	AppID         string                                   `json:"app_id"`        // 大模型互动应用ID
-	InstanceType  string                                   `json:"instance_type"` // 实例类型
+	Config        *ConfigRequest                           `json:"config,omitempty"` // 大模型互动实例级别配置
+	QuickStart    bool                                     `json:"quick_start"`      // 快速启动
+	AppID         string                                   `json:"app_id"`           // 大模型互动应用ID
+	InstanceType  string                                   `json:"instance_type"`    // 实例类型
 }
 
 // GenerateAIAgentCallCustomSelfTagRequest 前端创建Agent的请求参数

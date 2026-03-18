@@ -5,6 +5,7 @@ import (
 	"aibuddy/internal/model"
 	aiuserService "aibuddy/internal/services/aiuser"
 	"aibuddy/pkg/ahttp"
+	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
 	logger "aibuddy/pkg/log"
 	"errors"
@@ -431,6 +432,7 @@ func (h *Handler) GetUserInfo(state *ahttp.State) error {
 		UID:      uid,
 		Useranem: user.Username,
 		Email:    user.Email,
+		Phone:    user.Phone,
 		Gender:   user.Gender,
 		Birthday: birthday,
 		NickName: user.Nickname,
@@ -521,4 +523,35 @@ func (h *Handler) Unregister(state *ahttp.State) error {
 	return state.Resposne().Success()
 }
 
-// convertMessagesToDTO 将 DeviceMessage 列表转换为 MessageDTO 列表
+// DownloadChatRecord 下载百度的聊天记录
+func (h *Handler) DownloadChatRecord(state *ahttp.State, req *DownloadChatRecordRequest) error {
+	_, span := tracer().Start(state.Context(), "User.DownloadChatRecord")
+	defer span.End()
+
+	if req.PageNo == 0 {
+		req.PageNo = 1
+	}
+	if req.PageSize == 0 {
+		req.PageSize = 20
+	}
+
+	dialogues := baidu.NewDialogues()
+	resp, err := dialogues.GetDialogues(&baidu.DialoguesRequest{
+		UserID:    req.UserID,
+		PageNo:    req.PageNo,
+		PageSize:  req.PageSize,
+		BeginTime: req.ToBeginTime(),
+		EndTime:   req.ToEndTime(),
+	})
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().Error(err)
+	}
+
+	return state.Resposne().SetData(DownloadChatRecordResponse{
+		PageNo:   resp.PageNo,
+		PageSize: resp.PageSize,
+		Total:    len(resp.Data),
+		Data:     resp.Data,
+	}).Success()
+}

@@ -431,3 +431,14 @@ func (d *DeviceRepo) ClearUserInfo(ctx context.Context, uid int64) error {
 		return nil
 	})
 }
+
+// SetDeviceAgent 设置设备Agent
+func (d *DeviceRepo) SetDeviceAgent(deviceID string, agentName string) error {
+	if _, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).
+		Updates(map[string]any{
+			query.Device.AgentName.ColumnName().String(): agentName,
+		}); err != nil {
+		return err
+	}
+	return nil
+}

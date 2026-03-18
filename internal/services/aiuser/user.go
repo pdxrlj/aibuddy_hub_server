@@ -43,6 +43,14 @@ var (
 	smsSendCountKey = "sms_count:%s"
 )
 
+// getDefaultAgentName 获取默认 Agent 名称
+func getDefaultAgentName() string {
+	if config.Instance.Baidu != nil && config.Instance.Baidu.Agent != nil && config.Instance.Baidu.Agent.Default != "" {
+		return config.Instance.Baidu.Agent.Default
+	}
+	return "阳光元气型奶龙"
+}
+
 // Service 用户认证服务
 type Service struct {
 	UserRepo         *repository.UserRepo
@@ -360,6 +368,14 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType stri
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
 			span.SetAttributes(attribute.String("error", err.Error()))
 			return errors.New("当前设备没有找到合法的SN编码，请检查设备")
+		}
+
+		// 给Device设置默认的Agent
+		if err := s.DeviceRepo.SetDeviceAgent(d.DeviceID, getDefaultAgentName()); err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", d.DeviceID))
+			span.SetAttributes(attribute.String("error", err.Error()))
+			return err
 		}
 
 		mMgmt := management.Mgmt{

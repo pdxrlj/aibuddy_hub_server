@@ -6,6 +6,7 @@ import (
 	"aibuddy/internal/services/role"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -63,8 +64,8 @@ func (r *Handler) ChangeRole(state *ahttp.State, req *ChangeRquest) error {
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
-
-	err = r.RoleSerivce.ChangeRoleName(ctx, uid, req.DeviceID, req.RoleName)
+	slog.Info("[ChangeRole]", "uid", uid)
+	err = r.RoleSerivce.ChangeRoleName(ctx, uid, req.DeviceID, req.InstanceID, req.RoleName)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}

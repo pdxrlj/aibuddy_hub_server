@@ -31,7 +31,7 @@ type NFC struct {
 	Title   string `gorm:"column:title;type:varchar(255);not null" json:"title"`
 	Content string `gorm:"column:content;type:text;not null" json:"content"`
 
-	Status NFCStatus `gorm:"column:status;type:varchar(255);not null;default:'pending'" json:"status"`
+	Status NFCStatus `gorm:"column:status;type:varchar(255);not null;default:'制作中'" json:"status"`
 
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
