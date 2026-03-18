@@ -32,6 +32,7 @@ func (s *Service) CreateNFC(uid int64, deviceID, ctype string, title, content st
 		Title:    title,
 		Content:  content,
 	}
+
 	if err := s.nfcRepository.Create(nfc); err != nil {
 		return err
 	}
