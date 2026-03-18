@@ -6,9 +6,11 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gen"
+	"gorm.io/gen/field"
 	"gorm.io/gorm"
 )
 
@@ -150,18 +152,27 @@ func (d *DeviceRepo) SetDeviceStatus(deviceID string, state model.DeviceStatus) 
 func (d *DeviceRepo) CheckDeviceAuth(ctx context.Context, uid int64, deviceID string) bool {
 	_, span := tracer.Start(ctx, "CheckDeviceAuth")
 	defer span.End()
-
-	num, err := query.Device.Where(query.Device.UID.Eq(uid), query.Device.DeviceID.Eq(deviceID)).Count()
+	// slog.Info("[DeviceRepo] CheckDeviceAuth", "uid", uid, "device_id", deviceID)
+	// 同时匹配大小写，因为数据库中可能存储大写或小写
+	lowerDeviceID := strings.ToLower(deviceID)
+	upperDeviceID := strings.ToUpper(deviceID)
+	num, err := query.Device.Debug().Where(
+		query.Device.UID.Eq(uid),
+		field.Or(
+			query.Device.DeviceID.Eq(lowerDeviceID),
+			query.Device.DeviceID.Eq(upperDeviceID),
+		),
+	).Count()
 	if err != nil {
 		span.RecordError(err)
+		slog.Error("[DeviceRepo] CheckDeviceAuth error", "uid", uid, "device_id", deviceID, "error", err.Error())
+		span.SetAttributes(attribute.Int64("uid", uid))
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		span.SetAttributes(attribute.String("error", err.Error()))
 		return false
 	}
-
-	if num > 0 {
-		return true
-	}
-
-	return false
+	// slog.Info("[DeviceRepo] CheckDeviceAuth num", "num", num)
+	return num > 0
 }
 
 // IsValidDevice 判断设备是否是有效的设备

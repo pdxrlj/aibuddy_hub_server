@@ -80,7 +80,7 @@ func (f *File) FileProxy(state *ahttp.State, req *FileProxyRequest) error {
 	ctx, span := tracer().Start(state.Context(), "File.FileProxy")
 	defer span.End()
 
-	file, err := f.Service.FileProxy(ctx, req.DeviceID, req.Filename)
+	file, err := f.Service.FileProxy(ctx, req.DeviceID, req.Filename, req.Process)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))

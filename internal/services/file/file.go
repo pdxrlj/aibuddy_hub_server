@@ -95,11 +95,11 @@ func (f *Service) UploadFile(ctx context.Context, deviceID string, file *multipa
 }
 
 // FileProxy 文件代理
-func (f *Service) FileProxy(ctx context.Context, deviceID, filename string) (io.ReadCloser, error) {
+func (f *Service) FileProxy(ctx context.Context, deviceID, filename, process string) (io.ReadCloser, error) {
 	_, span := tracer().Start(ctx, "FileService.FileProxy")
 	defer span.End()
 
-	file, err := f.FileStorage.Download(ctx, filename)
+	file, err := f.FileStorage.Download(ctx, filename, process)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))

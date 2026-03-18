@@ -74,10 +74,16 @@ func (o *OSS) PresignURL(ctx context.Context, key string, expires time.Duration,
 }
 
 // Download 下载文件（流式）
-func (o *OSS) Download(ctx context.Context, key string) (io.ReadCloser, error) {
+func (o *OSS) Download(ctx context.Context, key string, process ...string) (io.ReadCloser, error) {
 	result, err := o.Client.GetObject(ctx, &oss.GetObjectRequest{
 		Bucket: oss.Ptr(o.bucket),
 		Key:    oss.Ptr(key),
+		Process: func() *string {
+			if len(process) > 0 && process[0] != "" {
+				return oss.Ptr(process[0])
+			}
+			return nil
+		}(),
 	})
 
 	if err != nil {

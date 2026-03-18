@@ -542,18 +542,26 @@ func (s *Service) CreateMessage(ctx context.Context, uid int64, data *model.Devi
 }
 
 // GetMessage 获取指定留言
-func (s *Service) GetMessage(ctx context.Context, uid int64, deviceID string, page int, pageSize int) ([]*model.DeviceMessage, int64, error) {
+func (s *Service) GetMessage(ctx context.Context, uid int64, deviceID string, page int, pageSize int) ([]*MessageDTO, int64, error) {
 	_, span := tracer().Start(ctx, "CreateMessage")
 	defer span.End()
 	// slog.Info("GetMessage", "uid", uid, "device_id", deviceID, "page", page, "pageSize", pageSize)
 	if !s.DeviceRepo.CheckDeviceAuth(ctx, uid, deviceID) {
 		err := errors.New("设备ID参数错误")
 		span.RecordError(err)
+		slog.Error("[GetMessage] CheckDeviceAuth error", "uid", uid, "device_id", deviceID, "error", err.Error())
 		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", deviceID))
 		return nil, 0, err
 	}
 
-	return s.DeviceMsgRepo.GetMessageBetweenUser(ctx, deviceID, page, pageSize)
+	messages, total, err := s.DeviceMsgRepo.GetMessageFromUser(ctx, deviceID, page, pageSize)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", deviceID))
+		return nil, 0, err
+	}
+	dtoMessages := s.ToMessageDTO(messages)
+	return dtoMessages, total, nil
 }
 
 // AnalysisGrowthReport 分析用户成长报告
@@ -683,4 +691,51 @@ func (s *Service) GetGrowthReportList(ctx context.Context, deviceID string, page
 	}
 
 	return formatReports, total, nil
+}
+
+// MessageDTO 留言响应DTO
+type MessageDTO struct {
+	ID           int    `json:"id"`
+	MsgID        string `json:"msg_id"`
+	FromDeviceID string `json:"from_device_id"`
+	FromUsername string `json:"from_username"`
+	ToDeviceID   string `json:"to_device_id"`
+	FromAvatar   string `json:"from_avatar"`
+	ToAvatar     string `json:"to_avatar"`
+	Content      string `json:"content"`
+	Fmt          string `json:"fmt"`
+	Dur          int    `json:"dur"`
+	Read         bool   `json:"read"`
+	CreatedAt    string `json:"created_at"`
+	UpdatedAt    string `json:"updated_at"`
+}
+
+// ToMessageDTO 将 DeviceMessage 列表转换为 MessageDTO 列表
+func (s *Service) ToMessageDTO(messages []*model.DeviceMessage) []*MessageDTO {
+	result := make([]*MessageDTO, len(messages))
+	for i, msg := range messages {
+		dto := &MessageDTO{
+			ID:           msg.ID,
+			MsgID:        msg.MsgID,
+			FromDeviceID: msg.FromDeviceID,
+			FromUsername: msg.FromUsername,
+			ToDeviceID:   msg.ToDeviceID,
+			Content:      msg.Content,
+			Fmt:          msg.Fmt.String(),
+			Dur:          msg.Dur,
+			Read:         msg.Read,
+			CreatedAt:    time.Time(msg.CreatedAt).Format("2006-01-02 15:04:05"),
+			UpdatedAt:    time.Time(msg.UpdatedAt).Format("2006-01-02 15:04:05"),
+		}
+		// 从 Device.DeviceInfo 获取头像
+		if msg.Device != nil && msg.Device.DeviceInfo != nil {
+			dto.FromAvatar = msg.Device.DeviceInfo.Avatar
+		}
+		// 从 ToDevice.DeviceInfo 获取头像
+		if msg.ToDevice != nil && msg.ToDevice.DeviceInfo != nil {
+			dto.ToAvatar = msg.ToDevice.DeviceInfo.Avatar
+		}
+		result[i] = dto
+	}
+	return result
 }

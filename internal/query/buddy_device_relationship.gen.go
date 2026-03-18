@@ -54,6 +54,16 @@ func newDeviceRelationship(db *gorm.DB, opts ...gen.DOOption) deviceRelationship
 		db: db.Session(&gorm.Session{}),
 
 		RelationField: field.NewRelation("TargetDevice", "model.Device"),
+		User: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("TargetDevice.User", "model.User"),
+		},
+		DeviceInfo: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("TargetDevice.DeviceInfo", "model.DeviceInfo"),
+		},
 	}
 
 	_deviceRelationship.fillFieldMap()
@@ -230,6 +240,13 @@ type deviceRelationshipBelongsToTargetDevice struct {
 	db *gorm.DB
 
 	field.RelationField
+
+	User struct {
+		field.RelationField
+	}
+	DeviceInfo struct {
+		field.RelationField
+	}
 }
 
 func (a deviceRelationshipBelongsToTargetDevice) Where(conds ...field.Expr) *deviceRelationshipBelongsToTargetDevice {

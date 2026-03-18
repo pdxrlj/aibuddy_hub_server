@@ -9,7 +9,7 @@ import (
 // ObjectStorage 定义对象存储接口
 type ObjectStorage[T any] interface {
 	PresignURL(ctx context.Context, key string, expires time.Duration, process ...string) (string, error)
-	Download(ctx context.Context, key string) (T, error)
+	Download(ctx context.Context, key string, process ...string) (T, error)
 	Delete(ctx context.Context, key string) error
 	Storage(ctx context.Context, key string, r io.Reader) error
 }
