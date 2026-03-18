@@ -19,8 +19,9 @@ type RolesResponse struct {
 
 // ChangeRquest 切换角色请求
 type ChangeRquest struct {
-	DeviceID string `json:"device_id" validate:"required" msg:"required:设备ID不能为空"`
-	RoleName string `json:"role_name" validate:"required" msg:"required:角色不能为空"`
+	DeviceID   string `json:"device_id" validate:"required" msg:"required:设备ID不能为空"`
+	InstanceID string `json:"instance_id"`
+	RoleName   string `json:"role_name" validate:"required" msg:"required:角色不能为空"`
 }
 
 // InfoRequest 角色信息请求数据

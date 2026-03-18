@@ -27,6 +27,14 @@ var tracer = func() trace.Tracer {
 	return otel.Tracer(config.Instance.Tracer.ServiceName)
 }
 
+var defaultTTS = func() string {
+	vcn := config.Instance.Baidu.TTS.Vcn
+	if vcn == "" {
+		vcn = "1000578"
+	}
+	return fmt.Sprintf(`DEFAULT{"vcn":"%s"}`, vcn)
+}
+
 // Service 角色服务
 type Service struct {
 	AgentRepo  *repository.AgentRepo
@@ -70,16 +78,30 @@ func (r *Service) GetRoleListByUID(ctx context.Context, uid int64, page int, siz
 }
 
 // ChangeRoleName 切换设备角色
-func (r *Service) ChangeRoleName(ctx context.Context, uid int64, deviceID string, roleName string) error {
+func (r *Service) ChangeRoleName(ctx context.Context, uid int64, deviceID, instanceID string, roleName string) error {
 	ctx, span := tracer().Start(ctx, "ChangeRoleName")
 	defer span.End()
+
+	if deviceID == "" {
+		return errors.New("设备ID和实例ID不能同时为空")
+	}
 
 	if !r.DeviceRepo.CheckDeviceAuth(ctx, uid, deviceID) {
 		return errors.New("无设置该设备的权限")
 	}
 
 	if err := r.DeviceRepo.ChangeDeviceRole(ctx, uid, deviceID, roleName); err != nil {
-		return errors.New("切换角色失败")
+		return fmt.Errorf("切换角色失败: %w", err)
+	}
+
+	if instanceID != "" {
+		if err := r.SwitchRole.SwitchSceneRole(&baidu.SwitchRoleRequest{
+			AiAgentInstanceID: cast.ToUint64(instanceID),
+			SceneRole:         roleName,
+			TTS:               defaultTTS(),
+		}); err != nil {
+			return fmt.Errorf("切换角色失败: %w", err)
+		}
 	}
 
 	return nil

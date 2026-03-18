@@ -41,9 +41,15 @@ var (
 
 	smsCacheKey     = "sms:%s"
 	smsSendCountKey = "sms_count:%s"
-
-	defaultAgentName = helpers.Cond(config.Instance.Baidu != nil && config.Instance.Baidu.Agent != nil && config.Instance.Baidu.Agent.Default != "", config.Instance.Baidu.Agent.Default, "阳光元气型奶龙")
 )
+
+// getDefaultAgentName 获取默认 Agent 名称
+func getDefaultAgentName() string {
+	if config.Instance.Baidu != nil && config.Instance.Baidu.Agent != nil && config.Instance.Baidu.Agent.Default != "" {
+		return config.Instance.Baidu.Agent.Default
+	}
+	return "阳光元气型奶龙"
+}
 
 // Service 用户认证服务
 type Service struct {
@@ -365,7 +371,7 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType stri
 		}
 
 		// 给Device设置默认的Agent
-		if err := s.DeviceRepo.SetDeviceAgent(d.DeviceID, defaultAgentName); err != nil {
+		if err := s.DeviceRepo.SetDeviceAgent(d.DeviceID, getDefaultAgentName()); err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
 			span.SetAttributes(attribute.String("error", err.Error()))

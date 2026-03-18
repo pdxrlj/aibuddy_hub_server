@@ -29,6 +29,16 @@ type ConfigRequest struct {
 	DFDA              string `json:"dfda,omitempty"`
 	TTS               string `json:"tts,omitempty"`
 	TTSEndDelayMs     int    `json:"tts_end_delay_ms,omitempty"`
+
+	EmotionRecognitionCfg *EmotionRecognitionCfg `json:"emotion_recognition_cfg,omitempty"`
+}
+
+// EmotionRecognitionCfg 情感识别配置
+type EmotionRecognitionCfg struct {
+	Enable         bool     `json:"enable,omitempty"`
+	InjectToLLM    bool     `json:"inject_to_llm,omitempty"`
+	TTSWithEmotion bool     `json:"tts_with_emotion,omitempty"`
+	EmotionList    []string `json:"emotion_list,omitempty"`
 }
 
 // GenerateAIAgentCallRequest 创建AIAgent请求
@@ -92,6 +102,14 @@ func buildConfigStr(cfg *ConfigRequest) (string, error) {
 			TTsEndDelayMs = 50
 		}
 		cfg.TTSEndDelayMs = TTsEndDelayMs
+	}
+
+	if cfg.EmotionRecognitionCfg == nil {
+		cfg.EmotionRecognitionCfg = &EmotionRecognitionCfg{
+			Enable:         true,
+			InjectToLLM:    true,
+			TTSWithEmotion: true,
+		}
 	}
 
 	configBytes, err := json.Marshal(cfg)
