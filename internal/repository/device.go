@@ -275,3 +275,14 @@ func (d *DeviceRepo) GetUserDeviceList(ctx context.Context, uid int64) ([]*model
 	}
 	return devices, nil
 }
+
+// SetDeviceAgent 设置设备Agent
+func (d *DeviceRepo) SetDeviceAgent(deviceID string, agentName string) error {
+	if _, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).
+		Updates(map[string]any{
+			query.Device.AgentName.ColumnName().String(): agentName,
+		}); err != nil {
+		return err
+	}
+	return nil
+}

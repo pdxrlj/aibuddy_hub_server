@@ -67,6 +67,8 @@ baidu:
   ak: ""
   sk: ""
   app_id: ""
+  agent:
+    default: "阳光元气型奶龙"
   qianfan:
     model: ""
     base_url: ""
@@ -81,6 +83,9 @@ baidu:
     vcn: "zh_female_daimengchuanmei_moon_bigtts"
     vol: 1.0
     spd: 1.0
+  tts:
+    vcn: 1000578
+    tts_end_delay_ms: 50
 tracer:
   service_name: "aibuddy_hub"
   endpoint: "112.132.224.74:4317"

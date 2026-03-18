@@ -45,7 +45,7 @@ func (r *DeviceMessageRepo) MarkMessageRead(ctx context.Context, messageID strin
 // BatchMessageRead 批量已读消息
 func (r *DeviceMessageRepo) BatchMessageRead(ctx context.Context, deviceID string, messageID []string) error {
 	ids := strings.Join(messageID, ",")
-	_, err := query.DeviceMessage.WithContext(ctx).Where(query.DeviceMessage.MsgID.In(ids), query.DeviceMessage.ToDeviceID.Eq(deviceID)).
+	_, err := query.DeviceMessage.WithContext(ctx).Debug().Where(query.DeviceMessage.MsgID.In(ids), query.DeviceMessage.ToDeviceID.Eq(deviceID)).
 		Updates(map[string]any{
 			query.DeviceMessage.UpdatedAt.ColumnName().String(): time.Now(),
 			query.DeviceMessage.Read.ColumnName().String():      true,

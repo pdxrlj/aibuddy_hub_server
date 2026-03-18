@@ -6,16 +6,14 @@ import (
 	"errors"
 	"fmt"
 
+	baiduservice "aibuddy/internal/services/baidu"
 	"aibuddy/internal/services/cache"
 	"aibuddy/internal/services/role"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
-	"aibuddy/pkg/helpers"
 	"log/slog"
-
-	"github.com/spf13/cast"
 )
 
 const (
@@ -30,56 +28,50 @@ const (
 
 // RtcHandler is the handler for the RTC service.
 type RtcHandler struct {
-	aiAgent     *baidu.AIAgent
-	switchRole  *baidu.SwitchRole
-	Cache       flash.Flash
-	RoleService *role.Service
+	aiAgent      *baidu.AIAgent
+	switchRole   *baidu.SwitchRole
+	Cache        flash.Flash
+	RoleService  *role.Service
+	BaiduService *baiduservice.Service
 }
 
 // NewRtcHandler creates a new RtcHandler.
 func NewRtcHandler() *RtcHandler {
 	return &RtcHandler{
-		aiAgent:     baidu.NewAIAgent(),
-		switchRole:  baidu.NewSwitchRole(),
-		Cache:       cache.Flash(),
-		RoleService: role.NewRoleService(),
+		aiAgent:      baidu.NewAIAgent(),
+		switchRole:   baidu.NewSwitchRole(),
+		Cache:        cache.Flash(),
+		RoleService:  role.NewRoleService(),
+		BaiduService: baiduservice.NewService(),
 	}
 }
 
 // GenerateAIAgentCall 与端侧SDK交互，创建AIAgentInstance
 func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgentCallRequest) error {
-	appID := req.AppID
-	if appID == "" {
-		appID = config.Instance.Baidu.AppID
-	}
-
-	request := &baidu.GenerateAIAgentCallRequest{
-		AppID:        appID,
-		InstanceType: baidu.InstanceType(req.InstanceType),
-		Config:       req.Config,
-	}
-
-	helpers.PP(request)
-
-	resp, err := h.aiAgent.GenerateAIAgentCall(request)
-	if err != nil {
-		slog.Error("Failed to create AIAgentInstance", "error", err)
-		return state.Resposne().Error(err)
-	}
-
 	if req.CustomSelfCfg == nil || req.CustomSelfCfg.DeviceID == "" {
 		return state.Resposne().Error(errors.New("缺少自定义的设备的ID"))
 	}
 
-	// 这里是保存了，当前会话RTC实例ID
-	slog.Info("[RTC] Store RTC instance ID", "deviceID", req.CustomSelfCfg.DeviceID, "instanceID", resp.AiAgentInstanceID)
-	_ = cache.StoreRTCInstanceID(req.CustomSelfCfg.DeviceID, cast.ToString(resp.AiAgentInstanceID))
-
-	// 切换到小程序选择的角色
-	err = h.RoleService.DeviceInstanceSwitchDefRole(state.Ctx.Request().Context(), resp.AiAgentInstanceID, req.CustomSelfCfg.DeviceID)
+	resp, err := h.BaiduService.GenerateAIAgentCall(state.Ctx.Request().Context(),
+		&baiduservice.GenerateAIAgentCallRequest{
+			AppID:        req.AppID,
+			InstanceType: req.InstanceType,
+			Config: &baiduservice.ConfigRequest{
+				LLM:               req.Config.LLM,
+				LLMToken:          req.Config.LLMToken,
+				TTSURL:            req.Config.TTSURL,
+				RTCAC:             req.Config.RTCAC,
+				Lang:              req.Config.Lang,
+				RemoteMusicPlayer: req.Config.RemoteMusicPlayer,
+				EnableVisual:      req.Config.EnableVisual,
+				DFDA:              req.Config.DFDA,
+				TTS:               req.Config.TTS,
+				TTSEndDelayMs:     req.Config.TTSEndDelayMS,
+			},
+			DeviceID: req.CustomSelfCfg.DeviceID,
+		})
 	if err != nil {
-		slog.Error("Failed to switch default role", "error", err)
-		return state.Resposne().Error(errors.New("切换默认角色失败:" + err.Error()))
+		return state.Resposne().Error(err)
 	}
 
 	return state.Resposne().

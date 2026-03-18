@@ -161,6 +161,20 @@ type BaiduConfig struct {
 	Qianfan *QianfanConfig `json:"qianfan" mapstructure:"qianfan"`
 	Qianwen *QianwenConfig `json:"qianwen" mapstructure:"qianwen"`
 	Volc    *VolcConfig    `json:"volc" mapstructure:"volc"`
+	TTS     *TTSConfig     `json:"tts" mapstructure:"tts"`
+
+	Agent *BaiduAgentConfig `json:"agent" mapstructure:"agent"`
+}
+
+// BaiduAgentConfig Agent配置
+type BaiduAgentConfig struct {
+	Default string `json:"default" mapstructure:"default"`
+}
+
+// TTSConfig TTS配置
+type TTSConfig struct {
+	Vcn           string `json:"vcn" mapstructure:"vcn"`                           // 发音人ID
+	TtsEndDelayMs int    `json:"tts_end_delay_ms" mapstructure:"tts_end_delay_ms"` // TTS结束延迟毫秒
 }
 
 // QianfanConfig 千帆大模型配置

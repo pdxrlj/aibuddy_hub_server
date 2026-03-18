@@ -134,6 +134,9 @@ func RegisterRoutes(base *ahttp.Base) {
 			feedbackHandler := feedbackhandler.NewHandler()
 			// 创建反馈
 			userGroup.POST("/feedback", feedbackHandler.Create)
+
+			// 下载百度的聊天记录
+			userGroup.GET("/download_chat_record", h.DownloadChatRecord)
 		})
 
 		// 情绪

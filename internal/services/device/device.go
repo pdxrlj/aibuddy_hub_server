@@ -453,7 +453,7 @@ type MessageDTO struct {
 }
 
 // ToMessageDTO 将 DeviceMessage 列表转换为 MessageDTO 列表
-func (s *Service) ToMessageDTO(messages []*model.DeviceMessage) []*MessageDTO {
+func (d *Service) ToMessageDTO(messages []*model.DeviceMessage) []*MessageDTO {
 	result := make([]*MessageDTO, len(messages))
 	for i, msg := range messages {
 		dto := &MessageDTO{
