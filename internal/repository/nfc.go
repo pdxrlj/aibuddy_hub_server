@@ -18,12 +18,31 @@ func NewNFCRepository() *NFCRepository {
 
 // Create 创建NFC
 func (r *NFCRepository) Create(nfc *model.NFC) error {
-	return model.Conn().GetDB().Create(nfc).Error
+	return query.NFC.Create(nfc)
 }
 
 // Update 更新NFC
-func (r *NFCRepository) Update(nfc *model.NFC) error {
-	return model.Conn().GetDB().Save(nfc).Error
+func (r *NFCRepository) Update(nfc *model.NFC, txs ...*query.Query) error {
+	tx := query.Q
+	if len(txs) > 0 {
+		tx = txs[0]
+	}
+
+	return tx.NFC.Save(nfc)
+}
+
+// UpdateNFCStatusInvalidByNFCID 设置之前的NFC为失效根据NFCID
+func (r *NFCRepository) UpdateNFCStatusInvalidByNFCID(nfcID string, txs ...*query.Query) error {
+	tx := query.Q
+	if len(txs) > 0 {
+		tx = txs[0]
+	}
+
+	_, err := tx.NFC.
+		Where(query.NFC.Status.Eq(model.NFCPaid.String())).
+		Where(query.NFC.NFCID.Eq(nfcID)).
+		Update(query.NFC.Status, model.NFCInvalid)
+	return err
 }
 
 // UpdateStatus 更新NFC状态
