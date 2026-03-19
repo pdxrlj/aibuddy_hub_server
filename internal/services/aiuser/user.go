@@ -66,6 +66,8 @@ type Service struct {
 	deviceService *device.Service
 
 	growthReportService *agent.GrowthReport
+
+	AfterCompleteProfileHook []AfterCompleteProfileHook
 }
 
 var tracer = func() trace.Tracer {
@@ -97,6 +99,9 @@ func New() *Service {
 		GrowthReportRepo: repository.NewGrowthReportRepo(),
 
 		growthReportService: agent.NewGroupReport(),
+		AfterCompleteProfileHook: []AfterCompleteProfileHook{
+			AfterCompleteProfileSendChildInfo,
+		},
 	}
 }
 
@@ -316,7 +321,9 @@ func (s *Service) LimitTaskTimes(key string, times int, ttl time.Duration) (int,
 }
 
 // CompleteProfile 完善设备信息
-func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType string, relation string, d *model.DeviceInfo) error {
+//
+//nolint:cyclop
+func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType, relation string, d *model.DeviceInfo) error {
 	ctx, span := tracer().Start(ctx, "CompleteProfile")
 	defer span.End()
 
@@ -390,6 +397,15 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType stri
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
 			span.SetAttributes(attribute.String("error", err.Error()))
 			return err
+		}
+
+		for _, hook := range s.AfterCompleteProfileHook {
+			if err := hook(ctx, d.DeviceID); err != nil {
+				span.RecordError(err)
+				span.SetAttributes(attribute.String("device_id", d.DeviceID))
+				span.SetAttributes(attribute.String("error", err.Error()))
+				return err
+			}
 		}
 
 		return nil
