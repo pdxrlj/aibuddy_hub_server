@@ -235,18 +235,18 @@ type DeviceInfoRequest struct {
 
 // DeviceInfoResponse 设备信息响应
 type DeviceInfoResponse struct {
-	Version     string   `json:"version"`
-	BoardType   string   `json:"board_type"`
-	DeviceID    string   `json:"device_id"`
-	NickName    string   `json:"nickname"`
-	Avatar      string   `json:"avatar"`
-	Gender      string   `json:"gender"`
-	Birthday    string   `json:"birthday"`
-	Relation    string   `json:"relation"`
-	Hobbies     []string `json:"hobbies"`
-	Values      []string `json:"values"`
-	Skills      []string `json:"skills"`
-	Personality []string `json:"personality"`
+	Version     string `json:"version"`
+	BoardType   string `json:"board_type"`
+	DeviceID    string `json:"device_id"`
+	NickName    string `json:"nickname"`
+	Avatar      string `json:"avatar"`
+	Gender      string `json:"gender"`
+	Birthday    string `json:"birthday"`
+	Relation    string `json:"relation"`
+	Hobbies     string `json:"hobbies"`
+	Values      string `json:"values"`
+	Skills      string `json:"skills"`
+	Personality string `json:"personality"`
 }
 
 // UpdateDeviceInfoRequest 更新设备信息请求

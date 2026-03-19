@@ -11,6 +11,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -464,11 +465,11 @@ func (h *Handler) DeviceProfile(state *ahttp.State, req *DeviceInfoRequest) erro
 		Avatar:      info.Avatar,
 		Gender:      info.Gender,
 		Birthday:    info.Birthday.Format(time.DateOnly),
-		Hobbies:     info.Hobbies,
-		Values:      info.Values,
+		Hobbies:     strings.Join(info.Hobbies, ","),
+		Values:      strings.Join(info.Values, ","),
 		Relation:    device.Relation,
-		Skills:      info.Skills,
-		Personality: info.Personality,
+		Skills:      strings.Join(info.Skills, ","),
+		Personality: strings.Join(info.Personality, ","),
 	}).Success()
 }
 
