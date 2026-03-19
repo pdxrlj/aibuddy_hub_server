@@ -1,7 +1,12 @@
 // Package model 聊天对话
 package model
 
-import "time"
+import (
+	"strings"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // ChatDialogue 聊天对话记录（问答对）
 type ChatDialogue struct {
@@ -21,4 +26,12 @@ type ChatDialogue struct {
 // TableName 表名
 func (ChatDialogue) TableName() string {
 	return TableName("chat_dialogue")
+}
+
+// BeforeCreate 在插入之前
+func (c *ChatDialogue) BeforeCreate(_ *gorm.DB) (err error) {
+	if c.DeviceID != "" {
+		c.DeviceID = strings.ToUpper(c.DeviceID)
+	}
+	return nil
 }

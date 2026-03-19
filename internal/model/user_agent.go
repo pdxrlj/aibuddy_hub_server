@@ -2,9 +2,11 @@
 package model
 
 import (
+	"strings"
 	"time"
 
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 // UserAgent 用户代理
@@ -24,4 +26,12 @@ type UserAgent struct {
 // TableName 表名
 func (UserAgent) TableName() string {
 	return TableName("user_agents")
+}
+
+// BeforeCreate 在插入之前
+func (u *UserAgent) BeforeCreate(_ *gorm.DB) (err error) {
+	if u.DeviceID != "" {
+		u.DeviceID = strings.ToUpper(u.DeviceID)
+	}
+	return nil
 }

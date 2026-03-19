@@ -2,9 +2,11 @@
 package model
 
 import (
+	"strings"
 	"time"
 
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 // DistractionRecord 分心记录
@@ -29,4 +31,12 @@ type PomodoroClock struct {
 // TableName returns the table name for the pomodoro clock
 func (PomodoroClock) TableName() string {
 	return TableName("pomodoro_clock")
+}
+
+// BeforeCreate 在插入之前
+func (p *PomodoroClock) BeforeCreate(_ *gorm.DB) (err error) {
+	if p.DeviceID != "" {
+		p.DeviceID = strings.ToUpper(p.DeviceID)
+	}
+	return nil
 }

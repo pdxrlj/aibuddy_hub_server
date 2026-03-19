@@ -4,9 +4,11 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 // GrowthReport 群组报告
@@ -59,4 +61,12 @@ func (g *GrowthReport) MustString() []byte {
 		return []byte{}
 	}
 	return jsonData
+}
+
+// BeforeCreate 在插入之前
+func (g *GrowthReport) BeforeCreate(_ *gorm.DB) (err error) {
+	if g.DeviceID != "" {
+		g.DeviceID = strings.ToUpper(g.DeviceID)
+	}
+	return nil
 }

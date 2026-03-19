@@ -2,9 +2,11 @@
 package model
 
 import (
+	"strings"
 	"time"
 
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 // EmotionStatus 情绪预警状态
@@ -57,4 +59,12 @@ type Emotion struct {
 // TableName 表名
 func (Emotion) TableName() string {
 	return TableName("emotion")
+}
+
+// BeforeCreate 在插入之前
+func (e *Emotion) BeforeCreate(_ *gorm.DB) (err error) {
+	if e.DeviceID != "" {
+		e.DeviceID = strings.ToUpper(e.DeviceID)
+	}
+	return nil
 }

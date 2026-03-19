@@ -1,7 +1,12 @@
 // Package model 设备SN模型
 package model
 
-import "time"
+import (
+	"strings"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // DeviceSN 设备SN
 type DeviceSN struct {
@@ -16,4 +21,12 @@ type DeviceSN struct {
 // TableName 表名
 func (DeviceSN) TableName() string {
 	return TableName("device_sn")
+}
+
+// BeforeCreate 在插入之前
+func (d *DeviceSN) BeforeCreate(_ *gorm.DB) (err error) {
+	if d.DeviceID != "" {
+		d.DeviceID = strings.ToUpper(d.DeviceID)
+	}
+	return nil
 }

@@ -1,9 +1,11 @@
 package model
 
 import (
+	"strings"
 	"time"
 
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 // DeviceStatus represents the status of a device.
@@ -72,4 +74,12 @@ type Device struct {
 // TableName returns the table name for Device model.
 func (Device) TableName() string {
 	return TableName("device")
+}
+
+// BeforeCreate 在插入之前
+func (d *Device) BeforeCreate(_ *gorm.DB) (err error) {
+	if d.DeviceID != "" {
+		d.DeviceID = strings.ToUpper(d.DeviceID)
+	}
+	return nil
 }
