@@ -22,16 +22,17 @@ func NewNFC() *Service {
 }
 
 // CreateNFC 创建NFC
-func (s *Service) CreateNFC(uid int64, deviceID, ctype string, fmt string, title, content string) error {
+func (s *Service) CreateNFC(uid int64, deviceID, ctype string, title, content string, voice string, picture string) error {
 	cid := helpers.GenerateNumber(10)
 	nfc := &model.NFC{
 		UID:      uid,
 		DeviceID: deviceID,
 		Cid:      cid,
-		Fmt:      fmt,
 		Ctype:    ctype,
 		Title:    title,
 		Content:  content,
+		Voice:    voice,
+		Picture:  picture,
 	}
 
 	if err := s.nfcRepository.Create(nfc); err != nil {
@@ -39,7 +40,7 @@ func (s *Service) CreateNFC(uid int64, deviceID, ctype string, fmt string, title
 	}
 
 	// 发送MQTT信息
-	if err := nfcframe.SendNFCCreate(deviceID, cid, fmt, ctype); err != nil {
+	if err := nfcframe.SendNFCCreate(deviceID, cid, ctype); err != nil {
 		return err
 	}
 
@@ -57,7 +58,7 @@ func (s *Service) GetNFCListByDeviceID(deviceID string, page, pageSize int) ([]*
 }
 
 // UpdateNFC 更新NFC
-func (s *Service) UpdateNFC(cid, ctype, fmt, title, content string) error {
+func (s *Service) UpdateNFC(cid, ctype, title, content string, voice string, picture string) error {
 	nfc, err := s.nfcRepository.GetByCid(cid)
 	if err != nil {
 		return err
@@ -66,7 +67,8 @@ func (s *Service) UpdateNFC(cid, ctype, fmt, title, content string) error {
 	nfc.Ctype = ctype
 	nfc.Title = title
 	nfc.Content = content
-	nfc.Fmt = fmt
+	nfc.Voice = voice
+	nfc.Picture = picture
 
 	return s.nfcRepository.Update(nfc)
 }

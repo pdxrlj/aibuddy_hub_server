@@ -39,11 +39,11 @@ type NFC struct {
 	Ctype    string `gorm:"column:ctype;type:varchar(255);not null" json:"ctype"`
 	NFCID    string `gorm:"column:nfc_id;type:varchar(255);not null" json:"nfc_id"`
 
-	Title   string `gorm:"column:title;type:varchar(255);not null" json:"title"`
-	Content string `gorm:"column:content;type:text;not null" json:"content"`
-	Fmt     string `gorm:"column:fmt;type:varchar(32);default:'text';not null" json:"fmt"`
-
-	Status NFCStatus `gorm:"column:status;type:varchar(255);not null;default:'制作中'" json:"status"`
+	Title   string    `gorm:"column:title;type:varchar(255);not null" json:"title"`
+	Content string    `gorm:"column:content;type:text;not null" json:"content"`
+	Voice   string    `gorm:"column:voice;type:varchar(255)" json:"voice"`
+	Picture string    `gorm:"column:picture;type:varchar(255);" json:"picture"`
+	Status  NFCStatus `gorm:"column:status;type:varchar(255);not null;default:'制作中'" json:"status"`
 
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
@@ -66,11 +66,17 @@ func (n *NFC) AfterFind(_ *gorm.DB) (err error) {
 	if config.Instance != nil && config.Instance.App != nil && config.Instance.App.DomainName != "" {
 		domainname = config.Instance.App.DomainName
 	}
-	slog.Info("[NFC] AfterFind", "content", n.Content)
-	if n.Content != "" && n.Fmt != "text" {
-		deviceID, _, found := strings.Cut(n.Content, "/")
+	slog.Info("[NFC] AfterFind", "voice", n.Voice, "picture", n.Picture)
+	if n.Voice != "" {
+		deviceID, _, found := strings.Cut(n.Voice, "/")
 		if found {
-			n.Content = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Content)
+			n.Voice = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Voice)
+		}
+	}
+	if n.Picture != "" {
+		deviceID, _, found := strings.Cut(n.Picture, "/")
+		if found {
+			n.Picture = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Picture)
 		}
 	}
 	return nil

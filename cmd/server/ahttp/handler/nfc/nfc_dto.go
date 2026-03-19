@@ -4,10 +4,11 @@ package nfc
 // CreateNFCRequest 创建NFC请求
 type CreateNFCRequest struct {
 	DeviceID string `json:"device_id" validate:"required" msg:"required:设备ID不能为空"`
-	Ctype    string `json:"ctype" form:"ctype" validate:"required,oneof==明信片 生日卡片 自定义 每日鼓励 悄悄话 成长日记"`
-	Fmt      string `json:"fmt"  form:"ctype" validate:"required,oneof=text voice picture"`
+	Ctype    string `json:"ctype" form:"ctype" validate:"required,oneof=明信片 生日卡片 自定义 每日鼓励 悄悄话 成长日记"`
 	Title    string `json:"title" form:"title" validate:"required,min=1,max=8" msg:"required:标题不能为空|min:标题不能为空|max:标题不能超过8个字符"`
 	Content  string `json:"content" form:"content" validate:"required,max=50" msg:"required:内容不能为空|max:内容不能超过50个字符"`
+	Voice    string `json:"voice" form:"voice"`
+	Picture  string `json:"picture" form:"picture"`
 }
 
 // CreateNFCResponse 创建NFC响应
@@ -25,7 +26,6 @@ type GetNFCInfoResponse struct {
 	NFCID   string `json:"nfc_id"`
 	CID     string `json:"cid"`
 	Ctype   string `json:"ctype"`
-	Fmt     string `json:"fmt"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }
@@ -41,9 +41,10 @@ type GetNFCListRequest struct {
 type ListItem struct {
 	CID     string `json:"cid"`
 	Ctype   string `json:"ctype"`
-	Fmt     string `json:"fmt"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
+	Voice   string `json:"voice"`
+	Picture string `json:"picture"`
 	Status  string `json:"status"`
 }
 
@@ -59,9 +60,10 @@ type GetNFCListResponse struct {
 type UpdateNFCRequest struct {
 	CID     string `param:"cid" validate:"required" msg:"required:CID不能为空"`
 	Ctype   string `json:"ctype" form:"ctype" validate:"required,oneof==明信片 生日卡片 自定义 每日鼓励 悄悄话 成长日记"`
-	Fmt     string `json:"fmt"  form:"ctype" validate:"required,oneof=text voice picture"`
 	Title   string `json:"title" form:"title" validate:"required,max=8" msg:"required:标题不能为空|max:8:标题不能超过8个字符"`
 	Content string `json:"content" form:"content" validate:"required,max=50" msg:"required:内容不能为空|max:50:内容不能超过50个字符"`
+	Voice   string `json:"voice" form:"voice"`
+	Picture string `json:"picture" form:"picture"`
 }
 
 // DeleteNFCRequest 删除NFC请求

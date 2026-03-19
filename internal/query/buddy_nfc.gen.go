@@ -36,7 +36,8 @@ func newNFC(db *gorm.DB, opts ...gen.DOOption) nFC {
 	_nFC.NFCID = field.NewString(tableName, "nfc_id")
 	_nFC.Title = field.NewString(tableName, "title")
 	_nFC.Content = field.NewString(tableName, "content")
-	_nFC.Fmt = field.NewString(tableName, "fmt")
+	_nFC.Voice = field.NewString(tableName, "voice")
+	_nFC.Picture = field.NewString(tableName, "picture")
 	_nFC.Status = field.NewString(tableName, "status")
 	_nFC.CreatedAt = field.NewTime(tableName, "created_at")
 	_nFC.UpdatedAt = field.NewTime(tableName, "updated_at")
@@ -58,7 +59,8 @@ type nFC struct {
 	NFCID     field.String
 	Title     field.String
 	Content   field.String
-	Fmt       field.String
+	Voice     field.String
+	Picture   field.String
 	Status    field.String
 	CreatedAt field.Time
 	UpdatedAt field.Time
@@ -86,7 +88,8 @@ func (n *nFC) updateTableName(table string) *nFC {
 	n.NFCID = field.NewString(table, "nfc_id")
 	n.Title = field.NewString(table, "title")
 	n.Content = field.NewString(table, "content")
-	n.Fmt = field.NewString(table, "fmt")
+	n.Voice = field.NewString(table, "voice")
+	n.Picture = field.NewString(table, "picture")
 	n.Status = field.NewString(table, "status")
 	n.CreatedAt = field.NewTime(table, "created_at")
 	n.UpdatedAt = field.NewTime(table, "updated_at")
@@ -106,7 +109,7 @@ func (n *nFC) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (n *nFC) fillFieldMap() {
-	n.fieldMap = make(map[string]field.Expr, 12)
+	n.fieldMap = make(map[string]field.Expr, 13)
 	n.fieldMap["id"] = n.ID
 	n.fieldMap["device_id"] = n.DeviceID
 	n.fieldMap["uid"] = n.UID
@@ -115,7 +118,8 @@ func (n *nFC) fillFieldMap() {
 	n.fieldMap["nfc_id"] = n.NFCID
 	n.fieldMap["title"] = n.Title
 	n.fieldMap["content"] = n.Content
-	n.fieldMap["fmt"] = n.Fmt
+	n.fieldMap["voice"] = n.Voice
+	n.fieldMap["picture"] = n.Picture
 	n.fieldMap["status"] = n.Status
 	n.fieldMap["created_at"] = n.CreatedAt
 	n.fieldMap["updated_at"] = n.UpdatedAt

@@ -21,7 +21,6 @@ const (
 type CrateMessage struct {
 	Type  Type   `json:"type"`
 	Cid   string `json:"cid"`
-	Fmt   string `json:"fmt"`
 	Ctype string `json:"ctype"`
 }
 
@@ -39,7 +38,6 @@ func (m *CrateMessage) Decode(data []byte) error {
 type CreateResRequest struct {
 	Type  Type   `json:"type"`
 	NFCID string `json:"nfc_id"`
-	Fmt   string `json:"fmt"`
 	Cid   string `json:"cid"`
 	Ctype string `json:"ctype"`
 }
@@ -55,12 +53,11 @@ func (m *CreateResRequest) Decode(data []byte) error {
 }
 
 // SendNFCCreate 发送NFC卡制作消息
-func SendNFCCreate(deviceID, cid, fmt, ctype string) error {
+func SendNFCCreate(deviceID, cid, ctype string) error {
 	topic := aiframe.NFCCrateTopic(deviceID)
 	message := &CrateMessage{
 		Type:  NFCCreateType,
 		Cid:   cid,
-		Fmt:   fmt,
 		Ctype: ctype,
 	}
 
