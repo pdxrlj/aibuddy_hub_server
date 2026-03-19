@@ -32,6 +32,9 @@ var tracer = func() trace.Tracer {
 	return otel.Tracer(config.Instance.Tracer.ServiceName)
 }
 
+// AfterConnectHook 连接后Hook
+type AfterConnectHook func(ctx context.Context, deviceID string) error
+
 // Service 设备服务
 type Service struct {
 	ClientIDPrefix         string
@@ -43,6 +46,9 @@ type Service struct {
 	DeviceMessageRepo *repository.DeviceMessageRepo
 
 	FileStorage storage.ObjectStorage[io.ReadCloser]
+
+	// 连接后Hook
+	AfterConnectHook []AfterConnectHook
 }
 
 // NewService 创建设备服务实例
@@ -65,6 +71,9 @@ func NewService() *Service {
 			config.Instance.Storage.OSS.Endpoint,
 			config.Instance.Storage.OSS.Bucket,
 		),
+		AfterConnectHook: []AfterConnectHook{
+			AfterConnectSendDeviceInfo,
+		},
 	}
 }
 
@@ -107,6 +116,14 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, simCard, version st
 
 	mqttURL := mqttConfig.Mqtt.URL
 	mqttURL = strings.Replace(mqttURL, "tcp", "mqtt", 1)
+
+	for _, hook := range d.AfterConnectHook {
+		if err := hook(ctx, deviceID); err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", deviceID))
+			return nil, err
+		}
+	}
 
 	return &ConfigInfo{
 		MQTTURL:      mqttURL,

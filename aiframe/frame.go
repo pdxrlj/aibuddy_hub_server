@@ -53,6 +53,11 @@ var (
 	NFCCrateTopic = func(deviceID string) string {
 		return GetTopic(fmt.Sprintf("%s/nfc", deviceID))
 	}
+
+	// MQTTSetChildInfoTopic 子设备信息设置主题
+	MQTTSetChildInfoTopic = func(deviceID string) string {
+		return GetTopic(fmt.Sprintf("%s/child/info", deviceID))
+	}
 )
 
 // GetTopic 获取 MQTT 主题
@@ -63,4 +68,9 @@ func GetTopic(topic string) string {
 	}
 
 	return mqtt.GetTopic(topicPrefix, topic)
+}
+
+// PublishToDevice 发布消息到设备
+func PublishToDevice(topic string, payload []byte) error {
+	return mqtt.Instance.Publish(topic, 1, false, payload)
 }
