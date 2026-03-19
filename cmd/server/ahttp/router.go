@@ -191,7 +191,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			group.POST("/:cid", nfcHandler.UpdateNFC, middleware.UnifiedAuthMiddleware())
 
 			// 删除NFC
-			group.DELETE("/:cid", nfcHandler.DeleteNFC, middleware.UnifiedAuthMiddleware())
+			group.GET("/:cid", nfcHandler.DeleteNFC, middleware.UnifiedAuthMiddleware())
 		})
 
 		// TTS语音复刻
