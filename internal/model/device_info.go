@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -69,6 +70,14 @@ func (d *DeviceInfo) AfterFind(_ *gorm.DB) error {
 
 	if d.Avatar != "" {
 		d.Avatar = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, d.DeviceID, d.Avatar)
+	}
+	return nil
+}
+
+// BeforeCreate 在插入之前
+func (d *DeviceInfo) BeforeCreate(_ *gorm.DB) (err error) {
+	if d.DeviceID != "" {
+		d.DeviceID = strings.ToUpper(d.DeviceID)
 	}
 	return nil
 }

@@ -1,7 +1,12 @@
 // Package model provides model definitions.
 package model
 
-import "time"
+import (
+	"strings"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // AnniversaryType 纪念日类型
 type AnniversaryType string
@@ -70,4 +75,12 @@ type AnniversaryReminder struct {
 // TableName 返回表名
 func (a *AnniversaryReminder) TableName() string {
 	return TableName("anniversary_reminder")
+}
+
+// BeforeCreate 在插入之前
+func (a *AnniversaryReminder) BeforeCreate(_ *gorm.DB) (err error) {
+	if a.DeviceID != "" {
+		a.DeviceID = strings.ToUpper(a.DeviceID)
+	}
+	return nil
 }

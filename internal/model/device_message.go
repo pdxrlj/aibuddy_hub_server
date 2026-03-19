@@ -4,6 +4,7 @@ package model
 import (
 	"aibuddy/pkg/config"
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -65,5 +66,18 @@ func (d *DeviceMessage) AfterFind(_ *gorm.DB) error {
 
 		d.Content = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, d.FromDeviceID, d.Content)
 	}
+	return nil
+}
+
+// BeforeCreate 在插入之前
+func (d *DeviceMessage) BeforeCreate(_ *gorm.DB) (err error) {
+	if d.FromDeviceID != "" {
+		d.FromDeviceID = strings.ToUpper(d.FromDeviceID)
+	}
+
+	if d.ToDeviceID != "" {
+		d.ToDeviceID = strings.ToUpper(d.ToDeviceID)
+	}
+
 	return nil
 }

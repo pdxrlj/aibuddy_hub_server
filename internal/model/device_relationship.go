@@ -1,7 +1,12 @@
 // Package model 用户关系模型
 package model
 
-import "time"
+import (
+	"strings"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // RelationshipStatus 关系状态
 type RelationshipStatus string
@@ -82,4 +87,16 @@ func (r *DeviceRelationship) Reject() {
 	now := time.Now()
 	r.Status = RelationshipStatusRejected
 	r.UpdatedAt = now
+}
+
+// BeforeCreate 在插入之前
+func (r *DeviceRelationship) BeforeCreate(_ *gorm.DB) (err error) {
+	if r.DeviceID != "" {
+		r.DeviceID = strings.ToUpper(r.DeviceID)
+	}
+
+	if r.TargetDeviceID != "" {
+		d.TargetDeviceID = strings.ToUpper(d.TargetDeviceID)
+	}
+	return nil
 }

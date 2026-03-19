@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"gorm.io/gorm"
 )
 
 // AfterConnectSendDeviceInfo 连接后发送设备信息
@@ -18,11 +19,16 @@ func AfterConnectSendDeviceInfo(ctx context.Context, deviceID string) error {
 	defer span.End()
 
 	ChildDeviceInfo, err := query.DeviceInfo.Where(query.DeviceInfo.DeviceID.Eq(deviceID)).First()
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
 		slog.Error("[AfterConnectSendDeviceInfo] GetChildDeviceInfo", "error", err.Error())
 		return err
+	}
+
+	if ChildDeviceInfo == nil {
+		slog.Info("[AfterConnectSendDeviceInfo] SendChildInfoToDevice Skip Send Device Info")
+		return nil
 	}
 
 	DeviceSN, err := query.DeviceSN.Where(query.DeviceSN.DeviceID.Eq(deviceID)).First()

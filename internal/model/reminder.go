@@ -1,6 +1,11 @@
 package model
 
-import "time"
+import (
+	"strings"
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // ReminderStatus represents the status of a reminder.
 type ReminderStatus string
@@ -106,4 +111,12 @@ func (r *Reminder) ComputedNextReminderTime() {
 	default:
 		r.NextReminderTime = r.ReminderTime
 	}
+}
+
+// BeforeCreate 在插入之前
+func (r *Reminder) BeforeCreate(_ *gorm.DB) (err error) {
+	if r.DeviceID != "" {
+		r.DeviceID = strings.ToUpper(r.DeviceID)
+	}
+	return nil
 }

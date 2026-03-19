@@ -2,7 +2,10 @@
 package model
 
 import (
+	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // DeviceOta 设备 OTA 信息
@@ -24,4 +27,12 @@ type DeviceOta struct {
 // TableName 表名
 func (DeviceOta) TableName() string {
 	return TableName("device_ota")
+}
+
+// BeforeCreate 在插入之前
+func (d *DeviceOta) BeforeCreate(_ *gorm.DB) (err error) {
+	if d.DeviceID != "" {
+		d.DeviceID = strings.ToUpper(d.DeviceID)
+	}
+	return nil
 }
