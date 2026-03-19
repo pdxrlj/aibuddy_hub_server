@@ -39,7 +39,7 @@ func (s *Service) CreateNFC(uid int64, deviceID, ctype string, fmt string, title
 	}
 
 	// 发送MQTT信息
-	if err := nfcframe.SendNFCCreate(deviceID, cid, ctype); err != nil {
+	if err := nfcframe.SendNFCCreate(deviceID, cid, fmt, ctype); err != nil {
 		return err
 	}
 
