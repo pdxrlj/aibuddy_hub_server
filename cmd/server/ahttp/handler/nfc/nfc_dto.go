@@ -68,5 +68,5 @@ type UpdateNFCRequest struct {
 
 // DeleteNFCRequest 删除NFC请求
 type DeleteNFCRequest struct {
-	CID string `param:"cid" validate:"required"`
+	CID string `param:"cid" query:"cid" validate:"required"`
 }
