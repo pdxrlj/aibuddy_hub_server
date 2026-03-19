@@ -433,11 +433,16 @@ func (d *DeviceRepo) ClearUserInfo(ctx context.Context, uid int64) error {
 }
 
 // SetDeviceAgent 设置设备Agent
-func (d *DeviceRepo) SetDeviceAgent(deviceID string, agentName string) error {
-	if _, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).
-		Updates(map[string]any{
-			query.Device.AgentName.ColumnName().String(): agentName,
-		}); err != nil {
+func (d *DeviceRepo) SetDeviceAgent(deviceID string, agentName string, tx ...*query.Query) error {
+	db := query.Q
+	if len(tx) > 0 {
+		db = tx[0]
+	}
+
+	_, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID)).
+		Update(db.Device.AgentName, agentName)
+	if err != nil {
+		slog.Error("[SetDeviceAgent] Update error", "error", err, "device_id", deviceID)
 		return err
 	}
 	return nil

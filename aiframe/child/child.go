@@ -10,6 +10,7 @@ import (
 // Info 子设备信息
 type Info struct {
 	Type     string `json:"type"`
+	Sn       string `json:"sn"`
 	NickName string `json:"nick_name"`
 	Sex      string `json:"sex"`
 	Birthday string `json:"birthday"`

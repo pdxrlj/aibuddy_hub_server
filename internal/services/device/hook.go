@@ -5,6 +5,8 @@ import (
 	"aibuddy/aiframe/child"
 	"aibuddy/internal/query"
 	"context"
+	"errors"
+	"log/slog"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -19,16 +21,38 @@ func AfterConnectSendDeviceInfo(ctx context.Context, deviceID string) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[AfterConnectSendDeviceInfo] GetChildDeviceInfo", "error", err.Error())
 		return err
 	}
 
-	if ChildDeviceInfo != nil {
-		return child.SendChildInfoToDevice(ctx, deviceID, &child.Info{
-			NickName: ChildDeviceInfo.NickName,
-			Sex:      ChildDeviceInfo.Gender,
-			Birthday: ChildDeviceInfo.Birthday.Format(time.DateOnly),
-		})
+	DeviceSN, err := query.DeviceSN.Where(query.DeviceSN.DeviceID.Eq(deviceID)).First()
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[AfterConnectSendDeviceInfo] GetDeviceSN", "error", err.Error())
+		return errors.New("获取设备SN失败")
+	}
+	sn := ""
+	if DeviceSN != nil {
+		sn = DeviceSN.SN
 	}
 
+	if ChildDeviceInfo != nil {
+		slog.Info("[AfterConnectSendDeviceInfo] SendChildInfoToDevice")
+		if err := child.SendChildInfoToDevice(ctx, deviceID, &child.Info{
+			NickName: ChildDeviceInfo.NickName,
+			Sn:       sn,
+			Sex:      ChildDeviceInfo.Gender,
+			Birthday: ChildDeviceInfo.Birthday.Format(time.DateOnly),
+		}); err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", deviceID))
+			slog.Error("[AfterConnectSendDeviceInfo] SendChildInfoToDevice", "error", err.Error())
+			return err
+		}
+		slog.Info("[AfterConnectSendDeviceInfo] SendChildInfoToDevice success")
+		return nil
+	}
+	slog.Info("[AfterConnectSendDeviceInfo] SendChildInfoToDevice not found")
 	return nil
 }

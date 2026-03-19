@@ -328,16 +328,19 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType, rel
 	defer span.End()
 
 	return query.Q.Transaction(func(tx *query.Query) error {
+		slog.Info("[CompleteProfile] UpsertProfile")
 		if err := s.DeviceInfoRepo.UpsertProfile(ctx, d, tx); err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
 			span.SetAttributes(attribute.String("error", err.Error()))
+			slog.Info("[CompleteProfile] UpsertProfile", "error", err.Error())
 			return err
 		}
 		if err := s.DeviceRepo.FirstAddDevice(ctx, d.DeviceID, uid, tx); err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
 			span.SetAttributes(attribute.String("error", err.Error()))
+			slog.Info("[CompleteProfile] FirstAddDevice", "error", err.Error())
 			return err
 		}
 
@@ -346,6 +349,7 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType, rel
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
 			span.SetAttributes(attribute.String("error", err.Error()))
+			slog.Error("[CompleteProfile] FromCacheGetDeviceInfo", "error", err.Error())
 			return err
 		}
 
@@ -357,6 +361,7 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType, rel
 			span.SetAttributes(attribute.String("version", version))
 			span.SetAttributes(attribute.String("relation", relation))
 			span.SetAttributes(attribute.String("error", err.Error()))
+			slog.Error("[CompleteProfile] ChangeDeviceInfo", "error", err.Error())
 			return err
 		}
 
@@ -365,49 +370,51 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType, rel
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
 			span.SetAttributes(attribute.String("error", err.Error()))
+			slog.Error("[CompleteProfile] FindUserByUserID", "error", err.Error())
 			return err
 		}
-
 		// 如果表里面没有这个Device那可能就是非法的Device
 		sn, err := s.BindDeviceSnRepo.GetDeviceSnByDeviceID(ctx, d.DeviceID)
 		if err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
 			span.SetAttributes(attribute.String("error", err.Error()))
+			slog.Error("[CompleteProfile] GetDeviceSnByDeviceID", "error", err.Error())
 			return errors.New("当前设备没有找到合法的SN编码，请检查设备")
 		}
 
 		// 给Device设置默认的Agent
-		if err := s.DeviceRepo.SetDeviceAgent(d.DeviceID, getDefaultAgentName()); err != nil {
+		if err := s.DeviceRepo.SetDeviceAgent(d.DeviceID, getDefaultAgentName(), tx); err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
 			span.SetAttributes(attribute.String("error", err.Error()))
+			slog.Info("[CompleteProfile] SetDeviceAgent", "error", err.Error())
 			return err
 		}
-
 		mMgmt := management.Mgmt{
 			Type:   management.MgmtTypeBound,
 			User:   user.Nickname,
 			Avatar: user.Avatar,
 			Sn:     sn,
 		}
-
 		if err := mMgmt.SendBoundToDevice(d.DeviceID); err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
 			span.SetAttributes(attribute.String("error", err.Error()))
+			slog.Info("[CompleteProfile] SendBoundToDevice", "error", err.Error())
 			return err
 		}
 
 		for _, hook := range s.AfterCompleteProfileHook {
+			slog.Info("[CompleteProfile] AfterCompleteProfileHook")
 			if err := hook(ctx, d.DeviceID); err != nil {
 				span.RecordError(err)
 				span.SetAttributes(attribute.String("device_id", d.DeviceID))
 				span.SetAttributes(attribute.String("error", err.Error()))
+				slog.Error("[CompleteProfile] AfterCompleteProfileHook", "error", err.Error())
 				return err
 			}
 		}
-
 		return nil
 	})
 }
@@ -428,6 +435,7 @@ func (s *Service) Lost(ctx context.Context, uid int64, deviceID string) error {
 		span.RecordError(err)
 		span.SetAttributes(attribute.Int64("user_id", uid))
 		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[CompleteProfile] Lost", "error", err.Error())
 		return err
 	}
 
@@ -439,12 +447,14 @@ func (s *Service) Lost(ctx context.Context, uid int64, deviceID string) error {
 	if err := management.SendLost(deviceID, contact, user.Phone); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[CompleteProfile] Unlost", "error", err.Error())
 		return err
 	}
 
 	if err := s.DeviceRepo.SetDeviceStatus(deviceID, model.DeviceStatusLost); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[CompleteProfile] Unbind", "error", err.Error())
 		return err
 	}
 
@@ -491,6 +501,7 @@ func (s *Service) Unbind(ctx context.Context, deviceID string) error {
 	if err := management.SendUnboundToDevice(deviceID); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[CompleteProfile] HaveDevice", "error", err.Error())
 		return err
 	}
 
@@ -530,6 +541,7 @@ func (s *Service) UserDeviceList(ctx context.Context, uid int64) ([]*model.Devic
 		span.RecordError(err)
 		span.SetAttributes(attribute.Int64("user_id", uid))
 		span.SetAttributes(attribute.String("error", err.Error()))
+		slog.Error("[CompleteProfile] UserDeviceList", "error", err.Error())
 		return nil, err
 	}
 
@@ -552,6 +564,7 @@ func (s *Service) CreateMessage(ctx context.Context, uid int64, data *model.Devi
 		err := errors.New("设备信息异常")
 		span.RecordError(err)
 		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", data.ToDeviceID))
+		slog.Error("[CompleteProfile] CreateMessage", "error", err.Error())
 		return err
 	}
 

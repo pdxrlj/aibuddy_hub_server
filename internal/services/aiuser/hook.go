@@ -24,9 +24,22 @@ func AfterCompleteProfileSendChildInfo(ctx context.Context, deviceID string) err
 		span.SetAttributes(attribute.String("device_id", deviceID))
 		return err
 	}
-	if ChildDeviceInfo != nil {
+
+	DeviceSN, err := query.DeviceSN.Where(query.DeviceSN.DeviceID.Eq(deviceID)).First()
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return err
+	}
+	sn := ""
+	if DeviceSN != nil {
+		sn = DeviceSN.SN
+	}
+
+	if ChildDeviceInfo != nil && DeviceSN != nil {
 		return child.SendChildInfoToDevice(ctx, deviceID, &child.Info{
 			NickName: ChildDeviceInfo.NickName,
+			Sn:       sn,
 			Sex:      ChildDeviceInfo.Gender,
 			Birthday: ChildDeviceInfo.Birthday.Format(time.DateOnly),
 		})

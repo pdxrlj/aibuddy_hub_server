@@ -7,6 +7,7 @@ import (
 	"aibuddy/internal/repository"
 	"aibuddy/pkg/mqtt"
 	"context"
+	"encoding/json"
 	"log/slog"
 )
 
@@ -34,10 +35,23 @@ func (h *PomodoroHandler) Handle(ctx *mqtt.Context) {
 	}
 
 	pomodoroClock := &model.PomodoroClock{
-		DeviceID:            deviceID,
-		TotalDuration:       pomodoro.TotalTime,
-		StudyDuration:       pomodoro.StudyDuration,
-		DistractionDuration: pomodoro.DistractionDuration,
+		DeviceID:      deviceID,
+		TotalDuration: pomodoro.TotalTime,
+		StudyDuration: pomodoro.StudyDuration,
+	}
+
+	// 序列化分心记录
+	if pomodoro.DistractionRecord != nil {
+		record := model.DistractionRecord{
+			TouchScreenCount: pomodoro.DistractionRecord.TouchScreenCount,
+			TouchHead:        pomodoro.DistractionRecord.TouchHead,
+		}
+		recordJSON, err := json.Marshal(record)
+		if err != nil {
+			slog.Error("[MQTT] PomodoroHandler marshal distraction record failed", "device_id", deviceID, "error", err)
+		} else {
+			pomodoroClock.DistractionRecord = recordJSON
+		}
 	}
 
 	if err := h.PomodoroClockRepo.Create(context.Background(), pomodoroClock); err != nil {

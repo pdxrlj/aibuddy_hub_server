@@ -100,6 +100,7 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, simCard, version st
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Info("[FirstOnline] GenerateAliyunMQTTAuth", "err", err.Error())
 		return nil, err
 	}
 
@@ -111,6 +112,7 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, simCard, version st
 	if err := d.cacheDeviceInfo(deviceID, simCard, version); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[FirstOnline]", "cacheDeviceInfo error", err)
 		return nil, err
 	}
 
@@ -121,7 +123,8 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, simCard, version st
 		if err := hook(ctx, deviceID); err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", deviceID))
-			return nil, err
+			slog.Error("[FirstOnline]", "AfterConnectHook error", err)
+			return nil, errors.New("无法发送用户信息给设备 " + err.Error())
 		}
 	}
 

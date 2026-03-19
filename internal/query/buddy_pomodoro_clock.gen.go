@@ -32,7 +32,7 @@ func newPomodoroClock(db *gorm.DB, opts ...gen.DOOption) pomodoroClock {
 	_pomodoroClock.DeviceID = field.NewString(tableName, "device_id")
 	_pomodoroClock.TotalDuration = field.NewInt(tableName, "total_duration")
 	_pomodoroClock.StudyDuration = field.NewInt(tableName, "study_duration")
-	_pomodoroClock.DistractionDuration = field.NewInt(tableName, "distraction_duration")
+	_pomodoroClock.DistractionRecord = field.NewField(tableName, "distraction_record")
 	_pomodoroClock.CreatedAt = field.NewTime(tableName, "created_at")
 	_pomodoroClock.UpdatedAt = field.NewTime(tableName, "updated_at")
 
@@ -44,14 +44,14 @@ func newPomodoroClock(db *gorm.DB, opts ...gen.DOOption) pomodoroClock {
 type pomodoroClock struct {
 	pomodoroClockDo
 
-	ALL                 field.Asterisk
-	ID                  field.Int    // ID
-	DeviceID            field.String // 设备ID
-	TotalDuration       field.Int    // 总时长
-	StudyDuration       field.Int    // 学习时长
-	DistractionDuration field.Int    // 分心时长
-	CreatedAt           field.Time   // 创建时间
-	UpdatedAt           field.Time   // 更新时间
+	ALL               field.Asterisk
+	ID                field.Int    // ID
+	DeviceID          field.String // 设备ID
+	TotalDuration     field.Int    // 总时长
+	StudyDuration     field.Int    // 学习时长
+	DistractionRecord field.Field  // 分心记录
+	CreatedAt         field.Time   // 创建时间
+	UpdatedAt         field.Time   // 更新时间
 
 	fieldMap map[string]field.Expr
 }
@@ -72,7 +72,7 @@ func (p *pomodoroClock) updateTableName(table string) *pomodoroClock {
 	p.DeviceID = field.NewString(table, "device_id")
 	p.TotalDuration = field.NewInt(table, "total_duration")
 	p.StudyDuration = field.NewInt(table, "study_duration")
-	p.DistractionDuration = field.NewInt(table, "distraction_duration")
+	p.DistractionRecord = field.NewField(table, "distraction_record")
 	p.CreatedAt = field.NewTime(table, "created_at")
 	p.UpdatedAt = field.NewTime(table, "updated_at")
 
@@ -96,7 +96,7 @@ func (p *pomodoroClock) fillFieldMap() {
 	p.fieldMap["device_id"] = p.DeviceID
 	p.fieldMap["total_duration"] = p.TotalDuration
 	p.fieldMap["study_duration"] = p.StudyDuration
-	p.fieldMap["distraction_duration"] = p.DistractionDuration
+	p.fieldMap["distraction_record"] = p.DistractionRecord
 	p.fieldMap["created_at"] = p.CreatedAt
 	p.fieldMap["updated_at"] = p.UpdatedAt
 }

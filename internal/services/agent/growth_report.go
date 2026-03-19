@@ -2,6 +2,7 @@
 package agent
 
 import (
+	"aibuddy/internal/model"
 	"aibuddy/internal/repository"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/helpers"
@@ -114,8 +115,14 @@ func (g *GrowthReport) GetPomodoroRecordSummary(ctx context.Context, deviceID st
 	distractionCount := 0
 	for _, pomodoroRecord := range pomodoroRecords {
 		totalDurationMin += pomodoroRecord.StudyDuration
-		if pomodoroRecord.DistractionDuration > 0 {
-			distractionCount++
+		// 解析分心记录
+		if len(pomodoroRecord.DistractionRecord) > 0 {
+			var record model.DistractionRecord
+			if err := json.Unmarshal(pomodoroRecord.DistractionRecord, &record); err == nil {
+				if record.TouchScreenCount > 0 || record.TouchHead > 0 {
+					distractionCount++
+				}
+			}
 		}
 	}
 
