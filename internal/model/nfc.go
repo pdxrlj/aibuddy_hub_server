@@ -43,6 +43,7 @@ type NFC struct {
 	Content string    `gorm:"column:content;type:text;not null" json:"content"`
 	Voice   string    `gorm:"column:voice;type:varchar(255)" json:"voice"`
 	Picture string    `gorm:"column:picture;type:varchar(255);" json:"picture"`
+	Dur     int       `gorm:"column:dur;type:int;default:0;" json:"dur"`
 	Status  NFCStatus `gorm:"column:status;type:varchar(255);not null;default:'制作中'" json:"status"`
 
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;default:CURRENT_TIMESTAMP" json:"created_at"`

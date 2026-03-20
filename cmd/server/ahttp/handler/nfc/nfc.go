@@ -5,6 +5,7 @@ import (
 	aiuserService "aibuddy/internal/services/aiuser"
 	"aibuddy/internal/services/nfc"
 	"aibuddy/pkg/ahttp"
+	"fmt"
 	"log/slog"
 	"net/http"
 )
@@ -28,7 +29,7 @@ func (h *Handler) CreateNFC(state *ahttp.State, req *CreateNFCRequest) error {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	slog.Info("[NFC] CreateNFC", "uid", uid, "device_id", req.DeviceID, "ctype", req.Ctype, "title", req.Title, "content", req.Content)
-	err = h.Service.CreateNFC(uid, req.DeviceID, req.Ctype, req.Title, req.Content, req.Voice, req.Picture)
+	err = h.Service.CreateNFC(uid, req.DeviceID, req.Ctype, req.Title, req.Content, req.Voice, req.Picture, *req.Dur)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
@@ -54,7 +55,13 @@ func (h *Handler) GetNFCInfo(state *ahttp.State, req *GetNFCInfoRequest) error {
 
 // GetNFCList 获取NFC列表
 func (h *Handler) GetNFCList(state *ahttp.State, req *GetNFCListRequest) error {
-	list, total, err := h.Service.GetNFCListByDeviceID(req.DeviceID, req.Page, req.PageSize)
+	dur := 0
+	if req.Dur != nil {
+		dur = *req.Dur
+	}
+
+	fmt.Println(dur)
+	list, total, err := h.Service.GetNFCListByDeviceID(req.DeviceID, req.UpdateAt, dur, req.Ctype, req.Page, req.PageSize)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
@@ -69,6 +76,7 @@ func (h *Handler) GetNFCList(state *ahttp.State, req *GetNFCListRequest) error {
 			Voice:   item.Voice,
 			Picture: item.Picture,
 			Status:  string(item.Status),
+			Dur:     item.Dur,
 		}
 	}
 
@@ -82,7 +90,7 @@ func (h *Handler) GetNFCList(state *ahttp.State, req *GetNFCListRequest) error {
 
 // UpdateNFC 更新NFC
 func (h *Handler) UpdateNFC(state *ahttp.State, req *UpdateNFCRequest) error {
-	err := h.Service.UpdateNFC(req.CID, req.Ctype, req.Title, req.Content, req.Voice, req.Picture)
+	err := h.Service.UpdateNFC(req.CID, req.Ctype, req.Title, req.Content, req.Voice, req.Picture, *req.Dur)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}

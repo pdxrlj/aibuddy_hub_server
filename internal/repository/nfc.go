@@ -4,7 +4,10 @@ package repository
 import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
+	"errors"
 	"time"
+
+	"gorm.io/gen"
 )
 
 // NFCRepository NFC仓库
@@ -64,8 +67,28 @@ func (r *NFCRepository) GetByNFCID(nfcID string) (*model.NFC, error) {
 }
 
 // GetListByDeviceID 根据设备ID获取NFC列表（分页）
-func (r *NFCRepository) GetListByDeviceID(deviceID string, page, pageSize int) ([]*model.NFC, int64, error) {
-	list, total, err := query.NFC.Where(query.NFC.DeviceID.Eq(deviceID)).FindByPage((page-1)*pageSize, pageSize)
+func (r *NFCRepository) GetListByDeviceID(deviceID string, searchTime string, dur int, ctype string, page, pageSize int) ([]*model.NFC, int64, error) {
+	field := []gen.Condition{
+		query.NFC.DeviceID.Eq(deviceID),
+	}
+
+	if dur > 0 {
+		field = append(field, query.NFC.Dur.Gte(dur))
+	}
+
+	if ctype != "" {
+		field = append(field, query.NFC.Ctype.Eq(ctype))
+	}
+
+	if searchTime != "" {
+		updateAt, err := time.Parse(time.DateTime, searchTime)
+		if err != nil {
+			return nil, 0, errors.New("时间参数格式有误")
+		}
+		field = append(field, query.NFC.UpdatedAt.Gte(updateAt))
+	}
+
+	list, total, err := query.NFC.Debug().Where(field...).FindByPage((page-1)*pageSize, pageSize)
 	if err != nil {
 		return nil, 0, err
 	}
