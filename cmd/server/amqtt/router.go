@@ -50,4 +50,8 @@ func SetupRoutes(instance *mqtt.Mqtt) {
 	// 番茄钟
 	pomodoroHandler := handler.NewPomodoroHandler()
 	r.On(":device_id/pomodoro", pomodoroHandler.Handle)
+
+	// 初始化状态信息
+	initInfoHandler := handler.NewInitInfoHandler()
+	r.On(":device_id/init", initInfoHandler.Handle)
 }
