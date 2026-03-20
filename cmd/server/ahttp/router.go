@@ -80,6 +80,9 @@ func RegisterRoutes(base *ahttp.Base) {
 				rtcGroup.POST("/userserver/instance/qianwen", rtc.InstanceQianwen)
 				rtcGroup.POST("/userserver/instance/volc", rtc.InstanceVolc)
 			})
+
+			// ota 升级校验
+			deviceGroup.GET("/:device_id/ota_check", device.OtaCheck)
 		})
 
 		group.Group("/file", nil, func(fileGroup *ahttp.Group) {

@@ -141,3 +141,9 @@ type AccountInfo struct {
 	Birthday string `json:"birthday"`
 	Sn       string `json:"sn"`
 }
+
+// OtaCheckRequest ota 升级校验请求
+type OtaCheckRequest struct {
+	DeviceID string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
+	Version  string `json:"version" form:"version" param:"version" query:"version" validate:"required,semver" msg:"required:版本号不能为空|semver:版本号格式无效"`
+}

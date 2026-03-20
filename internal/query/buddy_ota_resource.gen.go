@@ -29,6 +29,7 @@ func newOtaResource(db *gorm.DB, opts ...gen.DOOption) otaResource {
 	tableName := _otaResource.otaResourceDo.TableName()
 	_otaResource.ALL = field.NewAsterisk(tableName)
 	_otaResource.ID = field.NewInt(tableName, "id")
+	_otaResource.Version = field.NewString(tableName, "version")
 	_otaResource.OtaURL = field.NewString(tableName, "ota_url")
 	_otaResource.ModelURL = field.NewString(tableName, "model_url")
 	_otaResource.ResourceURL = field.NewString(tableName, "resource_url")
@@ -46,10 +47,11 @@ type otaResource struct {
 
 	ALL         field.Asterisk
 	ID          field.Int
-	OtaURL      field.String
-	ModelURL    field.String
-	ResourceURL field.String
-	ForceUpdate field.Bool
+	Version     field.String // 版本号
+	OtaURL      field.String // OTA下载地址
+	ModelURL    field.String // 模型下载地址
+	ResourceURL field.String // 资源下载地址
+	ForceUpdate field.Bool   // 是否强制更新
 	CreatedAt   field.Time
 	UpdatedAt   field.Time
 
@@ -69,6 +71,7 @@ func (o otaResource) As(alias string) *otaResource {
 func (o *otaResource) updateTableName(table string) *otaResource {
 	o.ALL = field.NewAsterisk(table)
 	o.ID = field.NewInt(table, "id")
+	o.Version = field.NewString(table, "version")
 	o.OtaURL = field.NewString(table, "ota_url")
 	o.ModelURL = field.NewString(table, "model_url")
 	o.ResourceURL = field.NewString(table, "resource_url")
@@ -91,8 +94,9 @@ func (o *otaResource) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (o *otaResource) fillFieldMap() {
-	o.fieldMap = make(map[string]field.Expr, 7)
+	o.fieldMap = make(map[string]field.Expr, 8)
 	o.fieldMap["id"] = o.ID
+	o.fieldMap["version"] = o.Version
 	o.fieldMap["ota_url"] = o.OtaURL
 	o.fieldMap["model_url"] = o.ModelURL
 	o.fieldMap["resource_url"] = o.ResourceURL

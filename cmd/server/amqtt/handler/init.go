@@ -28,7 +28,7 @@ func NewInitInfoHandler() *InitInfoHandler {
 func (h *InitInfoHandler) Handle(ctx *mqtt.Context) {
 	defer ctx.Message.Ack()
 	deviceID := ctx.Params["device_id"]
-
+	slog.Info("[MQTT] Init", "device_id", deviceID)
 	// 1. 发送设备用户信息到设备
 	h.DeviceUserInfo(deviceID)
 }

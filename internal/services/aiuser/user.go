@@ -405,16 +405,16 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType, rel
 			return err
 		}
 
-		for _, hook := range s.AfterCompleteProfileHook {
-			slog.Info("[CompleteProfile] AfterCompleteProfileHook")
-			if err := hook(ctx, d.DeviceID); err != nil {
-				span.RecordError(err)
-				span.SetAttributes(attribute.String("device_id", d.DeviceID))
-				span.SetAttributes(attribute.String("error", err.Error()))
-				slog.Error("[CompleteProfile] AfterCompleteProfileHook", "error", err.Error())
-				return err
-			}
-		}
+		// for _, hook := range s.AfterCompleteProfileHook {
+		// 	slog.Info("[CompleteProfile] AfterCompleteProfileHook")
+		// 	if err := hook(ctx, d.DeviceID); err != nil {
+		// 		span.RecordError(err)
+		// 		span.SetAttributes(attribute.String("device_id", d.DeviceID))
+		// 		span.SetAttributes(attribute.String("error", err.Error()))
+		// 		slog.Error("[CompleteProfile] AfterCompleteProfileHook", "error", err.Error())
+		// 		return err
+		// 	}
+		// }
 		return nil
 	})
 }

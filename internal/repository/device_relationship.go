@@ -130,14 +130,15 @@ func (d *DeviceRelationshipRepo) CreateDeviceRelationship(ctx context.Context, d
 	return nil
 }
 
-// DeleteDeviceRelationship 删除设备关系
+// DeleteDeviceRelationship 删除设备关系（双向删除：A->B 和 B->A）
 func (d *DeviceRelationshipRepo) DeleteDeviceRelationship(ctx context.Context, deviceID, targetDeviceID string) error {
 	_, span := tracer.Start(ctx, "DeviceRelationshipRepo.DeleteDeviceRelationship")
 	defer span.End()
 
+	// 删除双向关系：A->B 和 B->A
 	_, err := query.DeviceRelationship.WithContext(ctx).
-		Where(query.DeviceRelationship.DeviceID.Eq(deviceID)).
-		Where(query.DeviceRelationship.TargetDeviceID.Eq(targetDeviceID)).
+		Where(query.DeviceRelationship.DeviceID.Eq(deviceID), query.DeviceRelationship.TargetDeviceID.Eq(targetDeviceID)).
+		Or(query.DeviceRelationship.DeviceID.Eq(targetDeviceID), query.DeviceRelationship.TargetDeviceID.Eq(deviceID)).
 		Delete()
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		span.RecordError(err)
