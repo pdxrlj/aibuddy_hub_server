@@ -123,3 +123,21 @@ type MessageInfo struct {
 	Dur      int    `json:"dur"`
 	Ts       int
 }
+
+// AccountInfoRequest 获取硬件的账户消息请求
+type AccountInfoRequest struct {
+	DeviceID string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
+}
+
+// AccountInfoResponse 获取硬件的账户消息响应
+type AccountInfoResponse struct {
+	AccountInfo *AccountInfo `json:"account_info"`
+}
+
+// AccountInfo 硬件的账户消息
+type AccountInfo struct {
+	NickName string `json:"nick_name"`
+	Sex      string `json:"sex"`
+	Birthday string `json:"birthday"`
+	Sn       string `json:"sn"`
+}

@@ -43,22 +43,18 @@ func AfterConnectSendDeviceInfo(ctx context.Context, deviceID string) error {
 		sn = DeviceSN.SN
 	}
 
-	if ChildDeviceInfo != nil {
-		slog.Info("[AfterConnectSendDeviceInfo] SendChildInfoToDevice")
-		if err := child.SendChildInfoToDevice(ctx, deviceID, &child.Info{
-			NickName: ChildDeviceInfo.NickName,
-			Sn:       sn,
-			Sex:      ChildDeviceInfo.Gender,
-			Birthday: ChildDeviceInfo.Birthday.Format(time.DateOnly),
-		}); err != nil {
-			span.RecordError(err)
-			span.SetAttributes(attribute.String("device_id", deviceID))
-			slog.Error("[AfterConnectSendDeviceInfo] SendChildInfoToDevice", "error", err.Error())
-			return err
-		}
-		slog.Info("[AfterConnectSendDeviceInfo] SendChildInfoToDevice success")
-		return nil
+	slog.Info("[AfterConnectSendDeviceInfo] SendChildInfoToDevice")
+	if err := child.SendChildInfoToDevice(ctx, deviceID, &child.Info{
+		NickName: ChildDeviceInfo.NickName,
+		Sn:       sn,
+		Sex:      ChildDeviceInfo.Gender,
+		Birthday: ChildDeviceInfo.Birthday.Format(time.DateOnly),
+	}); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[AfterConnectSendDeviceInfo] SendChildInfoToDevice", "error", err.Error())
+		return err
 	}
-	slog.Info("[AfterConnectSendDeviceInfo] SendChildInfoToDevice not found")
+	slog.Info("[AfterConnectSendDeviceInfo] SendChildInfoToDevice success")
 	return nil
 }

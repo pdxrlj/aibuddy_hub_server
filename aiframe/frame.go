@@ -58,6 +58,11 @@ var (
 	MQTTSetChildInfoTopic = func(deviceID string) string {
 		return GetTopic(fmt.Sprintf("%s/child/info", deviceID))
 	}
+
+	// MQTTInitInfoTopic 初始化信息主题
+	MQTTInitInfoTopic = func(deviceID string) string {
+		return GetTopic(fmt.Sprintf("%s/init/info", deviceID))
+	}
 )
 
 // GetTopic 获取 MQTT 主题
@@ -72,5 +77,5 @@ func GetTopic(topic string) string {
 
 // PublishToDevice 发布消息到设备
 func PublishToDevice(topic string, payload []byte) error {
-	return mqtt.Instance.Publish(topic, 1, false, payload)
+	return mqtt.Instance.Publish(topic, 1, true, payload)
 }

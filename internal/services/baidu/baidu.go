@@ -19,9 +19,11 @@ import (
 
 // ConfigRequest 配置请求参数
 type ConfigRequest struct {
-	LLM               string `json:"llm,omitempty"`
-	LLMToken          string `json:"llm_token,omitempty"`
-	TTSURL            string `json:"tts_url,omitempty"`
+	LLM                 string `json:"llm,omitempty"`
+	LLMToken            string `json:"llm_token,omitempty"`
+	TTSURL              string `json:"tts_url,omitempty"`
+	TTSPrivateServerURL string `json:"tts_private_server_url,omitempty"`
+
 	RTCAC             string `json:"rtc_ac,omitempty"`
 	Lang              string `json:"lang,omitempty"`
 	RemoteMusicPlayer bool   `json:"remote_music_player,omitempty"`
@@ -85,7 +87,8 @@ func buildConfigStr(cfg *ConfigRequest) (string, error) {
 	}
 
 	if cfg.TTS == "" {
-		cfg.TTS = "DEFAULT"
+		cfg.TTS = "PRIVATE_EXTEND" // DEFAULT 默认音色
+		// cfg.TTS = "DEFAULT"
 	}
 
 	if cfg.TTSURL == "" {
@@ -93,7 +96,12 @@ func buildConfigStr(cfg *ConfigRequest) (string, error) {
 		if vcn == "" {
 			vcn = "1000578"
 		}
-		cfg.TTSURL = fmt.Sprintf(`DEFAULT{"vcn":"%s"}`, vcn)
+		// cfg.TTSURL = fmt.Sprintf(`DEFAULT{"vcn":"%s"}`, vcn)
+		cfg.TTSURL = fmt.Sprintf(`PRIVATE_EXTEND{"vcn":"%s"}`, vcn)
+	}
+
+	if cfg.TTSPrivateServerURL == "" {
+		cfg.TTSPrivateServerURL = "ws://8.153.82.116:8289/ws/2.0/speech/publiccloudspeech/v1/tts"
 	}
 
 	if cfg.TTSEndDelayMs == 0 {

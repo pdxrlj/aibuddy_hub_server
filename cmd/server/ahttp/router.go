@@ -61,6 +61,9 @@ func RegisterRoutes(base *ahttp.Base) {
 			// 获取设备消息列表
 			deviceGroup.GET("/:device_id/message_list", device.MessageList)
 
+			// 获取硬件的账户消息
+			deviceGroup.GET("/:device_id/account_info", device.AccountInfo)
+
 			// 大模型互动实例
 			deviceGroup.Group("/aiagent", nil, func(rtcGroup *ahttp.Group) {
 				rtc := devicehandler.NewRtcHandler()

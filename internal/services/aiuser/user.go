@@ -744,6 +744,15 @@ func (s *Service) UpdateDeviceInfo(ctx context.Context, uid int64, data *model.D
 		return errors.New("无法设置该设备的信息")
 	}
 
+	// 执行完成用户信息更新后钩子
+	for _, hook := range s.AfterCompleteProfileHook {
+		if err := hook(ctx, data.DeviceID); err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", data.DeviceID))
+			return err
+		}
+	}
+
 	return s.DeviceInfoRepo.UpdateDeviceInfo(ctx, data, uid, relation)
 }
 

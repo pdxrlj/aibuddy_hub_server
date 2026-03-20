@@ -254,3 +254,18 @@ func (d *Device) MessageList(state *ahttp.State, req *MessageListRequest) error 
 		List:  data,
 	})
 }
+
+// AccountInfo 获取硬件的账户消息
+func (d *Device) AccountInfo(state *ahttp.State, req *AccountInfoRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.AccountInfo")
+	defer span.End()
+
+	accountInfo, err := d.Service.GetAccountInfo(ctx, req.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		return state.Resposne().Error(err)
+	}
+
+	return state.Resposne().Success(accountInfo)
+}

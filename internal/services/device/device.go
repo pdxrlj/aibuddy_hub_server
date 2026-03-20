@@ -45,6 +45,8 @@ type Service struct {
 
 	DeviceMessageRepo *repository.DeviceMessageRepo
 
+	DeviceSnRepo *repository.BindDeviceSnRepo
+
 	FileStorage storage.ObjectStorage[io.ReadCloser]
 
 	// 连接后Hook
@@ -64,6 +66,7 @@ func NewService() *Service {
 		DeviceRelationshipRepo: repository.NewDeviceRelationshipRepo(),
 		UserRepo:               repository.NewUserRepo(),
 		DeviceMessageRepo:      repository.NewDeviceMessageRepo(),
+		DeviceSnRepo:           repository.NewBindDeviceSnRepo(),
 		FileStorage: storage.NewStorage(
 			config.Instance.Storage.OSS.AccessKeyID,
 			config.Instance.Storage.OSS.AccessKeySecret,
@@ -497,4 +500,44 @@ func (d *Service) ToMessageDTO(messages []*model.DeviceMessage) []*MessageDTO {
 		result[i] = dto
 	}
 	return result
+}
+
+// AccountInfo 账户信息
+type AccountInfo struct {
+	NickName string `json:"nick_name"`
+	Sex      string `json:"sex"`
+	Birthday string `json:"birthday"`
+	Sn       string `json:"sn"`
+}
+
+// GetAccountInfo 获取硬件的账户消息
+func (d *Service) GetAccountInfo(ctx context.Context, deviceID string) (*AccountInfo, error) {
+	_, span := tracer().Start(ctx, "DeviceService.GetAccountInfo")
+	defer span.End()
+
+	device, err := d.GetDeviceInfo(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return nil, err
+	}
+	if device == nil || device.DeviceInfo == nil {
+		span.RecordError(errors.New("无法查询到完整的设备信息"))
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return nil, errors.New("无法查询到完整的设备信息")
+	}
+
+	sn, err := d.DeviceSnRepo.GetDeviceSnByDeviceID(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return nil, errors.New("无法查询到设备SN")
+	}
+
+	return &AccountInfo{
+		NickName: device.DeviceInfo.NickName,
+		Sex:      device.DeviceInfo.Gender,
+		Birthday: device.DeviceInfo.Birthday.Format(time.DateOnly),
+		Sn:       sn,
+	}, nil
 }
