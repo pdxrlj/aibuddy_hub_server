@@ -96,7 +96,7 @@ func (r *DeviceRelationship) BeforeCreate(_ *gorm.DB) (err error) {
 	}
 
 	if r.TargetDeviceID != "" {
-		d.TargetDeviceID = strings.ToUpper(d.TargetDeviceID)
+		r.TargetDeviceID = strings.ToUpper(r.TargetDeviceID)
 	}
 	return nil
 }

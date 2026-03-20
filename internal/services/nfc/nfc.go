@@ -22,7 +22,7 @@ func NewNFC() *Service {
 }
 
 // CreateNFC 创建NFC
-func (s *Service) CreateNFC(uid int64, deviceID, ctype string, title, content string, voice string, picture string) error {
+func (s *Service) CreateNFC(uid int64, deviceID, ctype string, title, content string, voice string, picture string, dur int) error {
 	cid := helpers.GenerateNumber(10)
 	nfc := &model.NFC{
 		UID:      uid,
@@ -33,6 +33,7 @@ func (s *Service) CreateNFC(uid int64, deviceID, ctype string, title, content st
 		Content:  content,
 		Voice:    voice,
 		Picture:  picture,
+		Dur:      dur,
 	}
 
 	if err := s.nfcRepository.Create(nfc); err != nil {
@@ -53,12 +54,12 @@ func (s *Service) GetNFCInfoByNFCID(nfcID string) (*model.NFC, error) {
 }
 
 // GetNFCListByDeviceID 根据设备ID获取NFC列表
-func (s *Service) GetNFCListByDeviceID(deviceID string, page, pageSize int) ([]*model.NFC, int64, error) {
-	return s.nfcRepository.GetListByDeviceID(deviceID, page, pageSize)
+func (s *Service) GetNFCListByDeviceID(deviceID string, updateAt string, dur int, ctype string, page, pageSize int) ([]*model.NFC, int64, error) {
+	return s.nfcRepository.GetListByDeviceID(deviceID, updateAt, dur, ctype, page, pageSize)
 }
 
 // UpdateNFC 更新NFC
-func (s *Service) UpdateNFC(cid, ctype, title, content string, voice string, picture string) error {
+func (s *Service) UpdateNFC(cid, ctype, title, content string, voice string, picture string, dur int) error {
 	nfc, err := s.nfcRepository.GetByCid(cid)
 	if err != nil {
 		return err
@@ -69,6 +70,7 @@ func (s *Service) UpdateNFC(cid, ctype, title, content string, voice string, pic
 	nfc.Content = content
 	nfc.Voice = voice
 	nfc.Picture = picture
+	nfc.Dur = dur
 
 	return s.nfcRepository.Update(nfc)
 }
