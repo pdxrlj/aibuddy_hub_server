@@ -69,7 +69,7 @@ type UpdateNFCRequest struct {
 	Content string `json:"content" form:"content" validate:"required,max=50" msg:"required:内容不能为空|max:50:内容不能超过50个字符"`
 	Voice   string `json:"voice" form:"voice"`
 	Picture string `json:"picture" form:"picture"`
-	Dur     *int   `json:"dur" form:"dur" validate:"omitempty,min=1,max=60" msg:"min:语音时长最短1s|max:语音时长最长60s"`
+	Dur     *int   `json:"dur" form:"dur" validate:"omitempty,max=60" msg:"max:语音时长最长60s"`
 }
 
 // DeleteNFCRequest 删除NFC请求
