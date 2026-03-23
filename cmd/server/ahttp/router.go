@@ -9,6 +9,7 @@ import (
 	filehandler "aibuddy/cmd/server/ahttp/handler/file"
 	"aibuddy/cmd/server/ahttp/handler/nfc"
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
+	paymenthandler "aibuddy/cmd/server/ahttp/handler/payment"
 	remindhandler "aibuddy/cmd/server/ahttp/handler/remind"
 
 	ttsvoicehandler "aibuddy/cmd/server/ahttp/handler/tts_voice"
@@ -217,5 +218,12 @@ func RegisterRoutes(base *ahttp.Base) {
 		debugHandler := adebug.NewHandler()
 		// Debug
 		group.GET("/debug/token", debugHandler.ParseToken)
+
+		// 支付回调（无需认证）
+		group.Group("/payment", nil, func(paymentGroup *ahttp.Group) {
+			payment := paymenthandler.NewHandler()
+			paymentGroup.POST("/notify", payment.PayNotify)         // 支付结果通知
+			paymentGroup.POST("/refund_notify", payment.RefundNotify) // 退款结果通知
+		})
 	})
 }
