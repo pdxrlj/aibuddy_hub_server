@@ -26,6 +26,7 @@ type Config struct {
 	Baidu    *BaiduConfig    `json:"baidu" mapstructure:"baidu"`
 	Wechat   *WechatConfig   `json:"wechat" mapstructure:"wechat"`
 	MiniShop *MiniShopConfig `json:"mini_shop" mapstructure:"mini_shop"`
+	Pay      *PayConfig      `json:"pay" mapstructure:"pay"`
 }
 
 // AppConfig 应用配置
@@ -49,6 +50,19 @@ type WechatConfig struct {
 type MiniShopConfig struct {
 	AppID     string `json:"app_id" mapstructure:"app_id"`
 	AppSecret string `json:"app_secret" mapstructure:"app_secret"`
+}
+
+// PayConfig 微信支付配置
+type PayConfig struct {
+	AppID             string `json:"app_id" mapstructure:"app_id"`                           // 微信支付AppID
+	MchID             string `json:"mch_id" mapstructure:"mch_id"`                           // 微信商户号
+	APIV3Key          string `json:"api_v3_key" mapstructure:"api_v3_key"`                   // 微信支付API V3密钥
+	CertPath          string `json:"cert_path" mapstructure:"cert_path"`                     // 商户API证书文件路径
+	KeyPath           string `json:"key_path" mapstructure:"key_path"`                       // 商户API证书私钥文件路径
+	SerialNo          string `json:"serial_no" mapstructure:"serial_no"`                     // 商户API证书序列号
+	WechatpaySerialNo string `json:"wechatpay_serial_no" mapstructure:"wechatpay_serial_no"` // 微信支付公钥ID
+	NotifyURL         string `json:"notify_url" mapstructure:"notify_url"`                   // 支付结果通知URL
+	RefundNotifyURL   string `json:"refund_notify_url" mapstructure:"refund_notify_url"`     // 退款结果通知URL
 }
 
 // StorageConfig 存储配置

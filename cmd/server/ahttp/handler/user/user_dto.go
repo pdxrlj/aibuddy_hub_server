@@ -151,17 +151,24 @@ type AnalysisGrowthReportRequest struct {
 	EndTime   string `json:"end_time" form:"end_time" param:"end_time" query:"end_time" validate:"required" msg:"required:结束时间不能为空"`
 }
 
-// ParseTime 解析时间字符串
+// ParseTime 解析日期字符串，转换为当天的开始时间和结束时间
 func (r *AnalysisGrowthReportRequest) ParseTime() (startTime, endTime time.Time, err error) {
-	layout := "2006-01-02 15:04:05"
-	startTime, err = time.Parse(layout, r.StartTime)
+	layout := "2006-01-02"
+
+	startDate, err := time.Parse(layout, r.StartTime)
 	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("开始时间格式错误: %w", err)
+		return time.Time{}, time.Time{}, fmt.Errorf("开始时间格式错误，期望格式: 2006-01-02: %w", err)
 	}
-	endTime, err = time.Parse(layout, r.EndTime)
+
+	startTime = time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, startDate.Location())
+
+	endDate, err := time.Parse(layout, r.EndTime)
 	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("结束时间格式错误: %w", err)
+		return time.Time{}, time.Time{}, fmt.Errorf("结束时间格式错误，期望格式: 2006-01-02: %w", err)
 	}
+
+	endTime = time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 0, endDate.Location())
+
 	return startTime, endTime, nil
 }
 
