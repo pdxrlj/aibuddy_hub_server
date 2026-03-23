@@ -68,7 +68,7 @@ baidu:
   sk: ""
   app_id: ""
   agent:
-    default: "阳光元气型奶龙"
+    default: "阳光元气型"
   qianfan:
     model: ""
     base_url: ""

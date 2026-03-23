@@ -180,7 +180,7 @@ func (h *Handler) Lost(state *ahttp.State, req *LostRequest) error {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	err = h.UserServer.Lost(ctx, uid, req.DeviceID)
+	err = h.UserServer.Lost(ctx, uid, req.DeviceIDToUpper())
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
@@ -194,7 +194,7 @@ func (h *Handler) Unlost(state *ahttp.State, req *UnlostRequest) error {
 	ctx, span := tracer().Start(state.Context(), "Device.Unlost")
 	defer span.End()
 
-	err := h.UserServer.Unlost(ctx, req.DeviceID)
+	err := h.UserServer.Unlost(ctx, req.DeviceIDToUpper())
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
@@ -208,7 +208,7 @@ func (h *Handler) Unbind(state *ahttp.State, req *UnbindRequest) error {
 	ctx, span := tracer().Start(state.Context(), "Device.Unbind")
 	defer span.End()
 
-	err := h.UserServer.Unbind(ctx, req.DeviceID)
+	err := h.UserServer.Unbind(ctx, req.DeviceIDToUpper())
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))

@@ -48,7 +48,7 @@ func getDefaultAgentName() string {
 	if config.Instance.Baidu != nil && config.Instance.Baidu.Agent != nil && config.Instance.Baidu.Agent.Default != "" {
 		return config.Instance.Baidu.Agent.Default
 	}
-	return "阳光元气型奶龙"
+	return "阳光元气型"
 }
 
 // Service 用户认证服务

@@ -3,6 +3,7 @@ package userhandler
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -74,14 +75,29 @@ type LostRequest struct {
 	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
 }
 
+// DeviceIDToUpper 设备ID变成大写
+func (r *LostRequest) DeviceIDToUpper() string {
+	return strings.ToUpper(r.DeviceID)
+}
+
 // UnlostRequest 解除挂失请求
 type UnlostRequest struct {
 	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
 }
 
+// DeviceIDToUpper 设备ID变成大写
+func (r *UnlostRequest) DeviceIDToUpper() string {
+	return strings.ToUpper(r.DeviceID)
+}
+
 // UnbindRequest 解绑请求
 type UnbindRequest struct {
 	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+}
+
+// DeviceIDToUpper 设备ID变成大写
+func (r *UnbindRequest) DeviceIDToUpper() string {
+	return strings.ToUpper(r.DeviceID)
 }
 
 // HaveDeviceResponse 是否第一次完善设备信息响应
