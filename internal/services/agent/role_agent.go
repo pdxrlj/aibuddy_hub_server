@@ -142,17 +142,23 @@ func (s *RoleAgentService) AgentOutputFormat() *RoleAgentReport {
 	return &RoleAgentReport{}
 }
 
-// ConversationAnalysis 对话分析
-type ConversationAnalysis struct {
-	SummaryDate string                 `json:"summary_date"`
-	Period      Period                 `json:"period"`
-	Topics      Topics                 `json:"topics"`
-	Interaction InteractionPreferences `json:"interaction_preferences"`
+// ConversationSummary 对话总结
+type ConversationSummary struct {
+	UpdatedAt   string              `json:"updatedAt"`
+	Summary     string              `json:"summary"`
+	Topics      []ConversationTopic `json:"topics"`
+	FocusPoints []string            `json:"focusPoints"`
 }
 
-// Encode 编码 ConversationAnalysis 为 JSON
-func (s *ConversationAnalysis) Encode() ([]byte, error) {
+// Encode 编码 ConversationSummary 为 JSON
+func (s *ConversationSummary) Encode() ([]byte, error) {
 	return json.Marshal(s)
+}
+
+// ConversationTopic 对话话题
+type ConversationTopic struct {
+	Title string `json:"title"`
+	Desc  string `json:"desc"`
 }
 
 // Period 时间段
@@ -161,47 +167,11 @@ type Period struct {
 	EndDate   string `json:"end_date"`
 }
 
-// Topics 话题
-type Topics struct {
-	MainTopics           []MainTopic `json:"main_topics"`
-	KeyEvents            []KeyEvent  `json:"key_events"`
-	ConversationProgress string      `json:"conversation_progress"`
-}
-
-// MainTopic 主要话题
-type MainTopic struct {
-	Topic       string `json:"topic"`
-	Frequency   string `json:"frequency"`
-	Description string `json:"description"`
-}
-
-// KeyEvent 关键事件
-type KeyEvent struct {
-	Event          string `json:"event"`
-	MentionedCount int    `json:"mentioned_count"`
-	ChildFeeling   string `json:"child_feeling"`
-}
-
-// InteractionPreferences 互动偏好
-type InteractionPreferences struct {
-	Likes       []string    `json:"likes"`
-	Dislikes    []string    `json:"dislikes"`
-	ChangeTrend ChangeTrend `json:"change_trend"`
-}
-
-// ChangeTrend 变化趋势
-type ChangeTrend struct {
-	Trend       string `json:"trend"`
-	Description string `json:"description"`
-}
-
 // EmotionAnalysis 情绪分析
 type EmotionAnalysis struct {
-	SummaryDate               string                    `json:"summary_date"`
-	Period                    Period                    `json:"period"`
-	DailyEmotions             []DailyEmotion            `json:"daily_emotions"`
-	OverallTrend              OverallTrend              `json:"overall_trend"`
-	FamilyCommunicationAdvice FamilyCommunicationAdvice `json:"family_communication_advice"`
+	Period       Period       `json:"period"`
+	SummaryDate  string       `json:"summary_date"`
+	OverallTrend OverallTrend `json:"overall_trend"`
 }
 
 // Encode 编码 EmotionAnalysis 为 JSON
@@ -209,55 +179,24 @@ func (s *EmotionAnalysis) Encode() ([]byte, error) {
 	return json.Marshal(s)
 }
 
-// DailyEmotion 每日情绪
-type DailyEmotion struct {
-	Date           string       `json:"date"`
-	PrimaryEmotion string       `json:"primary_emotion"`
-	Intensity      int          `json:"intensity"`
-	Tags           []EmotionTag `json:"tags"`
-}
-
-// EmotionTag 情绪标签
-type EmotionTag struct {
-	Emotion string `json:"emotion"`
-	Event   string `json:"event"`
-}
-
 // OverallTrend 总体趋势
 type OverallTrend struct {
-	DominantEmotion     string               `json:"dominant_emotion"`
-	AverageIntensity    float64              `json:"average_intensity"`
 	Trend               string               `json:"trend"`
+	DominantEmotion     string               `json:"dominant_emotion"`
+	AverageIntensity    int                  `json:"average_intensity"`
 	KeyEmotionalMoments []KeyEmotionalMoment `json:"key_emotional_moments"`
 }
 
 // KeyEmotionalMoment 关键情绪时刻
 type KeyEmotionalMoment struct {
 	Date    string `json:"date"`
-	Emotion string `json:"emotion"`
-	Event   string `json:"event"`
 	Note    string `json:"note"`
-}
-
-// Encode 编码 KeyEmotionalMoment 为 JSON
-func (s *KeyEmotionalMoment) Encode() ([]byte, error) {
-	return json.Marshal(s)
-}
-
-// FamilyCommunicationAdvice 家庭沟通建议
-type FamilyCommunicationAdvice struct {
-	Tips            []string `json:"tips"`
-	AttentionPoints []string `json:"attention_points"`
-	SuggestedTopics []string `json:"suggested_topics"`
+	Event   string `json:"event"`
+	Emotion string `json:"emotion"`
 }
 
 // RoleAgentReport 角色代理报告（顶层结构）
 type RoleAgentReport struct {
-	ConversationAnalysis *ConversationAnalysis `json:"conversation_analysis"`
-	EmotionAnalysis      *EmotionAnalysis      `json:"emotion_analysis"`
-}
-
-// Encode 编码 RoleAgentReport 为 JSON
-func (s *RoleAgentReport) Encode() ([]byte, error) {
-	return json.Marshal(s)
+	ConversationSummary *ConversationSummary `json:"conversationSummary"`
+	EmotionAnalysis     *EmotionAnalysis     `json:"EmotionAnalysis"`
 }
