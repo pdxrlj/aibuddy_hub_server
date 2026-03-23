@@ -244,7 +244,8 @@ func (d *DeviceRepo) EraseDevice(ctx context.Context, deviceID string) error {
 			return err
 		}
 
-		_, err = tx.DeviceRelationship.Where(tx.DeviceRelationship.DeviceID.Eq(deviceID)).
+		_, err = tx.DeviceRelationship.
+			Where(tx.DeviceRelationship.DeviceID.Eq(deviceID)).
 			Or(query.DeviceRelationship.TargetDeviceID.Eq(deviceID)).
 			Delete()
 		if err != nil {

@@ -44,6 +44,8 @@ type Service struct {
 	DeviceRelationshipRepo *repository.DeviceRelationshipRepo
 
 	DeviceMessageRepo *repository.DeviceMessageRepo
+	OtaResource       *repository.DeviceOtaRepo
+	OtaResourceRepo   *repository.OtaResourceRepo
 
 	DeviceSnRepo *repository.BindDeviceSnRepo
 
@@ -67,6 +69,8 @@ func NewService() *Service {
 		UserRepo:               repository.NewUserRepo(),
 		DeviceMessageRepo:      repository.NewDeviceMessageRepo(),
 		DeviceSnRepo:           repository.NewBindDeviceSnRepo(),
+		OtaResource:            repository.NewDeviceOtaRepo(),
+		OtaResourceRepo:        repository.NewOtaResourceRepo(),
 		FileStorage: storage.NewStorage(
 			config.Instance.Storage.OSS.AccessKeyID,
 			config.Instance.Storage.OSS.AccessKeySecret,
@@ -539,5 +543,50 @@ func (d *Service) GetAccountInfo(ctx context.Context, deviceID string) (*Account
 		Sex:      device.DeviceInfo.Gender,
 		Birthday: device.DeviceInfo.Birthday.Format(time.DateOnly),
 		Sn:       sn,
+	}, nil
+}
+
+// OtaCheckResult OTA检查结果
+type OtaCheckResult struct {
+	NeedUpdate  bool   `json:"need_update"`  // 是否需要更新
+	Version     string `json:"ver"`          // 最新版本号
+	OtaURL      string `json:"ota_url"`      // OTA下载地址
+	ModelURL    string `json:"model_url"`    // 模型下载地址
+	ResourceURL string `json:"resource_url"` // 资源下载地址
+	Force       bool   `json:"force"`        // 是否强制更新
+}
+
+// OtaCheck 升级校验
+func (d *Service) OtaCheck(ctx context.Context, deviceID, currentVersion string) (*OtaCheckResult, error) {
+	_, span := tracer().Start(ctx, "DeviceService.OtaCheck")
+	defer span.End()
+
+	_ = deviceID
+
+	latestOta, err := d.OtaResourceRepo.GetLatestOtaResource(ctx)
+	if err != nil {
+		span.RecordError(err)
+		slog.Error("[OtaCheck] get latest ota resource failed", "error", err)
+		return nil, err
+	}
+
+	if latestOta == nil {
+		return &OtaCheckResult{NeedUpdate: false}, nil
+	}
+
+	cmp := helpers.CompareVersion(currentVersion, latestOta.Version)
+	if cmp >= 0 {
+		return &OtaCheckResult{NeedUpdate: false}, nil
+	}
+
+	force := latestOta.ForceUpdate
+
+	return &OtaCheckResult{
+		NeedUpdate:  true,
+		Version:     latestOta.Version,
+		OtaURL:      latestOta.OtaURL,
+		ModelURL:    latestOta.ModelURL,
+		ResourceURL: latestOta.ResourceURL,
+		Force:       force,
 	}, nil
 }

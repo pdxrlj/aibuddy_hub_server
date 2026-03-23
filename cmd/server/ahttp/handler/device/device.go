@@ -269,3 +269,18 @@ func (d *Device) AccountInfo(state *ahttp.State, req *AccountInfoRequest) error 
 
 	return state.Resposne().Success(accountInfo)
 }
+
+// OtaCheck ota 升级校验
+func (d *Device) OtaCheck(state *ahttp.State, req *OtaCheckRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.OtaCheck")
+	defer span.End()
+
+	device, err := d.Service.OtaCheck(ctx, req.DeviceID, req.Version)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		return state.Resposne().Error(err)
+	}
+
+	return state.Resposne().Success(device)
+}

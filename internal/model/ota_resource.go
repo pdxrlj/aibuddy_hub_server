@@ -7,10 +7,11 @@ import "time"
 type OtaResource struct {
 	ID int `gorm:"column:id;type:int(11);primaryKey;autoIncrement;"`
 
-	OtaURL      string `gorm:"column:ota_url;type:varchar(255);not null;"`
-	ModelURL    string `gorm:"column:model_url;type:varchar(255);not null;"`
-	ResourceURL string `gorm:"column:resource_url;type:varchar(255);not null;"`
-	ForceUpdate bool   `gorm:"column:force_update;type:boolean;not null;"`
+	Version     string `gorm:"column:version;type:varchar(255);not null;comment:版本号;"`
+	OtaURL      string `gorm:"column:ota_url;type:varchar(255);not null;comment:OTA下载地址;"`
+	ModelURL    string `gorm:"column:model_url;type:varchar(255);not null;comment:模型下载地址;"`
+	ResourceURL string `gorm:"column:resource_url;type:varchar(255);not null;comment:资源下载地址;"`
+	ForceUpdate bool   `gorm:"column:force_update;type:boolean;not null;default:false;comment:是否强制更新;"`
 
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;"`
