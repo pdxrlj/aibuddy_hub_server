@@ -219,10 +219,10 @@ func RegisterRoutes(base *ahttp.Base) {
 		// Debug
 		group.GET("/debug/token", debugHandler.ParseToken)
 
-		// 支付回调（无需认证）
+		// 支付回调
 		group.Group("/payment", nil, func(paymentGroup *ahttp.Group) {
 			payment := paymenthandler.NewHandler()
-			paymentGroup.POST("/notify", payment.PayNotify)         // 支付结果通知
+			paymentGroup.POST("/notify", payment.PayNotify)           // 支付结果通知
 			paymentGroup.POST("/refund_notify", payment.RefundNotify) // 退款结果通知
 		})
 	})
