@@ -96,6 +96,7 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 文件代理
 			fileGroup.GET("/:device_id/file_proxy", f.FileProxy)
+			fileGroup.GET("/file_proxy", f.FileProxy)
 		})
 
 		group.Group("/ota", nil, func(otaGroup *ahttp.Group) {
