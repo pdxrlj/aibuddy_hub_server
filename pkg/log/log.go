@@ -75,10 +75,15 @@ func (l *Logger) Setup() {
 		&slog.HandlerOptions{
 			Level: l.GetLevel(),
 			ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
-				if t, ok := a.Value.Any().(time.Time); ok {
-					a.Value = slog.StringValue(t.Format(time.DateTime))
+				if a.Key == slog.TimeKey {
+					if a.Value.Kind() == slog.KindTime {
+						t := a.Value.Time()
+						return slog.String(a.Key, t.Format(time.DateTime))
+					}
+					if t, ok := a.Value.Any().(time.Time); ok {
+						return slog.String(a.Key, t.Format(time.DateTime))
+					}
 				}
-
 				return a
 			},
 		})))
