@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 // Handler NFC处理器
@@ -69,14 +70,15 @@ func (h *Handler) GetNFCList(state *ahttp.State, req *GetNFCListRequest) error {
 	items := make([]ListItem, len(list))
 	for i, item := range list {
 		items[i] = ListItem{
-			CID:     item.Cid,
-			Ctype:   item.Ctype,
-			Title:   item.Title,
-			Content: item.Content,
-			Voice:   item.Voice,
-			Picture: item.Picture,
-			Status:  string(item.Status),
-			Dur:     item.Dur,
+			CID:       item.Cid,
+			Ctype:     item.Ctype,
+			Title:     item.Title,
+			Content:   item.Content,
+			Voice:     item.Voice,
+			Picture:   item.Picture,
+			Status:    string(item.Status),
+			Dur:       item.Dur,
+			CreatedAt: item.CreatedAt.Format(time.DateTime),
 		}
 	}
 

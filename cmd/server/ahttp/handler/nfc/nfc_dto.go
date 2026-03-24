@@ -43,14 +43,15 @@ type GetNFCListRequest struct {
 
 // ListItem 列表项
 type ListItem struct {
-	CID     string `json:"cid"`
-	Ctype   string `json:"ctype"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
-	Voice   string `json:"voice"`
-	Picture string `json:"picture"`
-	Dur     int    `json:"dur"`
-	Status  string `json:"status"`
+	CID       string `json:"cid"`
+	Ctype     string `json:"ctype"`
+	Title     string `json:"title"`
+	Content   string `json:"content"`
+	Voice     string `json:"voice"`
+	Picture   string `json:"picture"`
+	Dur       int    `json:"dur"`
+	Status    string `json:"status"`
+	CreatedAt string `json:"created_at"`
 }
 
 // GetNFCListResponse 获取NFC列表响应
