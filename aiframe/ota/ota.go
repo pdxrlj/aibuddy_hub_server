@@ -25,7 +25,7 @@ type Ota struct {
 	OtaURL      string `json:"ota_url"`
 	ModelURL    string `json:"model_url"`
 	ResourceURL string `json:"resource_url"`
-	ForceUpdate bool   `json:""`
+	ForceUpdate bool   `json:"force"`
 }
 
 // Encode 将 OTA 信息序列化为 JSON

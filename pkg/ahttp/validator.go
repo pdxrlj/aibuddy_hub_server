@@ -116,7 +116,7 @@ func validateMobile(fl validator.FieldLevel) bool {
 	return mobileRegex.MatchString(mobile)
 }
 
-// validateMAC MAC地址验证（支持字符串和字符串切片）
+// validateMAC MAC地址验证
 func validateMAC(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
@@ -124,6 +124,9 @@ func validateMAC(fl validator.FieldLevel) bool {
 	if field.Kind().String() == "slice" {
 		for i := 0; i < field.Len(); i++ {
 			mac := field.Index(i).String()
+			if mac == "" {
+				continue
+			}
 			if !macRegex.MatchString(mac) {
 				return false
 			}
@@ -133,6 +136,9 @@ func validateMAC(fl validator.FieldLevel) bool {
 
 	// 处理单个字符串
 	mac := field.String()
+	if mac == "" {
+		return true
+	}
 	return macRegex.MatchString(mac)
 }
 

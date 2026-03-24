@@ -31,7 +31,7 @@ func (r *UploadStreamRequest) SkipBodyBind() {}
 
 // FileProxyRequest 文件代理请求
 type FileProxyRequest struct {
-	DeviceID string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+	DeviceID string `json:"device_id" param:"device_id" validate:"aimac" msg:"aimac:设备ID格式无效"`
 	Filename string `json:"filename" query:"filename" validate:"required" msg:"required:文件名不能为空"`
 	Process  string `json:"process" query:"process"` // OSS 图片处理参数，如: image/resize,w_200,h_200
 }
