@@ -2,6 +2,9 @@
 package model
 
 import (
+	"aibuddy/pkg/config"
+	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -55,5 +58,27 @@ func (n *NFC) TableName() string {
 // BeforeCreate 在存储的时候DeviceID变成大写
 func (n *NFC) BeforeCreate(_ *gorm.DB) (err error) {
 	n.DeviceID = strings.ToUpper(n.DeviceID)
+	return nil
+}
+
+// AfterFind 判断nfc内容类型,返回实际地址
+func (n *NFC) AfterFind(_ *gorm.DB) (err error) {
+	domainname := DefaultDomainName
+	if config.Instance != nil && config.Instance.App != nil && config.Instance.App.DomainName != "" {
+		domainname = config.Instance.App.DomainName
+	}
+	slog.Info("[NFC] AfterFind", "voice", n.Voice, "picture", n.Picture)
+	if n.Voice != "" {
+		deviceID, _, found := strings.Cut(n.Voice, "/")
+		if found {
+			n.Voice = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Voice)
+		}
+	}
+	if n.Picture != "" {
+		deviceID, _, found := strings.Cut(n.Picture, "/")
+		if found {
+			n.Picture = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Picture)
+		}
+	}
 	return nil
 }
