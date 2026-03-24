@@ -18,9 +18,9 @@ func TestGetDialogues(t *testing.T) {
 	endTime := now.Unix()
 
 	resp, err := dialogues.GetDialogues(&DialoguesRequest{
-		UserID:    "test_user_001",
+		UserID:    "30:ED:A0:E9:F3:07",
 		PageNo:    1,
-		PageSize:  10,
+		PageSize:  1000,
 		BeginTime: beginTime,
 		EndTime:   endTime,
 	})
