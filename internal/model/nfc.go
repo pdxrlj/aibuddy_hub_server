@@ -41,8 +41,8 @@ type NFC struct {
 
 	Title   string    `gorm:"column:title;type:varchar(255);not null" json:"title"`
 	Content string    `gorm:"column:content;type:text;not null" json:"content"`
-	Voice   string    `gorm:"column:voice;type:varchar(255)" json:"voice"`
-	Picture string    `gorm:"column:picture;type:varchar(255);" json:"picture"`
+	Voice   string    `gorm:"column:voice;type:varchar(255)" json:"-"`
+	Picture string    `gorm:"column:picture;type:varchar(255);" json:"-"`
 	Dur     int       `gorm:"column:dur;type:int;default:0;" json:"dur"`
 	Status  NFCStatus `gorm:"column:status;type:varchar(255);not null;default:'制作中'" json:"status"`
 
@@ -62,7 +62,7 @@ func (n *NFC) BeforeCreate(_ *gorm.DB) (err error) {
 }
 
 // AfterFind 判断nfc内容类型,返回实际地址
-func (n *NFC) AfterFind(_ *gorm.DB) (err error) {
+func (n *NFC) AfterFind(_ *gorm.DB) error {
 	domainname := DefaultDomainName
 	if config.Instance != nil && config.Instance.App != nil && config.Instance.App.DomainName != "" {
 		domainname = config.Instance.App.DomainName
@@ -74,6 +74,7 @@ func (n *NFC) AfterFind(_ *gorm.DB) (err error) {
 			n.Voice = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Voice)
 		}
 	}
+
 	if n.Picture != "" {
 		deviceID, _, found := strings.Cut(n.Picture, "/")
 		if found {
