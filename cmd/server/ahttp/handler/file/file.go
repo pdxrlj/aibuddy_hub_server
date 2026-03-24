@@ -6,6 +6,7 @@ import (
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
 	"errors"
+	"log/slog"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -68,6 +69,8 @@ func (f *File) UploadStream(state *ahttp.State, req *UploadStreamRequest) error 
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
 		return state.Resposne().Error(err)
 	}
+
+	slog.Info("[UploadStream] 流式文件上传成功")
 
 	return state.Resposne().Success(&UploadFileResponse{
 		Filename:     filename,

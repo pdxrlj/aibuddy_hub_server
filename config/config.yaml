@@ -68,7 +68,7 @@ baidu:
   sk: ""
   app_id: ""
   agent:
-    default: "阳光元气型奶龙"
+    default: "阳光元气型"
   qianfan:
     model: ""
     base_url: ""
@@ -89,3 +89,17 @@ baidu:
 tracer:
   service_name: "aibuddy_hub"
   endpoint: "112.132.224.74:4317"
+
+pay:
+  # 基础配置
+  app_id: "" # 微信支付AppID（必须与商户号绑定）
+  mch_id: "" # 微信商户号（商户在商户平台的唯一身份标识）
+
+  # API密钥配置
+  api_v3_key: "" # 微信支付API V3密钥（用于回调解密和平台证书下载）
+  serial_no: "" # 商户API证书序列号（用于APIv3接口签名）
+  wechatpay_serial_no: "" # 微信支付公钥ID
+
+  # 回调通知配置
+  notify_url: "" # 支付结果通知URL
+  refund_notify_url: "" # 退款结果通知URL

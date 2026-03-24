@@ -266,7 +266,7 @@ func (r *Service) RefreshChatAnalysis(ctx context.Context, uid int64, deviceID s
 			return
 		}
 
-		conversationAnalysis, err := report.ConversationAnalysis.Encode()
+		conversationSummary, err := report.ConversationSummary.Encode()
 		if err != nil {
 			agentSpan.RecordError(err)
 			r.sendError(uid, deviceID, agentName, "生成对话分析失败了")
@@ -283,7 +283,7 @@ func (r *Service) RefreshChatAnalysis(ctx context.Context, uid int64, deviceID s
 		if err := r.UserAgentRepo.CreateUserAgent(ctx, &model.UserAgent{
 			DeviceID:             deviceID,
 			AgentName:            agentName,
-			ConversationAnalysis: conversationAnalysis,
+			ConversationAnalysis: conversationSummary,
 			EmotionAnalysis:      emotionAnalysis,
 		}); err != nil {
 			agentSpan.RecordError(err)
