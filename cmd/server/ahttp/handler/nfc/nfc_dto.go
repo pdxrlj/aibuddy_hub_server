@@ -9,7 +9,7 @@ type CreateNFCRequest struct {
 	Content  string `json:"content" form:"content" validate:"required,max=50" msg:"required:内容不能为空|max:内容不能超过50个字符"`
 	Voice    string `json:"voice" form:"voice"`
 	Picture  string `json:"picture" form:"picture"`
-	Dur      *int   `json:"dur" form:"dur" validate:"omitempty,max=60" msg:"max:语音时长最长60s"`
+	Dur      int    `json:"dur" form:"dur" validate:"omitempty,max=60" msg:"max:语音时长最长60s"`
 }
 
 // CreateNFCResponse 创建NFC响应
@@ -36,7 +36,7 @@ type GetNFCListRequest struct {
 	DeviceID string `param:"device_id" validate:"required"`
 	Ctype    string `json:"ctype" query:"ctype" validate:"omitempty,oneof=明信片 生日卡片 自定义 每日鼓励 悄悄话 成长日记"`
 	UpdateAt string `json:"update_at" query:"update_at" validate:"omitempty"`
-	Dur      *int   `json:"dur" query:"dur" validate:"omitempty"`
+	Dur      int    `json:"dur" query:"dur" validate:"omitempty"`
 	Page     int    `query:"page" validate:"gte=1" default:"1"`
 	PageSize int    `query:"page_size" validate:"gte=1" default:"10"`
 }
@@ -49,7 +49,7 @@ type ListItem struct {
 	Content   string `json:"content"`
 	Voice     string `json:"voice"`
 	Picture   string `json:"picture"`
-	Dur       int    `json:"dur"`
+	Dur       int    `json:"dur,omitempty"`
 	Status    string `json:"status"`
 	CreatedAt string `json:"created_at"`
 }
@@ -71,7 +71,7 @@ type UpdateNFCRequest struct {
 	Voice   string `json:"voice" form:"voice"`
 	Picture string `json:"picture" form:"picture"`
 
-	Dur *int `json:"dur" form:"dur" validate:"omitempty,max=60" msg:"max:语音时长最长60s"`
+	Dur int `json:"c" form:"dur" validate:"omitempty,max=60" msg:"max:语音时长最长60s"`
 }
 
 // DeleteNFCRequest 删除NFC请求
