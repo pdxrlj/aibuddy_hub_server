@@ -41,13 +41,10 @@ type NFC struct {
 
 	Title   string    `gorm:"column:title;type:varchar(255);not null" json:"title"`
 	Content string    `gorm:"column:content;type:text;not null" json:"content"`
-	Voice   string    `gorm:"column:voice;type:varchar(255)" json:"-"`
-	Picture string    `gorm:"column:picture;type:varchar(255);" json:"-"`
+	Voice   string    `gorm:"column:voice;type:varchar(255)" json:"voice"`
+	Picture string    `gorm:"column:picture;type:varchar(255);" json:"picture"`
 	Dur     int       `gorm:"column:dur;type:int;default:0;" json:"dur"`
 	Status  NFCStatus `gorm:"column:status;type:varchar(255);not null;default:'制作中'" json:"status"`
-
-	VoiceURL   string `gorm:"-" json:"voice"`
-	PictureURL string `gorm:"-" json:"picture"`
 
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
@@ -65,7 +62,7 @@ func (n *NFC) BeforeCreate(_ *gorm.DB) (err error) {
 }
 
 // AfterFind 判断nfc内容类型,返回实际地址
-func (n *NFC) AfterFind(_ *gorm.DB) error {
+func (n *NFC) AfterFind(_ *gorm.DB) (err error) {
 	domainname := DefaultDomainName
 	if config.Instance != nil && config.Instance.App != nil && config.Instance.App.DomainName != "" {
 		domainname = config.Instance.App.DomainName
@@ -74,14 +71,44 @@ func (n *NFC) AfterFind(_ *gorm.DB) error {
 	if n.Voice != "" {
 		deviceID, _, found := strings.Cut(n.Voice, "/")
 		if found {
-			n.VoiceURL = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Voice)
+			n.Voice = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Voice)
 		}
 	}
 	if n.Picture != "" {
 		deviceID, _, found := strings.Cut(n.Picture, "/")
 		if found {
-			n.PictureURL = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Picture)
+			n.Picture = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Picture)
 		}
 	}
 	return nil
+}
+
+// BeforeUpdate 在更新之前,将DeviceID转换为大写,将Voice和Picture中的filename提取出来
+func (n *NFC) BeforeUpdate(_ *gorm.DB) (err error) {
+	n.DeviceID = strings.ToUpper(n.DeviceID)
+	n.Voice = extractFilename(n.Voice)
+	n.Picture = extractFilename(n.Picture)
+	return nil
+}
+
+// extractFilename 从嵌套的URL中提取最终的filename值
+// 例如: https://ai.ipai.fans/api/v1/file/...?filename=30:ED:A0:E9:F3:22/9687183842.mp3
+// 返回: 30:ED:A0:E9:F3:22/9687183842.mp3
+func extractFilename(url string) string {
+	if url == "" {
+		return url
+	}
+	for strings.Contains(url, "filename=") {
+		idx := strings.LastIndex(url, "filename=")
+		if idx == -1 {
+			break
+		}
+		value := url[idx+9:] // len("filename=") = 9
+		if strings.Contains(value, "filename=") {
+			url = value
+			continue
+		}
+		return value
+	}
+	return url
 }

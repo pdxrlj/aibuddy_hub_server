@@ -60,6 +60,7 @@ func (h *AiChatHandler) Chat(ctx *mqtt.Context) {
 	}
 
 	if msg.Type == ai.ChatTypeEnd {
+		slog.Info("[Baidu] Chat", "对话结束开始下载", deviceID)
 		// 获取对话开始时间
 		var startTime int64
 		startKey := fmt.Sprintf("ai_chat:%s:%s:%s", deviceID, msg.Sid, ai.ChatTypeStart)
@@ -74,6 +75,7 @@ func (h *AiChatHandler) Chat(ctx *mqtt.Context) {
 
 		// 下载数据并触发预警
 		go func() {
+			slog.Info("[Baidu] Chat", "开始准备下载", deviceID)
 			if err := h.downloadDialogues(deviceID, startTime, time.Now().Unix()); err != nil {
 				slog.Error("[MQTT] Download dialogues failed", "error", err)
 				return
@@ -114,7 +116,7 @@ func (h *AiChatHandler) downloadDialogues(deviceID string, beginTime, endTime in
 
 	client := baidu.NewDialogues()
 	var allDialogues []baidu.DialogueItem
-
+	slog.Info("[BaiDu] downloadDialogues", "开始时间", beginTime, "结束时间", endTime)
 	// 查询当前对话使用的角色信息
 	deviceInfo, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).First()
 	if err != nil {
@@ -134,6 +136,7 @@ func (h *AiChatHandler) downloadDialogues(deviceID string, beginTime, endTime in
 			EndTime:   endTime,
 		})
 		if err != nil {
+			slog.Info("[Baidu] downloadDialogues", "获取对话记录失败", err)
 			return err
 		}
 
@@ -145,7 +148,7 @@ func (h *AiChatHandler) downloadDialogues(deviceID string, beginTime, endTime in
 		}
 		pageNo++
 	}
-
+	slog.Info("[Baidu] downloadDialogues", "共", fmt.Sprintf("%d 条", len(allDialogues)))
 	// 将对话记录配对保存（QUESTION + ANSWER）
 	dialogueModels := h.pairDialogues(deviceID, agentName, allDialogues)
 	if len(dialogueModels) == 0 {
