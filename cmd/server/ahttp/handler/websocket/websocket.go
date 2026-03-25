@@ -5,6 +5,7 @@ import (
 	"aibuddy/internal/services/aiuser"
 	"aibuddy/internal/services/websocket"
 	"aibuddy/pkg/ahttp"
+	"errors"
 	"log/slog"
 )
 
@@ -19,14 +20,22 @@ func NewHandler() *Handler {
 }
 
 // HandleConnect 处理连接
-func (h *Handler) HandleConnect(state *ahttp.State) error {
-	uid, err := aiuser.GetUIDFromContext(state.Ctx)
+func (h *Handler) HandleConnect(state *ahttp.State, req *HandleConnectRequest) error {
+	// Token
+	claims, err := aiuser.ValidateToken(state.Ctx, req.Token)
 	if err != nil {
 		slog.Error("[Websocket] HandleConnect", "error", err)
 		return state.Resposne().Error(err)
 	}
 
-	if err := h.Service.HandleConnect(uid, state.Ctx.Response(), state.Ctx.Request()); err != nil {
+	if claims == nil {
+		slog.Error("[Websocket] HandleConnect", "error", errors.New("token is invalid"))
+		return state.Resposne().Error(errors.New("无法获取有效的用户信息"))
+	}
+
+	uid := claims.UID
+
+	if err := h.Service.HandleConnect(uid, state.Ctx.Response().Writer, state.Ctx.Request()); err != nil {
 		slog.Error("[Websocket] HandleConnect", "error", err)
 		return state.Resposne().Error(err)
 	}

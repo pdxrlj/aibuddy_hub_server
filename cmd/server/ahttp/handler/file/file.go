@@ -34,10 +34,10 @@ func (f *File) UploadFile(state *ahttp.State, req *UploadFileRequest) error {
 	ctx, span := tracer().Start(state.Context(), "File.UploadFile")
 	defer span.End()
 
-	if req.File.Size >= 3<<20 {
-		span.RecordError(errors.New("文件大小不能超过3MB"))
+	if req.File.Size >= 20<<20 {
+		span.RecordError(errors.New("文件大小不能超过20MB"))
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(errors.New("文件大小不能超过3MB"))
+		return state.Resposne().Error(errors.New("文件大小不能超过20MB"))
 	}
 
 	filename, presignedURL, err := f.Service.UploadFile(ctx, req.DeviceID, req.File, req.EnableAudioTranscode, req.DestAudioFormat)
@@ -46,6 +46,25 @@ func (f *File) UploadFile(state *ahttp.State, req *UploadFileRequest) error {
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
 		return state.Resposne().Error(err)
 	}
+
+	return state.Resposne().Success(&UploadFileResponse{
+		Filename:     filename,
+		PresignedURL: presignedURL,
+	})
+}
+
+// UploadFileNoDeviceID 上传文件没有DeviceID
+func (f *File) UploadFileNoDeviceID(state *ahttp.State, req *UploadFileNoDeviceIDRequest) error {
+	ctx, span := tracer().Start(state.Context(), "File.UploadFileNoDeviceID")
+	defer span.End()
+
+	filename, presignedURL, err := f.Service.UploadFile(ctx, "", req.File, req.EnableAudioTranscode, req.DestAudioFormat)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().Error(err)
+	}
+
+	slog.Info("[UploadFileNoDeviceID] 文件上传成功")
 
 	return state.Resposne().Success(&UploadFileResponse{
 		Filename:     filename,
@@ -83,7 +102,10 @@ func (f *File) FileProxy(state *ahttp.State, req *FileProxyRequest) error {
 	ctx, span := tracer().Start(state.Context(), "File.FileProxy")
 	defer span.End()
 
-	file, err := f.Service.FileProxy(ctx, req.DeviceID, req.Filename, req.Process)
+	// 获取 Range header
+	bytesRange := state.Ctx.Request().Header.Get("Range")
+
+	file, err := f.Service.FileProxy(ctx, req.DeviceID, req.Filename, bytesRange, req.Process)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
