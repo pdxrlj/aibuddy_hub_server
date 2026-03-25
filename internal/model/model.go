@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -133,4 +134,26 @@ func (d *DB) GenerateQuery() {
 	g.ApplyBasic(models...)
 
 	g.Execute()
+}
+
+// ExtractFilename 从嵌套的URL中提取最终的filename值
+// 例如: https://ai.ipai.fans/api/v1/file/...?filename=30:ED:A0:E9:F3:22/9687183842.mp3
+// 返回: 30:ED:A0:E9:F3:22/9687183842.mp3
+func ExtractFilename(url string) string {
+	if url == "" {
+		return url
+	}
+	for strings.Contains(url, "filename=") {
+		idx := strings.LastIndex(url, "filename=")
+		if idx == -1 {
+			break
+		}
+		value := url[idx+9:] // len("filename=") = 9
+		if strings.Contains(value, "filename=") {
+			url = value
+			continue
+		}
+		return value
+	}
+	return url
 }
