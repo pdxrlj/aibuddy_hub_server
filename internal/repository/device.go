@@ -137,6 +137,13 @@ func (d *DeviceRepo) UpdateDeviceHardwareInfo(deviceID string, hardwareInfo []by
 	return nil
 }
 
+// SetDeviceVersion 设置设备版本
+func (d *DeviceRepo) SetDeviceVersion(deviceID string, version string) (info gen.ResultInfo, err error) {
+	return query.Device.Where(query.Device.DeviceID.Eq(deviceID)).Updates(map[string]any{
+		query.Device.Version.ColumnName().String(): version,
+	})
+}
+
 // SetDeviceStatus 设置设备状态
 func (d *DeviceRepo) SetDeviceStatus(deviceID string, state model.DeviceStatus) error {
 	if _, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).

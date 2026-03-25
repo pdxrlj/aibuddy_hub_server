@@ -90,6 +90,8 @@ func RegisterRoutes(base *ahttp.Base) {
 			f := filehandler.NewFile()
 			// 上传文件（表单方式）
 			fileGroup.POST("/:device_id/upload_file", f.UploadFile)
+			// 上传文件没有DeviceID
+			fileGroup.POST("/upload_file", f.UploadFileNoDeviceID)
 
 			// 流式上传文件
 			fileGroup.POST("/:device_id/upload_stream", f.UploadStream)
@@ -183,7 +185,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			group.GET("/list", m.ListAnniversary)       // 纪念日列表
 		})
 
-		group.GET("/websocket", websockethandler.NewHandler().HandleConnect, middleware.UnifiedAuthMiddleware())
+		group.GET("/websocket", websockethandler.NewHandler().HandleConnect)
 
 		group.Group("/nfc", nil, func(group *ahttp.Group) {
 			nfcHandler := nfc.NewHandler()

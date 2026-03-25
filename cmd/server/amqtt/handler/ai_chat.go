@@ -140,10 +140,11 @@ func (h *AiChatHandler) downloadDialogues(deviceID string, beginTime, endTime in
 			return err
 		}
 
+		slog.Info("[Baidu] downloadDialogues", "pageNo", pageNo, "pageSize", dialogues.PageSize, "dataCount", len(dialogues.Data))
+
 		allDialogues = append(allDialogues, dialogues.Data...)
 
-		// 如果返回数量小于请求的pageSize，说明已是最后一页
-		if dialogues.PageSize < pageSize {
+		if len(dialogues.Data) == 0 || len(dialogues.Data) < pageSize {
 			break
 		}
 		pageNo++

@@ -11,6 +11,14 @@ type UploadFileRequest struct {
 	DestAudioFormat      string `json:"dest_audio_format" form:"dest_audio_format" validate:"required_if=EnableAudioTranscode true,omitempty,oneof=mp3 wav aac flac ogg opus m4a" msg:"required_if:目标音频格式不能为空|oneof:音频格式无效"`
 }
 
+// UploadFileNoDeviceIDRequest 上传文件没有DeviceID请求
+type UploadFileNoDeviceIDRequest struct {
+	File *multipart.FileHeader `json:"file" form:"file" validate:"required" msg:"required:文件不能为空"`
+
+	EnableAudioTranscode bool   `json:"enable_audio_transcode" form:"enable_audio_transcode"`
+	DestAudioFormat      string `json:"dest_audio_format" form:"dest_audio_format" validate:"required_if=EnableAudioTranscode true,omitempty,oneof=mp3 wav aac flac ogg opus m4a" msg:"required_if:目标音频格式不能为空|oneof:音频格式无效"`
+}
+
 // UploadFileResponse 上传文件响应
 type UploadFileResponse struct {
 	Filename     string `json:"filename"`

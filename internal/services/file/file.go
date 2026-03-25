@@ -63,7 +63,8 @@ func (f *Service) UploadFile(ctx context.Context, deviceID string, file *multipa
 	}()
 	ext := path.Ext(file.Filename)
 	NewFilename := helpers.GenerateNumber(10) + ext
-	fileName := fmt.Sprintf("%s/%s", deviceID, NewFilename)
+	fileName := helpers.Cond(deviceID != "", fmt.Sprintf("%s/%s", deviceID, NewFilename), NewFilename)
+
 	if enableAudioTranscode {
 		PcmParams := helpers.Cond(ext == ".pcm", defaultPCMParams(), nil)
 		stream, err = f.AudioTranscode(ctx, stream, destAudioFormat, PcmParams)
@@ -74,7 +75,7 @@ func (f *Service) UploadFile(ctx context.Context, deviceID string, file *multipa
 		}
 
 		baseName := NewFilename[:len(NewFilename)-len(ext)]
-		fileName = fmt.Sprintf("%s/%s.%s", deviceID, baseName, destAudioFormat)
+		fileName = helpers.Cond(deviceID != "", fmt.Sprintf("%s/%s.%s", deviceID, baseName, destAudioFormat), fmt.Sprintf("%s.%s", baseName, destAudioFormat))
 	}
 
 	if err = f.FileStorage.Storage(ctx, fileName, stream); err != nil {
@@ -95,11 +96,11 @@ func (f *Service) UploadFile(ctx context.Context, deviceID string, file *multipa
 }
 
 // FileProxy 文件代理
-func (f *Service) FileProxy(ctx context.Context, deviceID, filename, process string) (io.ReadCloser, error) {
+func (f *Service) FileProxy(ctx context.Context, deviceID, filename, bytesRange, process string) (io.ReadCloser, error) {
 	_, span := tracer().Start(ctx, "FileService.FileProxy")
 	defer span.End()
 
-	file, err := f.FileStorage.Download(ctx, filename, process)
+	file, err := f.FileStorage.Download(ctx, filename, bytesRange, process)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))

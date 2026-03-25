@@ -115,6 +115,16 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, simCard, version st
 	span.SetAttributes(attribute.String("username", username))
 	span.SetAttributes(attribute.String("password", password))
 
+	// 设备存在时更新版本号，不存在则忽略（新设备尚未绑定）
+	if result, err := d.DeviceRepo.SetDeviceVersion(deviceID, version); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[FirstOnline] SetDeviceVersion error", "err", err.Error())
+		return nil, err
+	} else if result.RowsAffected == 0 {
+		slog.Info("[FirstOnline] device not found, skip version update", "device_id", deviceID)
+	}
+
 	// 为后续的完善用户信息做准备，缓存设备信息
 	if err := d.cacheDeviceInfo(deviceID, simCard, version); err != nil {
 		span.RecordError(err)

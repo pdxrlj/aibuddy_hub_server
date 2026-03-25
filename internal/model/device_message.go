@@ -81,3 +81,11 @@ func (d *DeviceMessage) BeforeCreate(_ *gorm.DB) (err error) {
 
 	return nil
 }
+
+// BeforeUpdate 在更新之前,将Content中的filename提取出来
+func (d *DeviceMessage) BeforeUpdate(_ *gorm.DB) (err error) {
+	if d.Fmt == MessageFmtVoice {
+		d.Content = ExtractFilename(d.Content)
+	}
+	return nil
+}

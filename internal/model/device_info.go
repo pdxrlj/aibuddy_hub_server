@@ -81,3 +81,12 @@ func (d *DeviceInfo) BeforeCreate(_ *gorm.DB) (err error) {
 	}
 	return nil
 }
+
+// BeforeUpdate 在更新之前,将DeviceID转换为大写
+func (d *DeviceInfo) BeforeUpdate(_ *gorm.DB) (err error) {
+	d.DeviceID = strings.ToUpper(d.DeviceID)
+	if d.Avatar != "" {
+		d.Avatar = ExtractFilename(d.Avatar)
+	}
+	return nil
+}

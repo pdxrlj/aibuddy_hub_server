@@ -52,3 +52,11 @@ func (u *User) AfterFind(_ *gorm.DB) (err error) {
 	}
 	return nil
 }
+
+// BeforeUpdate 在更新之前,将Avatar中的filename提取出来
+func (u *User) BeforeUpdate(_ *gorm.DB) (err error) {
+	if u.Avatar != "" {
+		u.Avatar = ExtractFilename(u.Avatar)
+	}
+	return nil
+}
