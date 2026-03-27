@@ -92,15 +92,20 @@ func (m *Memory) Exists(key string) bool {
 }
 
 // Incr atomically increments a key. If key doesn't exist, sets to 1 with optional TTL.
+// If key exists and no TTL is provided, preserves the existing TTL.
 func (m *Memory) Incr(key string, ttl ...time.Duration) (int64, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	var count int64
+	var existingTTL time.Duration
+	hasExistingTTL := false
+
 	if val, ok := m.store.Get(key); ok {
 		if n, ok := val.(int64); ok {
 			count = n
 		}
+		existingTTL, hasExistingTTL = m.store.GetTTL(key)
 	}
 
 	count++
@@ -108,6 +113,9 @@ func (m *Memory) Incr(key string, ttl ...time.Duration) (int64, error) {
 	var d time.Duration
 	if len(ttl) > 0 {
 		d = ttl[0]
+	} else if hasExistingTTL {
+		// key 已存在且未指定新 TTL，保留原有 TTL
+		d = existingTTL
 	}
 
 	if !m.store.SetWithTTL(key, count, 1, d) {

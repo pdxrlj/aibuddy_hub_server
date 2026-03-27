@@ -42,8 +42,20 @@ type AppConfig struct {
 
 // WechatConfig 微信配置
 type WechatConfig struct {
-	AppID     string `json:"app_id" mapstructure:"app_id"`
-	AppSecret string `json:"app_secret" mapstructure:"app_secret"`
+	AppID     string               `json:"app_id" mapstructure:"app_id"`
+	AppSecret string               `json:"app_secret" mapstructure:"app_secret"`
+	Templates *WechatTemplateConfig `json:"templates" mapstructure:"templates"`
+}
+
+// WechatTemplateConfig 微信小程序模板消息配置
+type WechatTemplateConfig struct {
+	MemoRemind           string `json:"memo_remind" mapstructure:"memo_remind"`                       // 备忘事项提醒
+	MessageRemind        string `json:"message_remind" mapstructure:"message_remind"`                 // 收到留言提醒
+	MessageNotify        string `json:"message_notify" mapstructure:"message_notify"`                 // 留言通知
+	BirthdayRemind       string `json:"birthday_remind" mapstructure:"birthday_remind"`               // 生日提醒
+	MembershipExpiration string `json:"membership_expiration" mapstructure:"membership_expiration"`   // 会员到期提醒
+	MembershipActivation string `json:"membership_activation" mapstructure:"membership_activation"`   // 开通会员成功通知
+	RiskWarning          string `json:"risk_warning" mapstructure:"risk_warning"`                     // 风险预警通知
 }
 
 // MiniShopConfig 微信配置
