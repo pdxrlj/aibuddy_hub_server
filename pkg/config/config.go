@@ -176,8 +176,15 @@ type BaiduConfig struct {
 	Qianwen *QianwenConfig `json:"qianwen" mapstructure:"qianwen"`
 	Volc    *VolcConfig    `json:"volc" mapstructure:"volc"`
 	TTS     *TTSConfig     `json:"tts" mapstructure:"tts"`
+	Maps    *MapsConfig    `json:"maps" mapstructure:"maps"`
 
 	Agent *BaiduAgentConfig `json:"agent" mapstructure:"agent"`
+}
+
+// MapsConfig 百度地图配置
+type MapsConfig struct {
+	Ak    string `json:"ak" mapstructure:"ak"`
+	AppID string `json:"app_id" mapstructure:"app_id"`
 }
 
 // BaiduAgentConfig Agent配置

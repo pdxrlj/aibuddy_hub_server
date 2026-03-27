@@ -86,6 +86,9 @@ baidu:
   tts:
     vcn: 1000578
     tts_end_delay_ms: 50
+  maps:
+    ak: "hk04Hv2nIJQb7dJo9U0KulylI3eUlfBL"
+    app_id: "122590536"
 tracer:
   service_name: "aibuddy_hub"
   endpoint: "112.132.224.74:4317"

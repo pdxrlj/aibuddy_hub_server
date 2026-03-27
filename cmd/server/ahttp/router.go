@@ -140,7 +140,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			userGroup.GET("/get_growth_report_list", h.GetGrowthReportList)
 
 			// 小程序留言
-			userGroup.POST("/message", h.LeavaMessage)
+			userGroup.POST("/message", h.SendMessage)
 			userGroup.GET("/message_list", h.MessageList)
 
 			feedbackHandler := feedbackhandler.NewHandler()

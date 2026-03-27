@@ -280,9 +280,9 @@ func (h *Handler) DeviceList(state *ahttp.State) error {
 	}).Success()
 }
 
-// LeavaMessage 发送留言
-func (h *Handler) LeavaMessage(state *ahttp.State, req *SendMsgRequest) error {
-	ctx, span := tracer().Start(state.Context(), "User.LeavaMessage")
+// SendMessage 发送消息
+func (h *Handler) SendMessage(state *ahttp.State, req *SendMsgRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.SendMessage")
 	defer span.End()
 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
