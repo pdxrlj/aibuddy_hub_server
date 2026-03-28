@@ -373,6 +373,20 @@ func (h *Handler) GetGrowthReportList(state *ahttp.State, req *GetGrowthReportLi
 	}).Success()
 }
 
+// DeleteGrowthReport 删除成长报告
+func (h *Handler) DeleteGrowthReport(state *ahttp.State, req *DeleteGrowthReportRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.DeleteGrowthReport")
+	defer span.End()
+
+	err := h.UserServer.DeleteGrowthReport(ctx, req.ReportID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("report_id", req.ReportID))
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+	return state.Resposne().Success()
+}
+
 // UpdateInfo 更新用户信息
 func (h *Handler) UpdateInfo(state *ahttp.State, req *InfoRequest) error {
 	ctx, span := tracer().Start(state.Context(), "User.GetGrowthReportList")

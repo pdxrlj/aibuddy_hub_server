@@ -690,8 +690,8 @@ func (s *Service) ConvertToGrowthReport(deviceID string, startTime, endTime time
 
 	return &model.GrowthReport{
 		DeviceID:             deviceID,
-		StartTime:            startTime,
-		EndTime:              endTime,
+		StartTime:            model.LocalTime(startTime),
+		EndTime:              model.LocalTime(endTime),
 		SummaryText:          report.SummaryText,
 		StatusCards:          statusCards,
 		InteractionSummary:   interactionSummary,
@@ -762,8 +762,13 @@ func mustMarshal(v any) []byte {
 	return data
 }
 
+type GrowthReportListItem struct {
+	DeviceName string `json:"device_name"`
+	*model.GrowthReport
+}
+
 // GetGrowthReportList 获取用户成长报告列表
-func (s *Service) GetGrowthReportList(ctx context.Context, deviceID string, page, pageSize int) ([]*GrowthReportResponse, int64, error) {
+func (s *Service) GetGrowthReportList(ctx context.Context, deviceID string, page, pageSize int) ([]*GrowthReportListItem, int64, error) {
 	_, span := tracer().Start(ctx, "GetGrowthReportList")
 	defer span.End()
 
@@ -772,17 +777,49 @@ func (s *Service) GetGrowthReportList(ctx context.Context, deviceID string, page
 		return nil, 0, err
 	}
 
-	formatReports := make([]*GrowthReportResponse, 0, len(reports))
+	// formatReports := make([]*GrowthReportResponse, 0, len(reports))
 
-	for i := range reports {
-		growthReport, err := s.FormatGrowthReport(ctx, reports[i])
-		if err != nil {
-			return nil, 0, err
-		}
-		formatReports = append(formatReports, growthReport)
+	// for i := range reports {
+	// 	growthReport, err := s.FormatGrowthReport(ctx, reports[i])
+	// 	if err != nil {
+	// 		return nil, 0, err
+	// 	}
+	// 	formatReports = append(formatReports, growthReport)
+	// }
+
+	var formatReports []*GrowthReportListItem
+	device, err := s.DeviceRepo.GetDeviceInfo(ctx, deviceID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if device.DeviceInfo == nil {
+		return nil, 0, errors.New("设备信息异常,无法获取设备名称")
+	}
+
+	for _, report := range reports {
+		formatReports = append(formatReports, &GrowthReportListItem{
+			DeviceName:   device.DeviceInfo.NickName,
+			GrowthReport: report,
+		})
 	}
 
 	return formatReports, total, nil
+}
+
+// DeleteGrowthReport 删除成长报告
+func (s *Service) DeleteGrowthReport(ctx context.Context, reportID string) error {
+	_, span := tracer().Start(ctx, "DeleteGrowthReport")
+	defer span.End()
+
+	err := s.GrowthReportRepo.Delete(ctx, cast.ToInt64(reportID))
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("report_id", reportID))
+		return err
+	}
+
+	return nil
 }
 
 // ClearUserInfo 清除用户全部数据

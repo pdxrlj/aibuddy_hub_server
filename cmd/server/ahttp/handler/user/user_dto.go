@@ -286,3 +286,8 @@ type UpdateDeviceInfoRequest struct {
 	Skills      string `json:"skills"`
 	Personality string `json:"personality"`
 }
+
+// DeleteGrowthReportRequest 删除成长报告请求
+type DeleteGrowthReportRequest struct {
+	ReportID string `json:"report_id" form:"report_id" param:"report_id" query:"report_id" validate:"required" msg:"required:成长报告ID不能为空"`
+}

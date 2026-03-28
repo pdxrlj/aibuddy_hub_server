@@ -75,14 +75,17 @@ func (l *Logger) Setup() {
 		&slog.HandlerOptions{
 			Level: l.GetLevel(),
 			ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
-				if a.Key == slog.TimeKey {
+				switch a.Key {
+				case slog.TimeKey:
 					if a.Value.Kind() == slog.KindTime {
 						t := a.Value.Time()
 						return slog.String(a.Key, t.Format(time.DateTime))
 					}
-					if t, ok := a.Value.Any().(time.Time); ok {
-						return slog.String(a.Key, t.Format(time.DateTime))
-					}
+				case slog.LevelKey:
+					level := a.Value.Any().(slog.Level)
+					return slog.String(a.Key, level.String())
+				case slog.SourceKey:
+					// 可选：格式化源码位置
 				}
 				return a
 			},
