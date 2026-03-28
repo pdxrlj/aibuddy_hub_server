@@ -446,6 +446,8 @@ type InteractionFacts struct {
 	TopRoles               []*TopRole `json:"top_roles"`
 	LongestChatDurationMin int        `json:"longest_chat_duration_min"`
 	ActiveTimeRange        string     `json:"active_time_range"`
+	DataCompleteness       string     `json:"data_completeness"`
+	Confidence             string     `json:"confidence"`
 }
 
 // TopRole 角色统计
@@ -459,6 +461,8 @@ type SocialFacts struct {
 	FamilyInteractions []*FamilyInteraction `json:"family_interactions"`
 	FriendAddedCount   int                  `json:"friend_added_count"`
 	FriendChatCount    int                  `json:"friend_chat_count"`
+	DataCompleteness   string               `json:"data_completeness"`
+	Confidence         string               `json:"confidence"`
 }
 
 // FamilyInteraction 家庭互动
@@ -469,15 +473,19 @@ type FamilyInteraction struct {
 
 // MemoryCapsuleFacts 记忆胶囊事实
 type MemoryCapsuleFacts struct {
-	Count int      `json:"count"`
-	Types []string `json:"types"`
+	Count             int      `json:"count"`
+	Types             []string `json:"types"`
+	DataCompleteness  string   `json:"data_completeness"`
+	Confidence        string   `json:"confidence"`
 }
 
 // EmotionFacts 情绪事实
 type EmotionFacts struct {
-	DailyEmotions []*DailyEmotionFact `json:"daily_emotions"`
-	EmotionTags   []*EmotionTagFact   `json:"emotion_tags"`
-	Summary       string              `json:"summary"`
+	DailyEmotions     []*DailyEmotionFact `json:"daily_emotions"`
+	EmotionTags       []*EmotionTagFact   `json:"emotion_tags"`
+	Summary           string              `json:"summary"`
+	DataCompleteness  string              `json:"data_completeness"`
+	Confidence        string              `json:"confidence"`
 }
 
 // DailyEmotionFact 每日情绪事实
@@ -496,17 +504,21 @@ type EmotionTagFact struct {
 
 // MomentCandidate 代表性事件候选
 type MomentCandidate struct {
-	MomentType string   `json:"moment_type"`
-	Title      string   `json:"title"`
-	Summary    string   `json:"summary"`
-	Timestamp  string   `json:"timestamp"`
-	Evidence   []string `json:"evidence"`
+	MomentType       string   `json:"moment_type"`
+	Title            string   `json:"title"`
+	Summary          string   `json:"summary"`
+	Timestamp        string   `json:"timestamp"`
+	Evidence         []string `json:"evidence"`
+	DataCompleteness string   `json:"data_completeness"`
+	Confidence       string   `json:"confidence"`
 }
 
 // LearningFacts 学习事实
 type LearningFacts struct {
-	AudioSummary    *AudioSummary    `json:"audio_summary"`
-	PomodoroSummary *PomodoroSummary `json:"pomodoro_summary"`
+	AudioSummary     *AudioSummary    `json:"audio_summary"`
+	PomodoroSummary  *PomodoroSummary `json:"pomodoro_summary"`
+	DataCompleteness string           `json:"data_completeness"`
+	Confidence       string           `json:"confidence"`
 }
 
 // AudioSummary 音频总结
@@ -525,8 +537,10 @@ type PomodoroSummary struct {
 
 // RiskFacts 风险事实
 type RiskFacts struct {
-	AlertCount int          `json:"alert_count"`
-	AlertTypes []*AlertType `json:"alert_types"`
+	AlertCount       int          `json:"alert_count"`
+	AlertTypes       []*AlertType `json:"alert_types"`
+	DataCompleteness string       `json:"data_completeness"`
+	Confidence       string       `json:"confidence"`
 }
 
 // AlertType 预警类型
@@ -537,14 +551,18 @@ type AlertType struct {
 
 // TopicFacts 话题事实
 type TopicFacts struct {
-	CommonTopics []string `json:"common_topics"`
+	CommonTopics     []string `json:"common_topics"`
+	DataCompleteness string   `json:"data_completeness"`
+	Confidence       string   `json:"confidence"`
 }
 
 // PortraitFacts 画像事实
 type PortraitFacts struct {
-	Preferences     []string `json:"preferences"`
-	Dislikes        []string `json:"dislikes"`
-	BehaviorSignals []string `json:"behavior_signals"`
+	Preferences      []string `json:"preferences"`
+	Dislikes         []string `json:"dislikes"`
+	BehaviorSignals  []string `json:"behavior_signals"`
+	DataCompleteness string   `json:"data_completeness"`
+	Confidence       string   `json:"confidence"`
 }
 
 // AgentOutputFormat 返回模型输出的格式

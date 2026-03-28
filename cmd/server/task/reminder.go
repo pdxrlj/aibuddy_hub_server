@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand/v2"
 
 	"github.com/hibiken/asynq"
@@ -52,6 +53,7 @@ func ReminderHandler(_ context.Context, t *asynq.Task) error {
 	if err := remind.SendMessage(remind.MsgTypeRemind, info.EntryID, "text", info.ReminderTitle, info.ReminderContent, info.DeviceID, ""); err != nil {
 		return err
 	}
+	slog.Info("[Reminder] ReminderHandler")
 
 	if !payload.Scheduled {
 		return nil

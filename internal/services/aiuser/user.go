@@ -627,6 +627,7 @@ func (s *Service) AnalysisGrowthReport(ctx context.Context, uid int64, deviceID 
 		}{}
 
 		defer func() {
+			slog.Info("[AnalysisGrowthReport] SendMessage", "device_id", deviceID, "result", result.msg)
 			websocket.SendMessage(uidStr, &websocket.GrowthReportFrame{
 				Type:     helpers.Cond(result.isSuccess, websocket.FrameTypeGrowthReportSuccess, websocket.FrameTypeGrowthReportFailure),
 				DeviceID: deviceID,

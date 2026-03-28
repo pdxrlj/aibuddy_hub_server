@@ -96,6 +96,7 @@ func buildConfigStr(cfg *ConfigRequest) (string, error) {
 		if vcn == "" {
 			vcn = "1000578"
 		}
+		// cfg.TTSURL = fmt.Sprintf(`DEFAULT{"vcn":"%s","vol":2.0,"spd":1.0,"emotion":"fluent"}`, vcn)
 		// cfg.TTSURL = fmt.Sprintf(`DEFAULT{"vcn":"%s"}`, vcn)
 		cfg.TTSURL = fmt.Sprintf(`PRIVATE_EXTEND{"vcn":"%s"}`, vcn)
 	}
