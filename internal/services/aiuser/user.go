@@ -762,6 +762,7 @@ func mustMarshal(v any) []byte {
 	return data
 }
 
+// GrowthReportListItem 成长报告列表项
 type GrowthReportListItem struct {
 	DeviceName string `json:"device_name"`
 	*model.GrowthReport
