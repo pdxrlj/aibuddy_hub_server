@@ -49,6 +49,11 @@ func (t LocalTime) Unix() int64 {
 	return time.Time(t).Unix()
 }
 
+// Format 格式化时间
+func (t LocalTime) Format(layout string) string {
+	return time.Time(t).Format(layout)
+}
+
 // Time 返回标准 time.Time
 func (t LocalTime) Time() time.Time {
 	return time.Time(t)

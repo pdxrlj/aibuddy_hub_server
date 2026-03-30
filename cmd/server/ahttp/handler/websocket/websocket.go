@@ -37,7 +37,8 @@ func (h *Handler) HandleConnect(state *ahttp.State, req *HandleConnectRequest) e
 
 	if err := h.Service.HandleConnect(uid, state.Ctx.Response().Writer, state.Ctx.Request()); err != nil {
 		slog.Error("[Websocket] HandleConnect", "error", err)
-		return state.Resposne().Error(err)
+		// melody 已经写入了响应，直接返回 nil 避免重复写入
+		return nil
 	}
 	return nil
 }

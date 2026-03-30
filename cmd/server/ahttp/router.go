@@ -138,9 +138,11 @@ func RegisterRoutes(base *ahttp.Base) {
 			// 分析用户成长报告
 			userGroup.GET("/analysis_growth_report", h.AnalysisGrowthReport)
 			userGroup.GET("/get_growth_report_list", h.GetGrowthReportList)
+			// 删除成长报告
+			userGroup.DELETE("/growth_report/:report_id", h.DeleteGrowthReport)
 
 			// 小程序留言
-			userGroup.POST("/message", h.LeavaMessage)
+			userGroup.POST("/message", h.SendMessage)
 			userGroup.GET("/message_list", h.MessageList)
 
 			feedbackHandler := feedbackhandler.NewHandler()

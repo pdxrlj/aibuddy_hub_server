@@ -5,6 +5,8 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // GrowthReportRepo 成长报告仓库
@@ -34,4 +36,22 @@ func (g *GrowthReportRepo) GetListByDeviceID(ctx context.Context, deviceID strin
 		Where(query.GrowthReport.DeviceID.Eq(deviceID)).
 		Order(query.GrowthReport.StartTime.Desc()).
 		FindByPage(offset, size)
+}
+
+// Delete 删除成长报告
+func (g *GrowthReportRepo) Delete(ctx context.Context, reportID int64) error {
+	_, span := tracer.Start(ctx, "GrowthReportRepo.Delete")
+	defer span.End()
+
+	_, err := query.GrowthReport.WithContext(ctx).
+		Where(query.GrowthReport.ID.Eq(reportID)).
+		Delete()
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("report_id", reportID))
+		return err
+	}
+
+	return nil
 }

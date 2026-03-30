@@ -10,6 +10,7 @@ import (
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
 	"aibuddy/pkg/mqtt"
+	"aibuddy/pkg/wxmini"
 	"context"
 	"fmt"
 	"log/slog"
@@ -23,14 +24,22 @@ type AiChatHandler struct {
 	cache          flash.Flash
 	EmotionService *agent.EmotionWarningService
 	Cache          flash.Flash
+
+	WxNotifyTemplateService *wxmini.Template
 }
 
 // NewAiChatHandler 创建AI对话处理器
 func NewAiChatHandler() *AiChatHandler {
+	wechatConfig := config.Instance.Wechat
+
 	return &AiChatHandler{
 		cache:          cache.Flash(),
 		EmotionService: agent.NewEmotionWarningService(),
 		Cache:          cache.Flash(),
+		WxNotifyTemplateService: wxmini.NewTemplate(
+			wechatConfig.AppID,
+			wechatConfig.AppSecret,
+		),
 	}
 }
 
@@ -223,7 +232,65 @@ func (h *AiChatHandler) TriggerWarning(ctx context.Context, deviceID string, dia
 		}
 
 		slog.Info("[MQTT] Emotion saved", "device_id", deviceID, "warning_level", result.WarningLevel)
+
+		// 发送预警消息
+		go h.sendRiskWarningNotice(deviceID, result)
 	}
 
 	return result, nil
+}
+
+// sendRiskWarningNotice 发送风险预警通知
+func (h *AiChatHandler) sendRiskWarningNotice(deviceID string, result *agent.WarningResult) {
+	// 查询设备信息获取绑定的用户ID
+	device, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).First()
+	if err != nil {
+		slog.Error("[MQTT] Query device failed", "error", err, "device_id", deviceID)
+		return
+	}
+
+	if device.UID == 0 {
+		slog.Warn("[MQTT] Device not bind user", "device_id", deviceID)
+		return
+	}
+
+	// 查询用户信息获取 OpenID
+	user, err := query.User.Where(query.User.ID.Eq(device.UID)).First()
+	if err != nil {
+		slog.Error("[MQTT] Query user failed", "error", err, "uid", device.UID)
+		return
+	}
+
+	if user.OpenID == "" {
+		slog.Warn("[MQTT] User not bind openid", "uid", device.UID)
+		return
+	}
+
+	templateID := config.Instance.Wechat.Templates.RiskWarning
+	if templateID == "" {
+		slog.Warn("[MQTT] Risk warning template ID not configured")
+		return
+	}
+
+	// 构建预警内容
+	warningTitle := "情绪风险预警"
+	warningContent := result.OverallAssessment
+	if len(warningContent) > 20 {
+		warningContent = warningContent[:20] + "..."
+	}
+	warningTime := time.Now().Format(time.DateTime)
+
+	err = h.WxNotifyTemplateService.RiskWarningNotice(
+		user.OpenID,
+		warningTitle,
+		result.WarningLevel,
+		warningContent,
+		warningTime,
+		templateID,
+	)
+	if err != nil {
+		slog.Error("[MQTT] Send warning message failed", "error", err)
+		return
+	}
+	slog.Info("[MQTT] Send warning message success", "device_id", deviceID, "open_id", user.OpenID)
 }

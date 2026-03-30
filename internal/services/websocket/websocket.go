@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/olahol/melody"
 	"github.com/spf13/cast"
@@ -100,7 +101,7 @@ func (s *Service) HandleMessage(session *melody.Session, msg []byte) {
 	switch frame.Type {
 	case FrameTypePing:
 		// 心跳消息，返回 pong
-		pong := map[string]any{"type": "pong", "timestamp": frame.Message}
+		pong := map[string]any{"type": "pong", "timestamp": time.Now().Unix()}
 		if data, err := json.Marshal(pong); err == nil {
 			if err := session.Write(data); err != nil {
 				slog.Error("failed to write pong", "error", err)

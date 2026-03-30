@@ -35,6 +35,14 @@ storage:
 wechat:
   app_id: ""
   app_secret: ""
+  templates:
+    memo_remind: "67a0Y52uQoBLzep_Aqj-OzF-PTS98-WgkuGlT7_onPA"           # 备忘事项提醒
+    message_remind: "yWL54YM--E9EpziRWZUtAcc1WsmEglbckDd4H-GaGCI"       # 收到留言提醒
+    message_notify: "M4eG62rCInZ3gctzzWvn9832qLGBMDWHNzOKNzr-YjA"       # 留言通知
+    birthday_remind: "0Vl6AGvLpnuzr1CfZUjDfDNLqa5yN2hcAd0YTxaRfKY"      # 生日提醒
+    membership_expiration: "3PcDepqVpaImJZ4me2UShuk4TPVThPKYx6fH7qTtWS8" # 会员到期提醒
+    membership_activation: "QZf2PQ_05DwxzF1Jywx09hsFhNYZjEKpPuPa9bzh82A" # 开通会员成功通知
+    risk_warning: "p6FFFA3s-A7ktpHBakmifsceTHahKAoAXjIs4O5hH4Y"         # 风险预警通知
 mini_shop:
   app_id: ""
   app_secret: ""
@@ -86,6 +94,9 @@ baidu:
   tts:
     vcn: 1000578
     tts_end_delay_ms: 50
+  maps:
+    ak: "hk04Hv2nIJQb7dJo9U0KulylI3eUlfBL"
+    app_id: "122590536"
 tracer:
   service_name: "aibuddy_hub"
   endpoint: "112.132.224.74:4317"
