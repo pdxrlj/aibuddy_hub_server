@@ -113,11 +113,8 @@ func (h *Handler) SendCode(state *ahttp.State, req *SendCodeRequest) error {
 func (h *Handler) RefreshToken(state *ahttp.State, req *TokenRequest) error {
 	ctx, span := tracer().Start(state.Ctx.Request().Context(), "refresh_token")
 	defer span.End()
-	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
-	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
-	}
-	token, expires, err := aiuserService.RefreshToken(ctx, req.Token, uid)
+
+	token, expires, err := aiuserService.RefreshToken(ctx, req.Token)
 	if err != nil {
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}

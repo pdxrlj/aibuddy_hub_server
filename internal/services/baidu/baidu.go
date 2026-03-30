@@ -87,8 +87,8 @@ func buildConfigStr(cfg *ConfigRequest) (string, error) {
 	}
 
 	if cfg.TTS == "" {
-		cfg.TTS = "PRIVATE_EXTEND" // DEFAULT 默认音色
-		// cfg.TTS = "DEFAULT"
+		// cfg.TTS = "PRIVATE_EXTEND" // DEFAULT 默认音色
+		cfg.TTS = "DEFAULT"
 	}
 
 	if cfg.TTSURL == "" {
@@ -97,13 +97,13 @@ func buildConfigStr(cfg *ConfigRequest) (string, error) {
 			vcn = "1000578"
 		}
 		// cfg.TTSURL = fmt.Sprintf(`DEFAULT{"vcn":"%s","vol":2.0,"spd":1.0,"emotion":"fluent"}`, vcn)
-		// cfg.TTSURL = fmt.Sprintf(`DEFAULT{"vcn":"%s"}`, vcn)
-		cfg.TTSURL = fmt.Sprintf(`PRIVATE_EXTEND{"vcn":"%s"}`, vcn)
+		cfg.TTSURL = fmt.Sprintf(`DEFAULT{"vcn":"%s","emotion":"calm","pit":-1}`, vcn)
+		// cfg.TTSURL = fmt.Sprintf(`PRIVATE_EXTEND{"vcn":"%s"}`, vcn)
 	}
 
-	if cfg.TTSPrivateServerURL == "" {
-		cfg.TTSPrivateServerURL = "ws://8.153.82.116:8289/ws/2.0/speech/publiccloudspeech/v1/tts"
-	}
+	// if cfg.TTSPrivateServerURL == "" {
+	// 	cfg.TTSPrivateServerURL = "ws://8.153.82.116:8289/ws/2.0/speech/publiccloudspeech/v1/tts"
+	// }
 
 	if cfg.TTSEndDelayMs == 0 {
 		TTsEndDelayMs := config.Instance.Baidu.TTS.TtsEndDelayMs
