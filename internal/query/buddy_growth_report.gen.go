@@ -30,8 +30,8 @@ func newGrowthReport(db *gorm.DB, opts ...gen.DOOption) growthReport {
 	_growthReport.ALL = field.NewAsterisk(tableName)
 	_growthReport.ID = field.NewInt64(tableName, "id")
 	_growthReport.DeviceID = field.NewString(tableName, "device_id")
-	_growthReport.StartTime = field.NewTime(tableName, "start_time")
-	_growthReport.EndTime = field.NewTime(tableName, "end_time")
+	_growthReport.StartTime = field.NewField(tableName, "start_time")
+	_growthReport.EndTime = field.NewField(tableName, "end_time")
 	_growthReport.SummaryText = field.NewString(tableName, "summary_text")
 	_growthReport.StatusCards = field.NewField(tableName, "status_cards")
 	_growthReport.InteractionSummary = field.NewField(tableName, "interaction_summary")
@@ -46,8 +46,8 @@ func newGrowthReport(db *gorm.DB, opts ...gen.DOOption) growthReport {
 	_growthReport.NextWeekSuggestions = field.NewField(tableName, "next_week_suggestions")
 	_growthReport.ParentScripts = field.NewField(tableName, "parent_scripts")
 	_growthReport.ClosingText = field.NewString(tableName, "closing_text")
-	_growthReport.CreatedAt = field.NewTime(tableName, "created_at")
-	_growthReport.UpdatedAt = field.NewTime(tableName, "updated_at")
+	_growthReport.CreatedAt = field.NewField(tableName, "created_at")
+	_growthReport.UpdatedAt = field.NewField(tableName, "updated_at")
 
 	_growthReport.fillFieldMap()
 
@@ -60,8 +60,8 @@ type growthReport struct {
 	ALL                  field.Asterisk
 	ID                   field.Int64
 	DeviceID             field.String
-	StartTime            field.Time
-	EndTime              field.Time
+	StartTime            field.Field
+	EndTime              field.Field
 	SummaryText          field.String
 	StatusCards          field.Field
 	InteractionSummary   field.Field
@@ -76,8 +76,8 @@ type growthReport struct {
 	NextWeekSuggestions  field.Field
 	ParentScripts        field.Field
 	ClosingText          field.String
-	CreatedAt            field.Time
-	UpdatedAt            field.Time
+	CreatedAt            field.Field
+	UpdatedAt            field.Field
 
 	fieldMap map[string]field.Expr
 }
@@ -96,8 +96,8 @@ func (g *growthReport) updateTableName(table string) *growthReport {
 	g.ALL = field.NewAsterisk(table)
 	g.ID = field.NewInt64(table, "id")
 	g.DeviceID = field.NewString(table, "device_id")
-	g.StartTime = field.NewTime(table, "start_time")
-	g.EndTime = field.NewTime(table, "end_time")
+	g.StartTime = field.NewField(table, "start_time")
+	g.EndTime = field.NewField(table, "end_time")
 	g.SummaryText = field.NewString(table, "summary_text")
 	g.StatusCards = field.NewField(table, "status_cards")
 	g.InteractionSummary = field.NewField(table, "interaction_summary")
@@ -112,8 +112,8 @@ func (g *growthReport) updateTableName(table string) *growthReport {
 	g.NextWeekSuggestions = field.NewField(table, "next_week_suggestions")
 	g.ParentScripts = field.NewField(table, "parent_scripts")
 	g.ClosingText = field.NewString(table, "closing_text")
-	g.CreatedAt = field.NewTime(table, "created_at")
-	g.UpdatedAt = field.NewTime(table, "updated_at")
+	g.CreatedAt = field.NewField(table, "created_at")
+	g.UpdatedAt = field.NewField(table, "updated_at")
 
 	g.fillFieldMap()
 

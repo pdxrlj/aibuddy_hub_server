@@ -36,7 +36,6 @@ type DeviceMessage struct {
 
 	MsgID        string `gorm:"column:msg_id;not null" json:"msg_id"`
 	FromDeviceID string `gorm:"column:from_device_id;not null" json:"from_device_id"`
-	FromUsername string `gorm:"column:from_username;not null" json:"from_username"`
 
 	ToDeviceID string `gorm:"column:to_device_id;not null" json:"to_device_id"`
 

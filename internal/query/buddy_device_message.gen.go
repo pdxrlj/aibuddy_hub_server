@@ -31,7 +31,6 @@ func newDeviceMessage(db *gorm.DB, opts ...gen.DOOption) deviceMessage {
 	_deviceMessage.ID = field.NewInt(tableName, "id")
 	_deviceMessage.MsgID = field.NewString(tableName, "msg_id")
 	_deviceMessage.FromDeviceID = field.NewString(tableName, "from_device_id")
-	_deviceMessage.FromUsername = field.NewString(tableName, "from_username")
 	_deviceMessage.ToDeviceID = field.NewString(tableName, "to_device_id")
 	_deviceMessage.Content = field.NewString(tableName, "content")
 	_deviceMessage.Fmt = field.NewString(tableName, "fmt")
@@ -83,7 +82,6 @@ type deviceMessage struct {
 	ID           field.Int
 	MsgID        field.String
 	FromDeviceID field.String
-	FromUsername field.String
 	ToDeviceID   field.String
 	Content      field.String
 	Fmt          field.String
@@ -113,7 +111,6 @@ func (d *deviceMessage) updateTableName(table string) *deviceMessage {
 	d.ID = field.NewInt(table, "id")
 	d.MsgID = field.NewString(table, "msg_id")
 	d.FromDeviceID = field.NewString(table, "from_device_id")
-	d.FromUsername = field.NewString(table, "from_username")
 	d.ToDeviceID = field.NewString(table, "to_device_id")
 	d.Content = field.NewString(table, "content")
 	d.Fmt = field.NewString(table, "fmt")
@@ -137,11 +134,10 @@ func (d *deviceMessage) GetFieldByName(fieldName string) (field.OrderExpr, bool)
 }
 
 func (d *deviceMessage) fillFieldMap() {
-	d.fieldMap = make(map[string]field.Expr, 13)
+	d.fieldMap = make(map[string]field.Expr, 12)
 	d.fieldMap["id"] = d.ID
 	d.fieldMap["msg_id"] = d.MsgID
 	d.fieldMap["from_device_id"] = d.FromDeviceID
-	d.fieldMap["from_username"] = d.FromUsername
 	d.fieldMap["to_device_id"] = d.ToDeviceID
 	d.fieldMap["content"] = d.Content
 	d.fieldMap["fmt"] = d.Fmt

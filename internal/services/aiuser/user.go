@@ -570,7 +570,7 @@ func (s *Service) CreateMessage(ctx context.Context, uid int64, data *model.Devi
 
 	data.MsgID = helpers.GenerateNumber(10)
 	data.FromDeviceID = fmt.Sprintf("%d", uid)
-	data.FromUsername = info.Relation
+
 	if err = s.DeviceMsgRepo.CreateDeviceMessage(ctx, data); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", data.ToDeviceID), attribute.Int64("uid", uid))
@@ -586,8 +586,8 @@ func (s *Service) CreateMessage(ctx context.Context, uid int64, data *model.Devi
 	return nil
 }
 
-// GetMessage 获取指定留言
-func (s *Service) GetMessage(ctx context.Context, uid int64, deviceID string, page int, pageSize int) ([]*MessageDTO, int64, error) {
+// GetMessage 获取指定留言（按对话分组）
+func (s *Service) GetMessage(ctx context.Context, uid int64, deviceID string, page int, pageSize int) ([][]*MessageDTO, int64, error) {
 	_, span := tracer().Start(ctx, "CreateMessage")
 	defer span.End()
 	// slog.Info("GetMessage", "uid", uid, "device_id", deviceID, "page", page, "pageSize", pageSize)
@@ -864,15 +864,17 @@ type MessageDTO struct {
 	UpdatedAt    string `json:"updated_at"`
 }
 
-// ToMessageDTO 将 DeviceMessage 列表转换为 MessageDTO 列表
-func (s *Service) ToMessageDTO(messages []*model.DeviceMessage) []*MessageDTO {
-	result := make([]*MessageDTO, len(messages))
-	for i, msg := range messages {
+// ToMessageDTO 将 DeviceMessage 列表转换为按对话分组的 MessageDTO 列表
+// 返回格式: [][]*MessageDTO，每个子数组代表与同一个聊天对象的所有消息
+func (s *Service) ToMessageDTO(messages []*model.DeviceMessage) [][]*MessageDTO {
+	// 按对话双方分组，确保 A->B 和 B->A 的消息在同一个组
+	groups := make(map[string][]*MessageDTO)
+
+	for _, msg := range messages {
 		dto := &MessageDTO{
 			ID:           msg.ID,
 			MsgID:        msg.MsgID,
 			FromDeviceID: msg.FromDeviceID,
-			FromUsername: msg.FromUsername,
 			ToDeviceID:   msg.ToDeviceID,
 			Content:      msg.Content,
 			Fmt:          msg.Fmt.String(),
@@ -889,7 +891,80 @@ func (s *Service) ToMessageDTO(messages []*model.DeviceMessage) []*MessageDTO {
 		if msg.ToDevice != nil && msg.ToDevice.DeviceInfo != nil {
 			dto.ToAvatar = msg.ToDevice.DeviceInfo.Avatar
 		}
-		result[i] = dto
+
+		// 生成分组key：将两个deviceID排序后拼接，确保双向对话在同一组
+		key := makeConversationKey(msg.FromDeviceID, msg.ToDeviceID)
+		groups[key] = append(groups[key], dto)
 	}
+
+	// 将 map 转换为二维数组
+	result := make([][]*MessageDTO, 0, len(groups))
+	for _, group := range groups {
+		result = append(result, group)
+	}
+
 	return result
+}
+
+// makeConversationKey 生成分组key，确保 A-B 和 B-A 的对话使用相同的key
+func makeConversationKey(id1, id2 string) string {
+	if id1 < id2 {
+		return id1 + ":" + id2
+	}
+	return id2 + ":" + id1
+}
+
+// GetUnreadMessageCount 获取未读消息数量
+func (s *Service) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID string) (int64, error) {
+	_, span := tracer().Start(ctx, "GetUnreadMessageCount")
+	defer span.End()
+
+	count, err := s.DeviceMsgRepo.GetUnreadMessageCount(ctx, uid, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", deviceID))
+		return 0, err
+	}
+
+	return count, nil
+}
+
+// MyInfoResponse 我的页面信息响应结构体
+type MyInfoResponse struct {
+	DeviceName        string `json:"device_name"`
+	DeviceAvatar      string `json:"device_avatar"`
+	DeviceID          string `json:"device_id"`
+	Sex               string `json:"sex"`
+	FriendCount       int64  `json:"friend_count"`
+	FamilyMemberCount int64  `json:"family_member_count"`
+
+	// TODO 会员信息需要根据实际情况返回
+	MembershipInfo any `json:"membership_info"`
+}
+
+// GetMyInfo 获取我的页面信息：当前设备的信息、 好友数、家庭成员数、会员信息
+func (s *Service) GetMyInfo(ctx context.Context, uid int64, deviceID string) (*MyInfoResponse, error) {
+	_, span := tracer().Start(ctx, "GetMyInfo")
+	defer span.End()
+
+	info, err := s.DeviceInfoRepo.GetUserInfoByDeivceID(ctx, deviceID)
+	if err != nil {
+		return nil, err
+	}
+	_ = uid
+	// 获取好友数量
+	_, friendCount, err := s.deviceService.GetFriends(ctx, deviceID, 1, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	return &MyInfoResponse{
+		DeviceName:        info.NickName,
+		DeviceAvatar:      info.Avatar,
+		FriendCount:       friendCount,
+		DeviceID:          deviceID,
+		Sex:               info.Gender,
+		FamilyMemberCount: 1,
+		MembershipInfo:    nil,
+	}, nil
 }

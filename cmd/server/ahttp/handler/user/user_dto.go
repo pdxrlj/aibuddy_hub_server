@@ -291,3 +291,13 @@ type UpdateDeviceInfoRequest struct {
 type DeleteGrowthReportRequest struct {
 	ReportID string `json:"report_id" form:"report_id" param:"report_id" query:"report_id" validate:"required" msg:"required:成长报告ID不能为空"`
 }
+
+// UnreadMessageCountRequest 获取未读消息数量请求
+type UnreadMessageCountRequest struct {
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+}
+
+// MyInfoRequest 我的页面信息请求
+type MyInfoRequest struct {
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+}

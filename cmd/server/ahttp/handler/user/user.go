@@ -262,6 +262,11 @@ func (h *Handler) DeviceList(state *ahttp.State) error {
 			avatar = device.DeviceInfo.Avatar
 			gender = device.DeviceInfo.Gender
 		}
+		// 2026/3/30 最终返回给用户的设备状态未知==>离线
+		if device.Status == model.DeviceStatusUnknown {
+			device.Status = model.DeviceStatusOffline
+		}
+
 		deviceListItems = append(deviceListItems, &DeviceInfoListItem{
 			DeviceID:   device.DeviceID,
 			DeviceName: deviceName,
@@ -516,6 +521,26 @@ func (h *Handler) UpdateDeviceProfile(state *ahttp.State, req *UpdateDeviceInfoR
 	return state.Resposne().Success()
 }
 
+// UnreadMessageCount 获取未读消息数量
+func (h *Handler) UnreadMessageCount(state *ahttp.State, req *UnreadMessageCountRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.UnreadMessageCount")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	count, err := h.UserServer.GetUnreadMessageCount(ctx, uid, req.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success(count)
+}
+
 // Unregister 注销用户帐号
 func (h *Handler) Unregister(state *ahttp.State) error {
 	ctx, span := tracer().Start(state.Context(), "User.Unregister")
@@ -566,4 +591,24 @@ func (h *Handler) DownloadChatRecord(state *ahttp.State, req *DownloadChatRecord
 		Total:    len(resp.Data),
 		Data:     resp.Data,
 	}).Success()
+}
+
+// MyInfo 我的页面信息：当前设备的信息、 好友数、家庭成员数、会员信息
+func (h *Handler) MyInfo(state *ahttp.State, req *MyInfoRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.MyInfo")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	info, err := h.UserServer.GetMyInfo(ctx, uid, req.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success(info)
 }

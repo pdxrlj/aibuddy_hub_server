@@ -8,7 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel/attribute"
+	"gorm.io/gen/field"
 )
 
 // DeviceMessageRepo 设备消息仓库
@@ -94,4 +96,30 @@ func (r *DeviceMessageRepo) GetMessageFromUser(ctx context.Context, fromID strin
 		return nil, 0, err
 	}
 	return messages, total, nil
+}
+
+// GetUnreadMessageCount 获取未读消息数量
+func (r *DeviceMessageRepo) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID string) (int64, error) {
+	_, span := tracer.Start(ctx, "DeviceMessageRepo.GetUnreadMessageCount")
+	defer span.End()
+
+	uidStr := cast.ToString(uid)
+	return query.DeviceMessage.WithContext(ctx).
+		Debug().
+		Where(
+			field.Or(
+				// FromDeviceID=uid AND ToDeviceID=deviceID
+				field.And(
+					query.DeviceMessage.FromDeviceID.Eq(uidStr),
+					query.DeviceMessage.ToDeviceID.Eq(deviceID),
+				),
+				// FromDeviceID=deviceID AND ToDeviceID=uid
+				field.And(
+					query.DeviceMessage.FromDeviceID.Eq(deviceID),
+					query.DeviceMessage.ToDeviceID.Eq(uidStr),
+				),
+			),
+		).
+		Where(query.DeviceMessage.Read.Is(false)).
+		Count()
 }

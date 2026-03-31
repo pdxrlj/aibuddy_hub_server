@@ -52,6 +52,7 @@ type GetFriendsResponse struct {
 type GetFriendsResponseItem struct {
 	DeviceID   string `json:"device_id"`
 	DeviceName string `json:"device_name"`
+	Sex        string `json:"sex"`
 	Avatar     string `json:"avatar"`
 	Relation   string `json:"relation"`
 }
