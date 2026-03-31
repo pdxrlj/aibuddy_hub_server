@@ -8,6 +8,7 @@ import (
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
 	logger "aibuddy/pkg/log"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -257,6 +258,7 @@ func (h *Handler) DeviceList(state *ahttp.State) error {
 		deviceName := ""
 		avatar := ""
 		gender := ""
+		hardwareInfo := json.RawMessage(device.HardwareInfo)
 		if device.DeviceInfo != nil {
 			deviceName = device.DeviceInfo.NickName
 			avatar = device.DeviceInfo.Avatar
@@ -268,12 +270,13 @@ func (h *Handler) DeviceList(state *ahttp.State) error {
 		}
 
 		deviceListItems = append(deviceListItems, &DeviceInfoListItem{
-			DeviceID:   device.DeviceID,
-			DeviceName: deviceName,
-			Version:    device.Version,
-			Status:     device.Status.String(),
-			Avatar:     avatar,
-			Gender:     gender,
+			DeviceID:     device.DeviceID,
+			DeviceName:   deviceName,
+			Version:      device.Version,
+			Status:       device.Status.String(),
+			Avatar:       avatar,
+			Gender:       gender,
+			HardwareInfo: hardwareInfo,
 		})
 	}
 
@@ -328,6 +331,26 @@ func (h *Handler) MessageList(state *ahttp.State, req *GetMessageRequest) error 
 		Total:    total,
 		Data:     data,
 	}).Success()
+}
+
+// MessageMark 标记留言已读
+func (h *Handler) MessageMark(state *ahttp.State, req *MessageMarkRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.MessageMark")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	if err := h.UserServer.MarkMessageRead(ctx, uid, req.DeviceID, req.MessageIDs); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.Int64("uid", uid))
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success()
 }
 
 // AnalysisGrowthReport 分析用户成长报告
@@ -532,13 +555,13 @@ func (h *Handler) UnreadMessageCount(state *ahttp.State, req *UnreadMessageCount
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	count, err := h.UserServer.GetUnreadMessageCount(ctx, uid, req.DeviceID)
+	response, err := h.UserServer.GetUnreadMessageCount(ctx, uid, req.DeviceID)
 	if err != nil {
 		span.RecordError(err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success(count)
+	return state.Resposne().Success(response)
 }
 
 // Unregister 注销用户帐号

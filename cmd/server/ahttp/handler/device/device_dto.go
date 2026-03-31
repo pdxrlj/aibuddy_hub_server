@@ -74,7 +74,7 @@ type GetDeviceInfoResponse struct {
 // AddFriendRequest 添加好友请求
 type AddFriendRequest struct {
 	DeviceID       string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
-	TargetDeviceID string `json:"target_device_id" form:"target_device_id" validate:"required,aimac" msg:"required:目标设备ID不能为空|aimac:目标设备ID格式无效"`
+	TargetDeviceID string `json:"target_device_id" form:"target_device_id" validate:"required,aimac,nefield=DeviceID" msg:"required:目标设备ID不能为空|aimac:目标设备ID格式无效|nefield:目标设备ID不能与设备ID相同"`
 }
 
 // AddFriendResponse 添加好友响应

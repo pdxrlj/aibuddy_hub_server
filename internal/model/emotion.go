@@ -52,6 +52,9 @@ type Emotion struct {
 	// 整体评估
 	OverallAssessment string `gorm:"column:overall_assessment;type:text;comment:整体评估;" json:"overall_assessment"`
 
+	// 阅读状态
+	Read bool `gorm:"column:read;type:boolean;default:false;comment:是否已读;" json:"read"`
+
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;comment:创建时间;" json:"created_at"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;comment:更新时间;" json:"updated_at"`
 }

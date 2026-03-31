@@ -150,6 +150,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			// 小程序留言
 			userGroup.POST("/message", h.SendMessage)
 			userGroup.GET("/message_list", h.MessageList)
+			userGroup.PUT("/message/read", h.MessageMark) // 标记消息已读
 
 			feedbackHandler := feedbackhandler.NewHandler()
 			// 创建反馈
@@ -160,11 +161,13 @@ func RegisterRoutes(base *ahttp.Base) {
 		})
 
 		// 情绪
-		group.Group("/emotion", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(emotionGroup *ahttp.Group) {
-			h := emotionhandler.NewHandler()
-			emotionGroup.GET("/:device_id/list", h.GetEmotions)
-			emotionGroup.GET("/:device_id/latest", h.GetLatestEmotion)
-		})
+		group.Group("/emotion", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()},
+			func(emotionGroup *ahttp.Group) {
+				h := emotionhandler.NewHandler()
+				emotionGroup.GET("/:device_id/list", h.GetEmotions)
+				emotionGroup.GET("/:device_id/latest", h.GetLatestEmotion)
+				emotionGroup.PUT("/read", h.MarkEmotionRead) // 标记情绪预警已读
+			})
 
 		group.Group("/role", nil, func(role *ahttp.Group) {
 			r := rolehandler.NewRoleHandler()

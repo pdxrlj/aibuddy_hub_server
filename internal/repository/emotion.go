@@ -5,6 +5,7 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
+	"strconv"
 	"time"
 
 	"gorm.io/gen"
@@ -30,6 +31,41 @@ func (r *EmotionRepo) GetEmotions(ctx context.Context, page, pageSize int, devic
 	return query.Emotion.WithContext(ctx).
 		Where(query.Emotion.DeviceID.Eq(deviceID)).
 		FindByPage(offset, pageSize)
+}
+
+// GetUnreadCount 获取未读情绪预警数量
+func (r *EmotionRepo) GetUnreadCount(ctx context.Context, deviceID string) (int64, error) {
+	return query.Emotion.WithContext(ctx).
+		Where(query.Emotion.DeviceID.Eq(deviceID)).
+		Where(query.Emotion.Read.Is(false)).
+		Count()
+}
+
+// MarkEmotionRead 标记情绪预警已读
+func (r *EmotionRepo) MarkEmotionRead(ctx context.Context, deviceID string, emotionIDs []string) error {
+	if len(emotionIDs) == 0 {
+		return nil
+	}
+	ids := make([]int64, 0, len(emotionIDs))
+	for _, idStr := range emotionIDs {
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			continue
+		}
+		ids = append(ids, id)
+	}
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	_, err := query.Emotion.WithContext(ctx).
+		Where(query.Emotion.DeviceID.Eq(deviceID), query.Emotion.ID.In(ids...)).
+		Updates(map[string]any{
+			query.Emotion.UpdatedAt.ColumnName().String(): time.Now(),
+			query.Emotion.Read.ColumnName().String():      true,
+		})
+	return err
 }
 
 // GetLatestEmotion 获取最新的

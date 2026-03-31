@@ -59,6 +59,7 @@ type Service struct {
 	BindDeviceSnRepo *repository.BindDeviceSnRepo
 	DeviceMsgRepo    *repository.DeviceMessageRepo
 	GrowthReportRepo *repository.GrowthReportRepo
+	Emotion          *repository.EmotionRepo
 
 	sms   *sms.AliyunSMS
 	cache flash.Flash
@@ -97,6 +98,7 @@ func New() *Service {
 		deviceService:    device.NewService(),
 		DeviceMsgRepo:    repository.NewDeviceMessageRepo(),
 		GrowthReportRepo: repository.NewGrowthReportRepo(),
+		Emotion:          repository.NewEmotionRepo(),
 
 		growthReportService: agent.NewGroupReport(),
 		AfterCompleteProfileHook: []AfterCompleteProfileHook{
@@ -914,19 +916,39 @@ func makeConversationKey(id1, id2 string) string {
 	return id2 + ":" + id1
 }
 
+// UnreadCountResponse 未读数量响应
+type UnreadCountResponse struct {
+	MessageCount int64 `json:"message_count"` // 消息未读数量
+	EmotionCount int64 `json:"emotion_count"` // 情绪预警未读数量
+}
+
 // GetUnreadMessageCount 获取未读消息数量
-func (s *Service) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID string) (int64, error) {
+func (s *Service) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID string) (*UnreadCountResponse, error) {
 	_, span := tracer().Start(ctx, "GetUnreadMessageCount")
 	defer span.End()
 
-	count, err := s.DeviceMsgRepo.GetUnreadMessageCount(ctx, uid, deviceID)
+	response := &UnreadCountResponse{}
+
+	// 对话消息未读数量
+	msgCount, err := s.DeviceMsgRepo.GetUnreadMessageCount(ctx, uid, deviceID)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", deviceID))
-		return 0, err
+		return nil, err
 	}
+	response.MessageCount = msgCount
 
-	return count, nil
+	// 情绪预警未读数量
+	emotionCount, err := s.Emotion.GetUnreadCount(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("获取情绪预警未读数量失败", "error", err, "device_id", deviceID)
+		emotionCount = 0
+	}
+	response.EmotionCount = emotionCount
+
+	return response, nil
 }
 
 // MyInfoResponse 我的页面信息响应结构体
@@ -967,4 +989,25 @@ func (s *Service) GetMyInfo(ctx context.Context, uid int64, deviceID string) (*M
 		FamilyMemberCount: 1,
 		MembershipInfo:    nil,
 	}, nil
+}
+
+// MarkMessageRead 标记消息已读
+func (s *Service) MarkMessageRead(ctx context.Context, uid int64, deviceID string, messageIDs []string) error {
+	_, span := tracer().Start(ctx, "MarkMessageRead")
+	defer span.End()
+
+	if len(messageIDs) == 0 {
+		return nil
+	}
+
+	// TODO: 可以在这里添加权限验证，确保 uid 有权限标记 deviceID 的消息
+
+	err := s.DeviceMsgRepo.BatchMessageRead(ctx, deviceID, messageIDs)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.Int64("uid", uid), attribute.StringSlice("message_ids", messageIDs))
+		return err
+	}
+
+	return nil
 }

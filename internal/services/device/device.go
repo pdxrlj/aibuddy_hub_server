@@ -463,7 +463,7 @@ func (d *Service) GetMessage(ctx context.Context, deviceID string, page int, pag
 		span.SetAttributes(attribute.String("device_id", deviceID))
 		return nil, 0, err
 	}
-	helpers.PP(messages)
+	// helpers.PP(messages)
 
 	dtoMessages := d.ToMessageDTO(messages)
 	return dtoMessages, total, nil

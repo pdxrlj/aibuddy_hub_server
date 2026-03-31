@@ -2,6 +2,7 @@
 package userhandler
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -112,12 +113,13 @@ type DeviceListResponse struct {
 
 // DeviceInfoListItem 设备信息列表项
 type DeviceInfoListItem struct {
-	DeviceID   string `json:"device_id"`
-	DeviceName string `json:"device_name"`
-	Version    string `json:"version"`
-	Status     string `json:"status"`
-	Avatar     string `json:"avatar"`
-	Gender     string `json:"gender"`
+	DeviceID     string          `json:"device_id"`
+	DeviceName   string          `json:"device_name"`
+	Version      string          `json:"version"`
+	Status       string          `json:"status"`
+	Avatar       string          `json:"avatar"`
+	Gender       string          `json:"gender"`
+	HardwareInfo json.RawMessage `json:"hardware_info"`
 }
 
 // SendMsgRequest 创建留言数据
@@ -300,4 +302,10 @@ type UnreadMessageCountRequest struct {
 // MyInfoRequest 我的页面信息请求
 type MyInfoRequest struct {
 	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+}
+
+// MessageMarkRequest 消息标记请求
+type MessageMarkRequest struct {
+	DeviceID   string   `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+	MessageIDs []string `json:"message_ids" form:"message_ids" param:"message_ids" query:"message_ids" validate:"required" msg:"required:消息ID不能为空"`
 }

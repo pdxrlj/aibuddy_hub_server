@@ -64,3 +64,16 @@ func (h *Handler) GetLatestEmotion(state *ahttp.State, req *GetLatestEmotionRequ
 		Data: emotion,
 	})
 }
+
+// MarkEmotionRead 标记情绪预警已读
+func (h *Handler) MarkEmotionRead(state *ahttp.State, req *MarkEmotionReadRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Emotion.MarkEmotionRead")
+	defer span.End()
+
+	if err := h.EmotionService.MarkEmotionRead(ctx, req.DeviceID, req.EmotionIDs); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		return state.Resposne().Error(err)
+	}
+	return state.Resposne().Success()
+}
