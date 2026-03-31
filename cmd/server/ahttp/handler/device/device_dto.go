@@ -102,8 +102,9 @@ type SendMessageRequest struct {
 // MessageListRequest 消息列表请求
 type MessageListRequest struct {
 	DeviceID string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
-	Page     int    `json:"page" query:"page" validate:"required" msg:"required:page不能为空"`
-	Size     int    `json:"size" query:"size" validate:"required" msg:"required:size不能为空"`
+	// TargetDeviceID string `json:"target_device_id" param:"target_device_id" validate:"required,aimac" msg:"required:目标设备ID不能为空"`
+	Page int `json:"page" query:"page" validate:"required" msg:"required:page不能为空"`
+	Size int `json:"size" query:"size" validate:"required" msg:"required:size不能为空"`
 }
 
 // MessageListResponse 消息列表请求

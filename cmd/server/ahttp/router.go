@@ -149,8 +149,8 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 小程序留言
 			userGroup.POST("/message", h.SendMessage)
-			userGroup.GET("/message_list", h.MessageList)
-			userGroup.PUT("/message/read", h.MessageMark) // 标记消息已读
+			userGroup.GET("/message_list", h.GetConvMessageList) // 获取对话消息列表
+			userGroup.PUT("/message/read", h.MessageMark)        // 标记消息已读
 
 			feedbackHandler := feedbackhandler.NewHandler()
 			// 创建反馈

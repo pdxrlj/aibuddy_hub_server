@@ -145,6 +145,14 @@ type MsgListResponse struct {
 	Data     any   `json:"data"`
 }
 
+// GetConvMessageListRequest 获取对话消息列表请求
+type GetConvMessageListRequest struct {
+	DeviceID       string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+	TargetDeviceID string `json:"target_device_id" form:"target_device_id" param:"target_device_id" query:"target_device_id" validate:"required,aimac" msg:"required:目标设备ID不能为空|aimac:设备ID格式无效"`
+	Page           int    `json:"page" form:"page" param:"page" query:"page" validate:"required,min=1" msg:"required:页码不能为空|min:页码不能小于1"`
+	PageSize       int    `json:"page_size" form:"page_size" param:"page_size" query:"page_size" validate:"required,min=1" msg:"required:每页条数不能为空|min:每页条数不能小于1"`
+}
+
 // AnalysisGrowthReportRequest 分析用户成长报告请求
 type AnalysisGrowthReportRequest struct {
 	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`

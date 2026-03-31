@@ -1011,3 +1011,82 @@ func (s *Service) MarkMessageRead(ctx context.Context, uid int64, deviceID strin
 
 	return nil
 }
+
+// GetConvMessageList 获取两个设备之间的对话消息列表
+func (s *Service) GetConvMessageList(ctx context.Context, uid int64, deviceID, targetDeviceID string, page, pageSize int) ([]*device.MessageDTO, int64, error) {
+	_, span := tracer().Start(ctx, "GetConvMessageList")
+	defer span.End()
+
+	devices, err := s.DeviceRepo.GetUserDeviceList(ctx, uid)
+	if err != nil {
+		span.RecordError(err)
+		return nil, 0, err
+	}
+
+	hasPermission := false
+	for _, device := range devices {
+		if device.DeviceID == deviceID || device.DeviceID == targetDeviceID {
+			hasPermission = true
+			break
+		}
+	}
+
+	if !hasPermission {
+		err := errors.New("无权限查看该对话")
+		span.RecordError(err)
+		span.SetAttributes(
+			attribute.Int64("uid", uid),
+			attribute.String("device_id", deviceID),
+			attribute.String("target_device_id", targetDeviceID),
+		)
+		return nil, 0, err
+	}
+
+	messages, total, err := s.DeviceMsgRepo.GetConvMessageList(ctx, deviceID, targetDeviceID, page, pageSize)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(
+			attribute.String("device_id", deviceID),
+			attribute.String("target_device_id", targetDeviceID),
+			attribute.Int("page", page),
+			attribute.Int("page_size", pageSize),
+		)
+		return nil, 0, err
+	}
+
+	// 转换为 MessageDTO 格式
+	dtoMessages := s.toMessageDTO(messages)
+
+	return dtoMessages, total, nil
+}
+
+// toMessageDTO 将 DeviceMessage 列表转换为 MessageDTO 列表
+func (s *Service) toMessageDTO(messages []*model.DeviceMessage) []*device.MessageDTO {
+	result := make([]*device.MessageDTO, 0, len(messages))
+	for _, msg := range messages {
+		dto := &device.MessageDTO{
+			ID:           msg.ID,
+			MsgID:        msg.MsgID,
+			FromDeviceID: msg.FromDeviceID,
+			ToDeviceID:   msg.ToDeviceID,
+			Content:      msg.Content,
+			Fmt:          msg.Fmt.String(),
+			Dur:          msg.Dur,
+			Read:         msg.Read,
+			CreatedAt:    time.Time(msg.CreatedAt).Format(time.DateTime),
+			UpdatedAt:    time.Time(msg.UpdatedAt).Format(time.DateTime),
+		}
+		// 从 Device.DeviceInfo 获取头像和用户名
+		if msg.Device != nil && msg.Device.DeviceInfo != nil {
+			dto.FromAvatar = msg.Device.DeviceInfo.Avatar
+			dto.FromUsername = msg.Device.DeviceInfo.NickName
+		}
+		// 从 ToDevice.DeviceInfo 获取头像和用户名
+		if msg.ToDevice != nil && msg.ToDevice.DeviceInfo != nil {
+			dto.ToAvatar = msg.ToDevice.DeviceInfo.Avatar
+			dto.ToUsername = msg.ToDevice.DeviceInfo.NickName
+		}
+		result = append(result, dto)
+	}
+	return result
+}

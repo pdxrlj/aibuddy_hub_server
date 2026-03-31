@@ -99,6 +99,48 @@ func (r *DeviceMessageRepo) GetMessageFromUser(ctx context.Context, fromID strin
 	return messages, total, nil
 }
 
+// GetConvMessageList 获取两个设备之间的对话消息列表（双向：A->B 和 B->A）
+func (r *DeviceMessageRepo) GetConvMessageList(ctx context.Context, deviceID, targetDeviceID string, page, size int) ([]*model.DeviceMessage, int64, error) {
+	_, span := tracer.Start(ctx, "DeviceMessageRepo.GetConvMessageList")
+	defer span.End()
+
+	offset := (page - 1) * size
+
+	// 查询双向消息：(A->B) OR (B->A)
+	messages, total, err := query.DeviceMessage.WithContext(ctx).
+		Where(
+			field.Or(
+				// A -> B
+				field.And(
+					query.DeviceMessage.FromDeviceID.Eq(deviceID),
+					query.DeviceMessage.ToDeviceID.Eq(targetDeviceID),
+				),
+				// B -> A
+				field.And(
+					query.DeviceMessage.FromDeviceID.Eq(targetDeviceID),
+					query.DeviceMessage.ToDeviceID.Eq(deviceID),
+				),
+			),
+		).
+		Order(query.DeviceMessage.CreatedAt.Desc()).
+		Preload(query.DeviceMessage.Device.DeviceInfo).
+		Preload(query.DeviceMessage.ToDevice.DeviceInfo).
+		FindByPage(offset, size)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(
+			attribute.String("device_id", deviceID),
+			attribute.String("target_device_id", targetDeviceID),
+			attribute.Int("page", page),
+			attribute.Int("size", size),
+		)
+		return nil, 0, err
+	}
+
+	return messages, total, nil
+}
+
 // GetUnreadMessageCount 获取未读消息数量
 func (r *DeviceMessageRepo) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID string) (int64, error) {
 	_, span := tracer.Start(ctx, "DeviceMessageRepo.GetUnreadMessageCount")

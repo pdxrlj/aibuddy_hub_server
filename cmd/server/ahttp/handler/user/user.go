@@ -333,6 +333,36 @@ func (h *Handler) MessageList(state *ahttp.State, req *GetMessageRequest) error 
 	}).Success()
 }
 
+// GetConvMessageList 获取两个设备之间的对话消息列表（双向：A->B 和 B->A）
+func (h *Handler) GetConvMessageList(state *ahttp.State, req *GetConvMessageListRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.GetConvMessageList")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	messages, total, err := h.UserServer.GetConvMessageList(ctx, uid, req.DeviceID, req.TargetDeviceID, req.Page, req.PageSize)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(
+			attribute.String("device_id", req.DeviceID),
+			attribute.String("target_device_id", req.TargetDeviceID),
+			attribute.Int64("uid", uid),
+		)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().SetData(MsgListResponse{
+		Page:     req.Page,
+		PageSize: req.PageSize,
+		Total:    total,
+		Data:     messages,
+	}).Success()
+}
+
 // MessageMark 标记留言已读
 func (h *Handler) MessageMark(state *ahttp.State, req *MessageMarkRequest) error {
 	ctx, span := tracer().Start(state.Context(), "User.MessageMark")
