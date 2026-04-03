@@ -28,3 +28,8 @@ func (s *Service) GetEmotions(ctx context.Context, page, pageSize int, deviceID 
 func (s *Service) GetLatestEmotion(ctx context.Context, deviceID string) (*model.Emotion, error) {
 	return s.emotionRepo.GetLatestEmotion(ctx, deviceID)
 }
+
+// MarkEmotionRead 标记情绪预警已读
+func (s *Service) MarkEmotionRead(ctx context.Context, deviceID string, emotionIDs []string) error {
+	return s.emotionRepo.MarkEmotionRead(ctx, deviceID, emotionIDs)
+}

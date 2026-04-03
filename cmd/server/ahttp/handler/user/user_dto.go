@@ -2,6 +2,7 @@
 package userhandler
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -112,12 +113,13 @@ type DeviceListResponse struct {
 
 // DeviceInfoListItem 设备信息列表项
 type DeviceInfoListItem struct {
-	DeviceID   string `json:"device_id"`
-	DeviceName string `json:"device_name"`
-	Version    string `json:"version"`
-	Status     string `json:"status"`
-	Avatar     string `json:"avatar"`
-	Gender     string `json:"gender"`
+	DeviceID     string          `json:"device_id"`
+	DeviceName   string          `json:"device_name"`
+	Version      string          `json:"version"`
+	Status       string          `json:"status"`
+	Avatar       string          `json:"avatar"`
+	Gender       string          `json:"gender"`
+	HardwareInfo json.RawMessage `json:"hardware_info"`
 }
 
 // SendMsgRequest 创建留言数据
@@ -141,6 +143,14 @@ type MsgListResponse struct {
 	PageSize int   `json:"page_size"`
 	Total    int64 `json:"total"`
 	Data     any   `json:"data"`
+}
+
+// GetConvMessageListRequest 获取对话消息列表请求
+type GetConvMessageListRequest struct {
+	DeviceID       string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+	TargetDeviceID string `json:"target_device_id" form:"target_device_id" param:"target_device_id" query:"target_device_id" validate:"required,aimac" msg:"required:目标设备ID不能为空|aimac:设备ID格式无效"`
+	Page           int    `json:"page" form:"page" param:"page" query:"page" validate:"required,min=1" msg:"required:页码不能为空|min:页码不能小于1"`
+	PageSize       int    `json:"page_size" form:"page_size" param:"page_size" query:"page_size" validate:"required,min=1" msg:"required:每页条数不能为空|min:每页条数不能小于1"`
 }
 
 // AnalysisGrowthReportRequest 分析用户成长报告请求
@@ -290,4 +300,20 @@ type UpdateDeviceInfoRequest struct {
 // DeleteGrowthReportRequest 删除成长报告请求
 type DeleteGrowthReportRequest struct {
 	ReportID string `json:"report_id" form:"report_id" param:"report_id" query:"report_id" validate:"required" msg:"required:成长报告ID不能为空"`
+}
+
+// UnreadMessageCountRequest 获取未读消息数量请求
+type UnreadMessageCountRequest struct {
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+}
+
+// MyInfoRequest 我的页面信息请求
+type MyInfoRequest struct {
+	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+}
+
+// MessageMarkRequest 消息标记请求
+type MessageMarkRequest struct {
+	DeviceID   string   `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+	MessageIDs []string `json:"message_ids" form:"message_ids" param:"message_ids" query:"message_ids" validate:"required" msg:"required:消息ID不能为空"`
 }

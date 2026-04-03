@@ -114,15 +114,17 @@ func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
 	}
 
 	for i, friend := range friends {
-		var deviceName, avatar string
+		var deviceName, avatar, sex string
 		if friend.TargetDevice.DeviceInfo != nil {
 			deviceName = friend.TargetDevice.DeviceInfo.NickName
 			avatar = friend.TargetDevice.DeviceInfo.Avatar
+			sex = friend.TargetDevice.DeviceInfo.Gender
 		}
 
 		friendsResponse[i+1] = &GetFriendsResponseItem{
 			DeviceID:   friend.TargetDeviceID,
 			DeviceName: deviceName,
+			Sex:        sex,
 			Avatar:     avatar,
 			Relation:   "朋友",
 		}

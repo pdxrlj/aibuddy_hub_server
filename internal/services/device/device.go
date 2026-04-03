@@ -366,7 +366,6 @@ func (d *Service) SendMessage(ctx context.Context, deviceID, targetDeviceID, con
 	if err = d.DeviceMessageRepo.CreateDeviceMessage(ctx, &model.DeviceMessage{
 		MsgID:        msgID,
 		FromDeviceID: deviceID,
-		FromUsername: deviceInfo.DeviceInfo.NickName,
 		ToDeviceID:   targetDeviceID,
 		Content:      content,
 		Fmt:          model.MessageFmt(fmt),
@@ -421,7 +420,6 @@ func (d *Service) SendMessageToUser(ctx context.Context, deviceID string, uid in
 	if err = d.DeviceMessageRepo.CreateDeviceMessage(ctx, &model.DeviceMessage{
 		MsgID:        msgID,
 		FromDeviceID: deviceID,
-		FromUsername: deviceInfo.DeviceInfo.NickName,
 		ToDeviceID:   strconv.Itoa(uid),
 		Content:      content,
 		Fmt:          model.MessageFmt(fmt),
@@ -454,8 +452,8 @@ func (d *Service) SendMessageToUser(ctx context.Context, deviceID string, uid in
 	return nil
 }
 
-// GetMessage 获取指定留言
-func (d *Service) GetMessage(ctx context.Context, deviceID string, page int, pageSize int) ([]*MessageDTO, int64, error) {
+// GetMessage 获取指定留言（按对话分组）
+func (d *Service) GetMessage(ctx context.Context, deviceID string, page int, pageSize int) ([][]*MessageDTO, int64, error) {
 	_, span := tracer().Start(ctx, "CreateMessage")
 	defer span.End()
 
@@ -465,6 +463,8 @@ func (d *Service) GetMessage(ctx context.Context, deviceID string, page int, pag
 		span.SetAttributes(attribute.String("device_id", deviceID))
 		return nil, 0, err
 	}
+	// helpers.PP(messages)
+
 	dtoMessages := d.ToMessageDTO(messages)
 	return dtoMessages, total, nil
 }
@@ -478,6 +478,7 @@ type MessageDTO struct {
 	ToDeviceID   string `json:"to_device_id"`
 	FromAvatar   string `json:"from_avatar"`
 	ToAvatar     string `json:"to_avatar"`
+	ToUsername   string `json:"to_username"`
 	Content      string `json:"content"`
 	Fmt          string `json:"fmt"`
 	Dur          int    `json:"dur"`
@@ -486,15 +487,17 @@ type MessageDTO struct {
 	UpdatedAt    string `json:"updated_at"`
 }
 
-// ToMessageDTO 将 DeviceMessage 列表转换为 MessageDTO 列表
-func (d *Service) ToMessageDTO(messages []*model.DeviceMessage) []*MessageDTO {
-	result := make([]*MessageDTO, len(messages))
-	for i, msg := range messages {
+// ToMessageDTO 将 DeviceMessage 列表转换为按对话分组的 MessageDTO 列表
+// 返回格式: [][]*MessageDTO，每个子数组代表与同一个聊天对象的所有消息
+func (d *Service) ToMessageDTO(messages []*model.DeviceMessage) [][]*MessageDTO {
+	// 按对话双方分组，确保 A->B 和 B->A 的消息在同一个组
+	groups := make(map[string][]*MessageDTO)
+
+	for _, msg := range messages {
 		dto := &MessageDTO{
 			ID:           msg.ID,
 			MsgID:        msg.MsgID,
 			FromDeviceID: msg.FromDeviceID,
-			FromUsername: msg.FromUsername,
 			ToDeviceID:   msg.ToDeviceID,
 			Content:      msg.Content,
 			Fmt:          msg.Fmt.String(),
@@ -506,14 +509,34 @@ func (d *Service) ToMessageDTO(messages []*model.DeviceMessage) []*MessageDTO {
 		// 从 Device.DeviceInfo 获取头像
 		if msg.Device != nil && msg.Device.DeviceInfo != nil {
 			dto.FromAvatar = msg.Device.DeviceInfo.Avatar
+			dto.FromUsername = msg.Device.DeviceInfo.NickName
 		}
 		// 从 ToDevice.DeviceInfo 获取头像
 		if msg.ToDevice != nil && msg.ToDevice.DeviceInfo != nil {
 			dto.ToAvatar = msg.ToDevice.DeviceInfo.Avatar
+			dto.ToUsername = msg.ToDevice.DeviceInfo.NickName
 		}
-		result[i] = dto
+
+		// 生成分组key：将两个deviceID排序后拼接，确保双向对话在同一组
+		key := makeConversationKey(msg.FromDeviceID, msg.ToDeviceID)
+		groups[key] = append(groups[key], dto)
 	}
+
+	// 将 map 转换为二维数组
+	result := make([][]*MessageDTO, 0, len(groups))
+	for _, group := range groups {
+		result = append(result, group)
+	}
+
 	return result
+}
+
+// makeConversationKey 生成分组key，确保 A-B 和 B-A 的对话使用相同的key
+func makeConversationKey(id1, id2 string) string {
+	if id1 < id2 {
+		return id1 + ":" + id2
+	}
+	return id2 + ":" + id1
 }
 
 // AccountInfo 账户信息

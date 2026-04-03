@@ -8,6 +8,7 @@ import (
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
 	logger "aibuddy/pkg/log"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -257,18 +258,25 @@ func (h *Handler) DeviceList(state *ahttp.State) error {
 		deviceName := ""
 		avatar := ""
 		gender := ""
+		hardwareInfo := json.RawMessage(device.HardwareInfo)
 		if device.DeviceInfo != nil {
 			deviceName = device.DeviceInfo.NickName
 			avatar = device.DeviceInfo.Avatar
 			gender = device.DeviceInfo.Gender
 		}
+		// 2026/3/30 最终返回给用户的设备状态未知==>离线
+		if device.Status == model.DeviceStatusUnknown {
+			device.Status = model.DeviceStatusOffline
+		}
+
 		deviceListItems = append(deviceListItems, &DeviceInfoListItem{
-			DeviceID:   device.DeviceID,
-			DeviceName: deviceName,
-			Version:    device.Version,
-			Status:     device.Status.String(),
-			Avatar:     avatar,
-			Gender:     gender,
+			DeviceID:     device.DeviceID,
+			DeviceName:   deviceName,
+			Version:      device.Version,
+			Status:       device.Status.String(),
+			Avatar:       avatar,
+			Gender:       gender,
+			HardwareInfo: hardwareInfo,
 		})
 	}
 
@@ -323,6 +331,56 @@ func (h *Handler) MessageList(state *ahttp.State, req *GetMessageRequest) error 
 		Total:    total,
 		Data:     data,
 	}).Success()
+}
+
+// GetConvMessageList 获取两个设备之间的对话消息列表（双向：A->B 和 B->A）
+func (h *Handler) GetConvMessageList(state *ahttp.State, req *GetConvMessageListRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.GetConvMessageList")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	messages, total, err := h.UserServer.GetConvMessageList(ctx, uid, req.DeviceID, req.TargetDeviceID, req.Page, req.PageSize)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(
+			attribute.String("device_id", req.DeviceID),
+			attribute.String("target_device_id", req.TargetDeviceID),
+			attribute.Int64("uid", uid),
+		)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().SetData(MsgListResponse{
+		Page:     req.Page,
+		PageSize: req.PageSize,
+		Total:    total,
+		Data:     messages,
+	}).Success()
+}
+
+// MessageMark 标记留言已读
+func (h *Handler) MessageMark(state *ahttp.State, req *MessageMarkRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.MessageMark")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	if err := h.UserServer.MarkMessageRead(ctx, uid, req.DeviceID, req.MessageIDs); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.Int64("uid", uid))
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success()
 }
 
 // AnalysisGrowthReport 分析用户成长报告
@@ -516,6 +574,26 @@ func (h *Handler) UpdateDeviceProfile(state *ahttp.State, req *UpdateDeviceInfoR
 	return state.Resposne().Success()
 }
 
+// UnreadMessageCount 获取未读消息数量
+func (h *Handler) UnreadMessageCount(state *ahttp.State, req *UnreadMessageCountRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.UnreadMessageCount")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	response, err := h.UserServer.GetUnreadMessageCount(ctx, uid, req.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success(response)
+}
+
 // Unregister 注销用户帐号
 func (h *Handler) Unregister(state *ahttp.State) error {
 	ctx, span := tracer().Start(state.Context(), "User.Unregister")
@@ -566,4 +644,24 @@ func (h *Handler) DownloadChatRecord(state *ahttp.State, req *DownloadChatRecord
 		Total:    len(resp.Data),
 		Data:     resp.Data,
 	}).Success()
+}
+
+// MyInfo 我的页面信息：当前设备的信息、 好友数、家庭成员数、会员信息
+func (h *Handler) MyInfo(state *ahttp.State, req *MyInfoRequest) error {
+	ctx, span := tracer().Start(state.Context(), "User.MyInfo")
+	defer span.End()
+
+	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	info, err := h.UserServer.GetMyInfo(ctx, uid, req.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	return state.Resposne().Success(info)
 }

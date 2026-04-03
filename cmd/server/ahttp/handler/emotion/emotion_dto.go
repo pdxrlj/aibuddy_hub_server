@@ -25,3 +25,9 @@ type GetLatestEmotionRequest struct {
 type GetLatestEmotionRes struct {
 	Data *model.Emotion `json:"data"`
 }
+
+// MarkEmotionReadRequest 标记情绪预警已读请求
+type MarkEmotionReadRequest struct {
+	DeviceID   string   `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
+	EmotionIDs []string `json:"emotion_ids" form:"emotion_ids" param:"emotion_ids" query:"emotion_ids" validate:"required" msg:"required:情绪预警ID不能为空"`
+}

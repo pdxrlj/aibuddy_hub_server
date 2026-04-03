@@ -125,6 +125,7 @@ func (w *WarningResult) ToEmotion(deviceID string, dialogueID int64) (*model.Emo
 		ScamRisk:           scamRiskJSON,
 		EmotionalRisk:      emotionalRiskJSON,
 		OverallAssessment:  w.OverallAssessment,
+		Read:               false,
 	}, nil
 }
 

@@ -43,6 +43,7 @@ func newEmotion(db *gorm.DB, opts ...gen.DOOption) emotion {
 	_emotion.ScamRisk = field.NewField(tableName, "scam_risk")
 	_emotion.EmotionalRisk = field.NewField(tableName, "emotional_risk")
 	_emotion.OverallAssessment = field.NewString(tableName, "overall_assessment")
+	_emotion.Read = field.NewBool(tableName, "read")
 	_emotion.CreatedAt = field.NewTime(tableName, "created_at")
 	_emotion.UpdatedAt = field.NewTime(tableName, "updated_at")
 
@@ -70,6 +71,7 @@ type emotion struct {
 	ScamRisk           field.Field   // 诈骗风险
 	EmotionalRisk      field.Field   // 情绪风险
 	OverallAssessment  field.String  // 整体评估
+	Read               field.Bool    // 是否已读
 	CreatedAt          field.Time    // 创建时间
 	UpdatedAt          field.Time    // 更新时间
 
@@ -103,6 +105,7 @@ func (e *emotion) updateTableName(table string) *emotion {
 	e.ScamRisk = field.NewField(table, "scam_risk")
 	e.EmotionalRisk = field.NewField(table, "emotional_risk")
 	e.OverallAssessment = field.NewString(table, "overall_assessment")
+	e.Read = field.NewBool(table, "read")
 	e.CreatedAt = field.NewTime(table, "created_at")
 	e.UpdatedAt = field.NewTime(table, "updated_at")
 
@@ -121,7 +124,7 @@ func (e *emotion) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (e *emotion) fillFieldMap() {
-	e.fieldMap = make(map[string]field.Expr, 17)
+	e.fieldMap = make(map[string]field.Expr, 18)
 	e.fieldMap["id"] = e.ID
 	e.fieldMap["device_id"] = e.DeviceID
 	e.fieldMap["dialogue_id"] = e.DialogueID
@@ -137,6 +140,7 @@ func (e *emotion) fillFieldMap() {
 	e.fieldMap["scam_risk"] = e.ScamRisk
 	e.fieldMap["emotional_risk"] = e.EmotionalRisk
 	e.fieldMap["overall_assessment"] = e.OverallAssessment
+	e.fieldMap["read"] = e.Read
 	e.fieldMap["created_at"] = e.CreatedAt
 	e.fieldMap["updated_at"] = e.UpdatedAt
 }

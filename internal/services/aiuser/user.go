@@ -59,6 +59,7 @@ type Service struct {
 	BindDeviceSnRepo *repository.BindDeviceSnRepo
 	DeviceMsgRepo    *repository.DeviceMessageRepo
 	GrowthReportRepo *repository.GrowthReportRepo
+	Emotion          *repository.EmotionRepo
 
 	sms   *sms.AliyunSMS
 	cache flash.Flash
@@ -97,6 +98,7 @@ func New() *Service {
 		deviceService:    device.NewService(),
 		DeviceMsgRepo:    repository.NewDeviceMessageRepo(),
 		GrowthReportRepo: repository.NewGrowthReportRepo(),
+		Emotion:          repository.NewEmotionRepo(),
 
 		growthReportService: agent.NewGroupReport(),
 		AfterCompleteProfileHook: []AfterCompleteProfileHook{
@@ -570,7 +572,7 @@ func (s *Service) CreateMessage(ctx context.Context, uid int64, data *model.Devi
 
 	data.MsgID = helpers.GenerateNumber(10)
 	data.FromDeviceID = fmt.Sprintf("%d", uid)
-	data.FromUsername = info.Relation
+
 	if err = s.DeviceMsgRepo.CreateDeviceMessage(ctx, data); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", data.ToDeviceID), attribute.Int64("uid", uid))
@@ -586,8 +588,8 @@ func (s *Service) CreateMessage(ctx context.Context, uid int64, data *model.Devi
 	return nil
 }
 
-// GetMessage 获取指定留言
-func (s *Service) GetMessage(ctx context.Context, uid int64, deviceID string, page int, pageSize int) ([]*MessageDTO, int64, error) {
+// GetMessage 获取指定留言（按对话分组）
+func (s *Service) GetMessage(ctx context.Context, uid int64, deviceID string, page int, pageSize int) ([][]*MessageDTO, int64, error) {
 	_, span := tracer().Start(ctx, "CreateMessage")
 	defer span.End()
 	// slog.Info("GetMessage", "uid", uid, "device_id", deviceID, "page", page, "pageSize", pageSize)
@@ -864,15 +866,17 @@ type MessageDTO struct {
 	UpdatedAt    string `json:"updated_at"`
 }
 
-// ToMessageDTO 将 DeviceMessage 列表转换为 MessageDTO 列表
-func (s *Service) ToMessageDTO(messages []*model.DeviceMessage) []*MessageDTO {
-	result := make([]*MessageDTO, len(messages))
-	for i, msg := range messages {
+// ToMessageDTO 将 DeviceMessage 列表转换为按对话分组的 MessageDTO 列表
+// 返回格式: [][]*MessageDTO，每个子数组代表与同一个聊天对象的所有消息
+func (s *Service) ToMessageDTO(messages []*model.DeviceMessage) [][]*MessageDTO {
+	// 按对话双方分组，确保 A->B 和 B->A 的消息在同一个组
+	groups := make(map[string][]*MessageDTO)
+
+	for _, msg := range messages {
 		dto := &MessageDTO{
 			ID:           msg.ID,
 			MsgID:        msg.MsgID,
 			FromDeviceID: msg.FromDeviceID,
-			FromUsername: msg.FromUsername,
 			ToDeviceID:   msg.ToDeviceID,
 			Content:      msg.Content,
 			Fmt:          msg.Fmt.String(),
@@ -889,7 +893,200 @@ func (s *Service) ToMessageDTO(messages []*model.DeviceMessage) []*MessageDTO {
 		if msg.ToDevice != nil && msg.ToDevice.DeviceInfo != nil {
 			dto.ToAvatar = msg.ToDevice.DeviceInfo.Avatar
 		}
-		result[i] = dto
+
+		// 生成分组key：将两个deviceID排序后拼接，确保双向对话在同一组
+		key := makeConversationKey(msg.FromDeviceID, msg.ToDeviceID)
+		groups[key] = append(groups[key], dto)
+	}
+
+	// 将 map 转换为二维数组
+	result := make([][]*MessageDTO, 0, len(groups))
+	for _, group := range groups {
+		result = append(result, group)
+	}
+
+	return result
+}
+
+// makeConversationKey 生成分组key，确保 A-B 和 B-A 的对话使用相同的key
+func makeConversationKey(id1, id2 string) string {
+	if id1 < id2 {
+		return id1 + ":" + id2
+	}
+	return id2 + ":" + id1
+}
+
+// UnreadCountResponse 未读数量响应
+type UnreadCountResponse struct {
+	MessageCount int64 `json:"message_count"` // 消息未读数量
+	EmotionCount int64 `json:"emotion_count"` // 情绪预警未读数量
+}
+
+// GetUnreadMessageCount 获取未读消息数量
+func (s *Service) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID string) (*UnreadCountResponse, error) {
+	_, span := tracer().Start(ctx, "GetUnreadMessageCount")
+	defer span.End()
+
+	response := &UnreadCountResponse{}
+
+	// 对话消息未读数量
+	msgCount, err := s.DeviceMsgRepo.GetUnreadMessageCount(ctx, uid, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", deviceID))
+		return nil, err
+	}
+	response.MessageCount = msgCount
+
+	// 情绪预警未读数量
+	emotionCount, err := s.Emotion.GetUnreadCount(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("获取情绪预警未读数量失败", "error", err, "device_id", deviceID)
+		emotionCount = 0
+	}
+	response.EmotionCount = emotionCount
+
+	return response, nil
+}
+
+// MyInfoResponse 我的页面信息响应结构体
+type MyInfoResponse struct {
+	DeviceName        string `json:"device_name"`
+	DeviceAvatar      string `json:"device_avatar"`
+	DeviceID          string `json:"device_id"`
+	Sex               string `json:"sex"`
+	FriendCount       int64  `json:"friend_count"`
+	FamilyMemberCount int64  `json:"family_member_count"`
+
+	// TODO 会员信息需要根据实际情况返回
+	MembershipInfo any `json:"membership_info"`
+}
+
+// GetMyInfo 获取我的页面信息：当前设备的信息、 好友数、家庭成员数、会员信息
+func (s *Service) GetMyInfo(ctx context.Context, uid int64, deviceID string) (*MyInfoResponse, error) {
+	_, span := tracer().Start(ctx, "GetMyInfo")
+	defer span.End()
+
+	info, err := s.DeviceInfoRepo.GetUserInfoByDeivceID(ctx, deviceID)
+	if err != nil {
+		return nil, err
+	}
+	_ = uid
+	// 获取好友数量
+	_, friendCount, err := s.deviceService.GetFriends(ctx, deviceID, 1, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	return &MyInfoResponse{
+		DeviceName:        info.NickName,
+		DeviceAvatar:      info.Avatar,
+		FriendCount:       friendCount,
+		DeviceID:          deviceID,
+		Sex:               info.Gender,
+		FamilyMemberCount: 1,
+		MembershipInfo:    nil,
+	}, nil
+}
+
+// MarkMessageRead 标记消息已读
+func (s *Service) MarkMessageRead(ctx context.Context, uid int64, deviceID string, messageIDs []string) error {
+	_, span := tracer().Start(ctx, "MarkMessageRead")
+	defer span.End()
+
+	if len(messageIDs) == 0 {
+		return nil
+	}
+
+	// TODO: 可以在这里添加权限验证，确保 uid 有权限标记 deviceID 的消息
+
+	err := s.DeviceMsgRepo.BatchMessageRead(ctx, deviceID, messageIDs)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.Int64("uid", uid), attribute.StringSlice("message_ids", messageIDs))
+		return err
+	}
+
+	return nil
+}
+
+// GetConvMessageList 获取两个设备之间的对话消息列表
+func (s *Service) GetConvMessageList(ctx context.Context, uid int64, deviceID, targetDeviceID string, page, pageSize int) ([]*device.MessageDTO, int64, error) {
+	_, span := tracer().Start(ctx, "GetConvMessageList")
+	defer span.End()
+
+	devices, err := s.DeviceRepo.GetUserDeviceList(ctx, uid)
+	if err != nil {
+		span.RecordError(err)
+		return nil, 0, err
+	}
+
+	hasPermission := false
+	for _, device := range devices {
+		if device.DeviceID == deviceID || device.DeviceID == targetDeviceID {
+			hasPermission = true
+			break
+		}
+	}
+
+	if !hasPermission {
+		err := errors.New("无权限查看该对话")
+		span.RecordError(err)
+		span.SetAttributes(
+			attribute.Int64("uid", uid),
+			attribute.String("device_id", deviceID),
+			attribute.String("target_device_id", targetDeviceID),
+		)
+		return nil, 0, err
+	}
+
+	messages, total, err := s.DeviceMsgRepo.GetConvMessageList(ctx, deviceID, targetDeviceID, page, pageSize)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(
+			attribute.String("device_id", deviceID),
+			attribute.String("target_device_id", targetDeviceID),
+			attribute.Int("page", page),
+			attribute.Int("page_size", pageSize),
+		)
+		return nil, 0, err
+	}
+
+	// 转换为 MessageDTO 格式
+	dtoMessages := s.toMessageDTO(messages)
+
+	return dtoMessages, total, nil
+}
+
+// toMessageDTO 将 DeviceMessage 列表转换为 MessageDTO 列表
+func (s *Service) toMessageDTO(messages []*model.DeviceMessage) []*device.MessageDTO {
+	result := make([]*device.MessageDTO, 0, len(messages))
+	for _, msg := range messages {
+		dto := &device.MessageDTO{
+			ID:           msg.ID,
+			MsgID:        msg.MsgID,
+			FromDeviceID: msg.FromDeviceID,
+			ToDeviceID:   msg.ToDeviceID,
+			Content:      msg.Content,
+			Fmt:          msg.Fmt.String(),
+			Dur:          msg.Dur,
+			Read:         msg.Read,
+			CreatedAt:    time.Time(msg.CreatedAt).Format(time.DateTime),
+			UpdatedAt:    time.Time(msg.UpdatedAt).Format(time.DateTime),
+		}
+		// 从 Device.DeviceInfo 获取头像和用户名
+		if msg.Device != nil && msg.Device.DeviceInfo != nil {
+			dto.FromAvatar = msg.Device.DeviceInfo.Avatar
+			dto.FromUsername = msg.Device.DeviceInfo.NickName
+		}
+		// 从 ToDevice.DeviceInfo 获取头像和用户名
+		if msg.ToDevice != nil && msg.ToDevice.DeviceInfo != nil {
+			dto.ToAvatar = msg.ToDevice.DeviceInfo.Avatar
+			dto.ToUsername = msg.ToDevice.DeviceInfo.NickName
+		}
+		result = append(result, dto)
 	}
 	return result
 }
