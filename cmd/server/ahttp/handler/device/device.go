@@ -168,6 +168,11 @@ func (d *Device) GetDeviceInfo(state *ahttp.State, req *GetDeviceInfoRequest) er
 		avatar = deviceInfo.DeviceInfo.Avatar
 	}
 
+	// 对端设备信息，使用MQTT协议发送给对端
+	if err := d.Service.UseMQTTSendTargetDeviceToFriendInfo(ctx, req.DeviceID, req.TargetDeviceID); err != nil {
+		slog.Warn("send target device friend info failed", "error", err)
+	}
+
 	return state.Resposne().Success(&GetDeviceInfoResponse{
 		DeviceID:   deviceInfo.DeviceID,
 		DeviceName: nickName,
@@ -245,7 +250,11 @@ func (d *Device) MessageList(state *ahttp.State, req *MessageListRequest) error 
 	data, total, err := d.Service.GetMessage(ctx, req.DeviceID, req.Page, req.Size)
 	if err != nil {
 		span.RecordError(err)
-		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.Int("page", req.Page), attribute.Int("size", req.Size))
+		span.SetAttributes(
+			attribute.String("device_id", req.DeviceID),
+			attribute.Int("page", req.Page),
+			attribute.Int("size", req.Size),
+		)
 		return state.Resposne().Error(err)
 	}
 
