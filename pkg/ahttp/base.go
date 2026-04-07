@@ -22,6 +22,11 @@ type State struct {
 	Ctx   echo.Context
 }
 
+// RawRequest 获取原始请求
+func (s *State) RawRequest() *http.Request {
+	return s.Ctx.Request()
+}
+
 // Base HTTP 基础结构
 type Base struct {
 	*echo.Echo

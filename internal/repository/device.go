@@ -457,8 +457,8 @@ func (d *DeviceRepo) SetDeviceAgent(deviceID string, agentName string, tx ...*qu
 	return nil
 }
 
-// SetDeviceVipExpireTime 设置设备VIP的过期时间
-func (d *DeviceRepo) SetDeviceVipExpireTime(ctx context.Context, deviceID string, expireTime time.Time, tx ...*query.Query) error {
+// SetDeviceVipExpireTime 设置设备VIP的过期时间（累加时长）
+func (d *DeviceRepo) SetDeviceVipExpireTime(ctx context.Context, deviceID string, duration time.Duration, tx ...*query.Query) error {
 	_, span := tracer.Start(ctx, "DeviceService.SetDeviceVipExpireTime")
 	defer span.End()
 
@@ -466,14 +466,46 @@ func (d *DeviceRepo) SetDeviceVipExpireTime(ctx context.Context, deviceID string
 	if len(tx) > 0 {
 		db = tx[0]
 	}
-	_, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID)).
-		Update(db.Device.ExpireTime, expireTime)
+
+	// 查询设备当前的过期时间
+	device, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID)).First()
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[SetDeviceVipExpireTime] Get device error", "error", err, "device_id", deviceID)
+		return err
+	}
+
+	// 计算新的过期时间
+	var newExpireTime time.Time
+	now := time.Now()
+
+	// 如果当前有过期时间且未过期，在当前基础上增加
+	if !device.ExpireTime.IsZero() && device.ExpireTime.After(now) {
+		newExpireTime = device.ExpireTime.Add(duration)
+	} else {
+		// 否则从当前时间开始计算
+		newExpireTime = now.Add(duration)
+	}
+
+	// 更新过期时间
+	_, err = db.Device.Where(db.Device.DeviceID.Eq(deviceID)).
+		Update(db.Device.ExpireTime, newExpireTime)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(
+			attribute.String("device_id", deviceID),
+			attribute.String("new_expire_time", newExpireTime.Format("2006-01-02 15:04:05")),
+		)
 		slog.Error("[SetDeviceVipExpireTime] Update error", "error", err, "device_id", deviceID)
 		return err
 	}
+
+	slog.Info("[SetDeviceVipExpireTime] Success",
+		"device_id", deviceID,
+		"duration", duration.String(),
+		"new_expire_time", newExpireTime.Format("2006-01-02 15:04:05"))
+
 	return nil
 }
 

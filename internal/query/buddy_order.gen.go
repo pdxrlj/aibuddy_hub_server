@@ -30,8 +30,9 @@ func newOrder(db *gorm.DB, opts ...gen.DOOption) order {
 	_order.ALL = field.NewAsterisk(tableName)
 	_order.ID = field.NewInt64(tableName, "id")
 	_order.UserID = field.NewInt64(tableName, "user_id")
+	_order.DeviceID = field.NewString(tableName, "device_id")
 	_order.OutTradeNo = field.NewString(tableName, "out_trade_no")
-	_order.OrderNo = field.NewString(tableName, "order_no")
+	_order.TransactionID = field.NewString(tableName, "transaction_id")
 	_order.Status = field.NewString(tableName, "status")
 	_order.ExpireTime = field.NewField(tableName, "expire_time")
 	_order.CreatedAt = field.NewField(tableName, "created_at")
@@ -55,16 +56,17 @@ func newOrder(db *gorm.DB, opts ...gen.DOOption) order {
 type order struct {
 	orderDo
 
-	ALL        field.Asterisk
-	ID         field.Int64
-	UserID     field.Int64  // 用户ID
-	OutTradeNo field.String // 微信订单号
-	OrderNo    field.String // 商户订单号
-	Status     field.String // 订单状态
-	ExpireTime field.Field  // 订单超时时间
-	CreatedAt  field.Field  // 创建时间
-	UpdatedAt  field.Field  // 更新时间
-	Goods      orderHasManyGoods
+	ALL           field.Asterisk
+	ID            field.Int64
+	UserID        field.Int64  // 用户ID
+	DeviceID      field.String // 设备ID
+	OutTradeNo    field.String // 商户订单号
+	TransactionID field.String // 微信支付订单号
+	Status        field.String // 订单状态
+	ExpireTime    field.Field  // 订单超时时间
+	CreatedAt     field.Field  // 创建时间
+	UpdatedAt     field.Field  // 更新时间
+	Goods         orderHasManyGoods
 
 	fieldMap map[string]field.Expr
 }
@@ -83,8 +85,9 @@ func (o *order) updateTableName(table string) *order {
 	o.ALL = field.NewAsterisk(table)
 	o.ID = field.NewInt64(table, "id")
 	o.UserID = field.NewInt64(table, "user_id")
+	o.DeviceID = field.NewString(table, "device_id")
 	o.OutTradeNo = field.NewString(table, "out_trade_no")
-	o.OrderNo = field.NewString(table, "order_no")
+	o.TransactionID = field.NewString(table, "transaction_id")
 	o.Status = field.NewString(table, "status")
 	o.ExpireTime = field.NewField(table, "expire_time")
 	o.CreatedAt = field.NewField(table, "created_at")
@@ -105,11 +108,12 @@ func (o *order) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (o *order) fillFieldMap() {
-	o.fieldMap = make(map[string]field.Expr, 9)
+	o.fieldMap = make(map[string]field.Expr, 10)
 	o.fieldMap["id"] = o.ID
 	o.fieldMap["user_id"] = o.UserID
+	o.fieldMap["device_id"] = o.DeviceID
 	o.fieldMap["out_trade_no"] = o.OutTradeNo
-	o.fieldMap["order_no"] = o.OrderNo
+	o.fieldMap["transaction_id"] = o.TransactionID
 	o.fieldMap["status"] = o.Status
 	o.fieldMap["expire_time"] = o.ExpireTime
 	o.fieldMap["created_at"] = o.CreatedAt

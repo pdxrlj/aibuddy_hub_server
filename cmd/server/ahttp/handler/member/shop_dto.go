@@ -9,5 +9,42 @@ type GoodsListRequest struct {
 
 // CreateOrderRequest 创建订单请求
 type CreateOrderRequest struct {
-	GoodsID int64 `json:"goods_id" query:"goods_id" validate:"required,min=1"`
+	GoodsID  int64  `json:"goods_id" query:"goods_id" validate:"required,min=1"`
+	DeviceID string `json:"device_id" query:"device_id" validate:"required"`
+}
+
+// PaySuccessRequest 支付成功请求
+type PaySuccessRequest struct{}
+
+// SkipBodyBind 跳过参数绑定
+func (p *PaySuccessRequest) SkipBodyBind() bool {
+	return true
+}
+
+// RefundSuccessRequest 退款成功请求
+type RefundSuccessRequest struct{}
+
+// SkipBodyBind 跳过参数绑定
+func (r *RefundSuccessRequest) SkipBodyBind() bool {
+	return true
+}
+
+// OrderListRequest 获取订单列表请求
+type OrderListRequest struct {
+	Page     int    `json:"page" query:"page" validate:"required,min=1"`
+	PageSize int    `json:"page_size" query:"page_size" validate:"required,min=1"`
+	Status   string `json:"status" query:"status" validate:"omitempty,oneof=待支付 已支付 已超时 已退款 全部" msg:"oneof:订单状态无效"`
+}
+
+// GetStatus 获取订单状态
+func (o *OrderListRequest) GetStatus() string {
+	if o.Status == "" {
+		return "已支付"
+	}
+
+	if o.Status == "全部" {
+		return ""
+	}
+
+	return o.Status
 }

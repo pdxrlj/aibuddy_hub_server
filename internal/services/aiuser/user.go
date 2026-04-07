@@ -1116,7 +1116,7 @@ func (s *Service) CheckAndActivateDevice(ctx context.Context, deviceID string, t
 				return err
 			}
 
-			if err := s.DeviceRepo.SetDeviceVipExpireTime(ctx, deviceID, time.Now().Add(DefaultDeviceActivateTime), tx[0]); err != nil {
+			if err := s.DeviceRepo.SetDeviceVipExpireTime(ctx, deviceID, DefaultDeviceActivateTime, tx[0]); err != nil {
 				return err
 			}
 
@@ -1128,7 +1128,7 @@ func (s *Service) CheckAndActivateDevice(ctx context.Context, deviceID string, t
 				return err
 			}
 
-			if err := s.DeviceRepo.SetDeviceVipExpireTime(ctx, deviceID, time.Now().Add(DefaultDeviceActivateTime), tx); err != nil {
+			if err := s.DeviceRepo.SetDeviceVipExpireTime(ctx, deviceID, DefaultDeviceActivateTime, tx); err != nil {
 				return err
 			}
 

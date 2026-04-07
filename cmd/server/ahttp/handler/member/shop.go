@@ -54,11 +54,47 @@ func (h *Handler) CreateOrder(state *ahttp.State, req *CreateOrderRequest) error
 		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	order, err := h.MemberService.CreateOrder(ctx, uid, req.GoodsID)
+	order, err := h.MemberService.CreateOrder(ctx, uid, req.GoodsID, req.DeviceID)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.Int64("goods_id", req.GoodsID), attribute.Int64("uid", uid))
 		return state.Response().Error(err)
 	}
 	return state.Response().Success(order)
+}
+
+// PaySuccess 支付成功回调
+func (h *Handler) PaySuccess(state *ahttp.State, _ *PaySuccessRequest) error {
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "Shop.PaySuccess")
+	defer span.End()
+
+	// Service 层已经处理了所有响应（成功和失败），无需再处理 error
+	_ = h.MemberService.PaySuccess(ctx, state.Ctx.Response(), state.RawRequest())
+	return nil
+}
+
+// RefundSuccess 退款成功回调
+func (h *Handler) RefundSuccess(state *ahttp.State, _ *RefundSuccessRequest) error {
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "Shop.RefundSuccess")
+	defer span.End()
+
+	// Service 层已经处理了所有响应（成功和失败），无需再处理 error
+	_ = h.MemberService.RefundNotify(ctx, state.Ctx.Response(), state.RawRequest())
+	return nil
+}
+
+// OrderList 获取订单列表
+func (h *Handler) OrderList(state *ahttp.State, req *OrderListRequest) error {
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "Shop.OrderList")
+	defer span.End()
+
+	orders, err := h.MemberService.OrderList(ctx, req.Page, req.PageSize, req.GetStatus())
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int("page", req.Page), attribute.Int("page_size", req.PageSize), attribute.String("status", req.Status))
+		return state.Response().Error(err)
+	}
+
+	return state.Response().Success(orders)
 }
