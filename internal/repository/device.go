@@ -527,3 +527,21 @@ func (d *DeviceRepo) IsDeviceVipExpired(ctx context.Context, deviceID string) (b
 	// 判断过期时间是否小于当前时间
 	return deviceInfo.ExpireTime.Before(time.Now()), nil
 }
+
+// SetVoiceID 设置设备的语音ID
+func (d *DeviceRepo) SetVoiceID(ctx context.Context, deviceID string, voiceID string) error {
+	_, span := tracer.Start(ctx, "DeviceService.SetVoiceID")
+	defer span.End()
+
+	_, err := query.Device.
+		Where(query.Device.DeviceID.Eq(deviceID)).
+		Update(query.Device.VoiceID, voiceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		span.SetAttributes(attribute.String("voice_id", voiceID))
+		slog.Error("[SetVoiceId] Update error", "error", err, "device_id", deviceID)
+		return err
+	}
+	return nil
+}
