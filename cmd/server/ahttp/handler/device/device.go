@@ -193,6 +193,11 @@ func (d *Device) AddFriend(state *ahttp.State, req *AddFriendRequest) error {
 		return state.Resposne().Error(err)
 	}
 
+	// 对端设备信息，使用MQTT协议发送给对端
+	if err := d.Service.UseMQTTSendTargetDeviceToFriendInfo(ctx, req.DeviceID, req.TargetDeviceID); err != nil {
+		slog.Warn("send target device friend info failed", "error", err)
+	}
+
 	return state.Resposne().Success(&AddFriendResponse{
 		Name:     targetDevice.DeviceInfo.NickName,
 		Avatar:   targetDevice.DeviceInfo.Avatar,
