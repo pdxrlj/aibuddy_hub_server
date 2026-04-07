@@ -21,7 +21,7 @@ type User struct {
 
 	Email    string    `gorm:"column:email;type:varchar(128);"`
 	Username string    `gorm:"column:username;type:varchar(32);"`
-	Gender   int       `gorm:"sex:gender;type:int;default:0"`
+	Gender   string    `gorm:"column:gender;type:varchar(10);default:未知"`
 	Birthday time.Time `gorm:"column:birthday;type:date;comment:生日;"`
 
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;"`

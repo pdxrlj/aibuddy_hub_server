@@ -459,6 +459,7 @@ func (h *Handler) UpdateInfo(state *ahttp.State, req *InfoRequest) error {
 		Username: req.Username,
 		Gender:   req.Gender,
 	}
+
 	if req.Birthday != "" {
 		birthday, err := time.Parse(time.DateOnly, req.Birthday)
 		if err != nil {

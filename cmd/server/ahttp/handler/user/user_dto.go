@@ -201,7 +201,7 @@ type GrowthReportListResponse struct {
 type InfoRequest struct {
 	Username string `json:"username" validate:"omitempty,min=2,max=6" msg:"min:姓名长度不能小于2|max:姓名最长长度为6"`
 	Phone    string `json:"phone" validate:"omitempty"`
-	Gender   int    `json:"gender" validate:"omitempty,min=0,max=2" msg:"min:参数取值范围[0,2]|max:参数取值范围[0,2]"`
+	Gender   string `json:"gender" validate:"omitempty,oneof=未知 男 女" msg:"oneof:性别取值范围为[未知,男,女]"`
 	Birthday string `json:"birthday" validate:"omitempty"`
 	Email    string `json:"email" validate:"omitempty,email" msg:"email:邮箱格式不正确"`
 	NickName string `json:"nickname" validate:"omitempty,required,min=2,max=8" msg:"required:昵称不能为空|min:昵称长度不能小于2|max:昵称最长长度为8"`
@@ -214,7 +214,7 @@ type InfoResponse struct {
 	Useranem string `json:"username"`
 	Phone    string `json:"phone"`
 	Email    string `json:"email"`
-	Gender   int    `json:"gender"`
+	Gender   string `json:"gender"`
 	Birthday string `json:"birthday"`
 	NickName string `json:"nickname"`
 	Avatar   string `json:"avatar"`
