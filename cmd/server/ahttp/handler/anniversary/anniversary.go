@@ -38,12 +38,12 @@ func (a *Anniversary) CreateAnniversary(state *ahttp.State, r *AnniversaryInfoCr
 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	anniversaryTime, err := time.Parse(time.DateTime, r.AnniversaryTime)
 	if err != nil {
-		return state.Resposne().Error(errors.New("纪念日时间格式错误"))
+		return state.Response().Error(errors.New("纪念日时间格式错误"))
 	}
 
 	if err := a.AnniversaryServer.SubmitAnniversary(ctx, uid, r.DeviceID, &model.AnniversaryReminder{
@@ -55,10 +55,10 @@ func (a *Anniversary) CreateAnniversary(state *ahttp.State, r *AnniversaryInfoCr
 		ReminderWay:      model.ReminderWay(r.ReminderWay),
 		Remarks:          r.Remarks,
 	}); err != nil {
-		return state.Resposne().Error(errors.New("创建纪念日失败:" + err.Error()))
+		return state.Response().Error(errors.New("创建纪念日失败:" + err.Error()))
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // UpdateAnniversary 创建纪念日列表
@@ -68,12 +68,12 @@ func (a *Anniversary) UpdateAnniversary(state *ahttp.State, r *AnniversaryInfoUp
 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	anniversaryTime, err := time.Parse(time.DateTime, r.AnniversaryTime)
 	if err != nil {
-		return state.Resposne().Error(errors.New("纪念日时间格式错误"))
+		return state.Response().Error(errors.New("纪念日时间格式错误"))
 	}
 
 	if err := a.AnniversaryServer.SubmitAnniversary(ctx, uid, r.DeviceID, &model.AnniversaryReminder{
@@ -86,10 +86,10 @@ func (a *Anniversary) UpdateAnniversary(state *ahttp.State, r *AnniversaryInfoUp
 		ReminderWay:      model.ReminderWay(r.ReminderWay),
 		Remarks:          r.Remarks,
 	}); err != nil {
-		return state.Resposne().Error(errors.New("更新纪念日失败:" + err.Error()))
+		return state.Response().Error(errors.New("更新纪念日失败:" + err.Error()))
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // DeleateAnniversary 删除纪念日列表
@@ -99,14 +99,14 @@ func (a *Anniversary) DeleateAnniversary(state *ahttp.State, r *InfoRequest) err
 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	if err := a.AnniversaryServer.DeleteAnniversary(ctx, uid, r.DeviceID, r.ID); err != nil {
-		return state.Resposne().Error(errors.New("删除纪念日失败:" + err.Error()))
+		return state.Response().Error(errors.New("删除纪念日失败:" + err.Error()))
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // ListAnniversary 删除纪念日列表
@@ -116,12 +116,12 @@ func (a *Anniversary) ListAnniversary(state *ahttp.State, r *ListRequest) error 
 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	data, total, err := a.AnniversaryServer.GetListByPage(ctx, uid, r.DeviceID, r.Page, r.Size)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	result := make([]*InfoReponse, 0, len(data))
@@ -138,7 +138,7 @@ func (a *Anniversary) ListAnniversary(state *ahttp.State, r *ListRequest) error 
 		})
 	}
 
-	return state.Resposne().SetData(ListReponse{
+	return state.Response().SetData(ListReponse{
 		Total: total,
 		Page:  r.Page,
 		Size:  r.Size,

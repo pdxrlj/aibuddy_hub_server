@@ -33,10 +33,10 @@ func (s *Handler) GoodsList(state *ahttp.State, req *GoodsListRequest) error {
 
 	data, total, nexKey, err := s.ShopService.GoodsList(ctx, req.PageSize, req.NextKey)
 	if err != nil {
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().SetData(&GoodsListResponse{
+	return state.Response().SetData(&GoodsListResponse{
 		Total:   total,
 		NextKey: nexKey,
 		List:    data,

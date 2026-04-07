@@ -279,6 +279,7 @@ func (d *Service) GetDeviceInfo(ctx context.Context, deviceID string) (*model.De
 
 // UseMQTTSendTargetDeviceToFriendInfo 查询设备信息后给对端发送好友信息,通过MQTT发送
 func (d *Service) UseMQTTSendTargetDeviceToFriendInfo(ctx context.Context, deviceID, targetDeviceID string) error {
+	slog.Info("[MQTT] UseMQTTSendTargetDeviceToFriendInfo", "deviceID", deviceID, "targetDeviceID", targetDeviceID)
 	_, span := tracer().Start(ctx, "DeviceService.SendTargetDeviceToFriendInfo")
 	defer span.End()
 

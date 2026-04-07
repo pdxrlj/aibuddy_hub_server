@@ -38,14 +38,14 @@ func (h *Handler) Create(state *ahttp.State, req *CreateFeedbackRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("feedback_type", req.FeedbackType), attribute.String("content", req.Content))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	images, err := req.ImagesEncode()
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("feedback_type", req.FeedbackType), attribute.String("content", req.Content))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	feedback := &model.Feedback{
@@ -63,7 +63,7 @@ func (h *Handler) Create(state *ahttp.State, req *CreateFeedbackRequest) error {
 			attribute.String("content", req.Content),
 			attribute.String("images", string(images)),
 		)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
-	return state.Resposne().Success()
+	return state.Response().Success()
 }

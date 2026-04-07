@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log/slog"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gen"
@@ -454,4 +455,43 @@ func (d *DeviceRepo) SetDeviceAgent(deviceID string, agentName string, tx ...*qu
 		return err
 	}
 	return nil
+}
+
+// SetDeviceVipExpireTime 设置设备VIP的过期时间
+func (d *DeviceRepo) SetDeviceVipExpireTime(ctx context.Context, deviceID string, expireTime time.Time, tx ...*query.Query) error {
+	_, span := tracer.Start(ctx, "DeviceService.SetDeviceVipExpireTime")
+	defer span.End()
+
+	db := query.Q
+	if len(tx) > 0 {
+		db = tx[0]
+	}
+	_, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID)).
+		Update(db.Device.ExpireTime, expireTime)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[SetDeviceVipExpireTime] Update error", "error", err, "device_id", deviceID)
+		return err
+	}
+	return nil
+}
+
+// IsDeviceVipExpired 判断设备VIP是否已经过期了
+func (d *DeviceRepo) IsDeviceVipExpired(ctx context.Context, deviceID string) (bool, error) {
+	_, span := tracer.Start(ctx, "DeviceService.IsDeviceVipExpired")
+	defer span.End()
+
+	deviceInfo, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).First()
+	if err != nil || deviceInfo == nil {
+		return true, errors.New("没有查询到当前设备")
+	}
+
+	// 如果过期时间为空，则认为没有过期
+	if deviceInfo.ExpireTime.IsZero() {
+		return false, nil
+	}
+
+	// 判断过期时间是否小于当前时间
+	return deviceInfo.ExpireTime.Before(time.Now()), nil
 }

@@ -32,6 +32,7 @@ func (o OrderStatus) String() string {
 // Order 订单
 type Order struct {
 	ID         int64  `gorm:"column:id;autoIncrement;primaryKey" json:"id"`
+	UserID     int64  `gorm:"column:user_id;index;comment:用户ID" json:"user_id"`
 	OutTradeNo string `gorm:"column:out_trade_no;index;type:varchar(255);comment:微信订单号" json:"out_trade_no"`
 	OrderNo    string `gorm:"column:order_no;uniqueIndex;type:varchar(64);comment:商户订单号" json:"order_no"`
 

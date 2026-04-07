@@ -417,8 +417,8 @@ func getValidationFieldTag(structType reflect.Type, defaultTag, actualTag string
 	return fieldTag, validationRule
 }
 
-// Resposne 返回响应对象（注意：方法名拼写错误，保持兼容性）
-func (s *State) Resposne() *Response {
+// Response 返回响应对象（注意：方法名拼写错误，保持兼容性）
+func (s *State) Response() *Response {
 	return NewResponse(s.Ctx)
 }
 

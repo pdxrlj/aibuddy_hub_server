@@ -112,5 +112,8 @@ pay:
   wechatpay_serial_no: "" # 微信支付公钥ID
 
   # 回调通知配置
-  notify_url: "" # 支付结果通知URL
-  refund_notify_url: "" # 退款结果通知URL
+  notify_url: "https://ai.ipai.fans/api/v1/pay/notify" # 支付结果通知URL
+  refund_notify_url: "https://ai.ipai.fans/api/v1/pay/refund/notify" # 退款结果通知URL
+
+  # 调试模式
+  debug: false

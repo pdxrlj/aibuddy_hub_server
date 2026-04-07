@@ -56,10 +56,10 @@ func (h *Handler) CreateCloneVoice(state *ahttp.State, req *CreateCloneVoiceRequ
 	})
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().SetData(&CreateCloneVoiceResponse{
+	return state.Response().SetData(&CreateCloneVoiceResponse{
 		VoiceID: result.VoiceID,
 	}).Success()
 }
@@ -91,10 +91,10 @@ func (h *Handler) RetrainCloneVoice(state *ahttp.State, req *RetrainCloneVoiceRe
 	})
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // GetCloneVoiceList 获取音色列表
@@ -109,7 +109,7 @@ func (h *Handler) GetCloneVoiceList(state *ahttp.State, req *GetCloneVoiceListRe
 	})
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	items := make([]CloneVoiceItem, len(result.Data))
@@ -126,7 +126,7 @@ func (h *Handler) GetCloneVoiceList(state *ahttp.State, req *GetCloneVoiceListRe
 		}
 	}
 
-	return state.Resposne().SetData(&GetCloneVoiceListResponse{
+	return state.Response().SetData(&GetCloneVoiceListResponse{
 		TotalCount: result.TotalCount,
 		Data:       items,
 	}).Success()
@@ -142,8 +142,8 @@ func (h *Handler) DeleteCloneVoice(state *ahttp.State, req *DeleteCloneVoiceRequ
 	err := h.ttsVoice.DeleteCloneVoice(req.AppID, req.UniqID, strconv.FormatInt(req.VoiceID, 10))
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }

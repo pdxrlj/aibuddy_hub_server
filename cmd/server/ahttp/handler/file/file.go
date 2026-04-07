@@ -37,17 +37,17 @@ func (f *File) UploadFile(state *ahttp.State, req *UploadFileRequest) error {
 	if req.File.Size >= 20<<20 {
 		span.RecordError(errors.New("文件大小不能超过20MB"))
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(errors.New("文件大小不能超过20MB"))
+		return state.Response().Error(errors.New("文件大小不能超过20MB"))
 	}
 
 	filename, presignedURL, err := f.Service.UploadFile(ctx, req.DeviceID, req.File, req.EnableAudioTranscode, req.DestAudioFormat)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Success(&UploadFileResponse{
+	return state.Response().Success(&UploadFileResponse{
 		Filename:     filename,
 		PresignedURL: presignedURL,
 	})
@@ -61,12 +61,12 @@ func (f *File) UploadFileNoDeviceID(state *ahttp.State, req *UploadFileNoDeviceI
 	filename, presignedURL, err := f.Service.UploadFile(ctx, "", req.File, req.EnableAudioTranscode, req.DestAudioFormat)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	slog.Info("[UploadFileNoDeviceID] 文件上传成功")
 
-	return state.Resposne().Success(&UploadFileResponse{
+	return state.Response().Success(&UploadFileResponse{
 		Filename:     filename,
 		PresignedURL: presignedURL,
 	})
@@ -86,12 +86,12 @@ func (f *File) UploadStream(state *ahttp.State, req *UploadStreamRequest) error 
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	slog.Info("[UploadStream] 流式文件上传成功")
 
-	return state.Resposne().Success(&UploadFileResponse{
+	return state.Response().Success(&UploadFileResponse{
 		Filename:     filename,
 		PresignedURL: presignedURL,
 	})
@@ -109,11 +109,11 @@ func (f *File) FileProxy(state *ahttp.State, req *FileProxyRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 	defer func() {
 		_ = file.Close()
 	}()
 
-	return state.Resposne().File(file, req.Filename)
+	return state.Response().File(file, req.Filename)
 }

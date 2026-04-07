@@ -7,6 +7,7 @@ import (
 	devicehandler "aibuddy/cmd/server/ahttp/handler/device"
 	emotionhandler "aibuddy/cmd/server/ahttp/handler/emotion"
 	filehandler "aibuddy/cmd/server/ahttp/handler/file"
+	membershop "aibuddy/cmd/server/ahttp/handler/member"
 	"aibuddy/cmd/server/ahttp/handler/nfc"
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
 	paymenthandler "aibuddy/cmd/server/ahttp/handler/payment"
@@ -238,6 +239,14 @@ func RegisterRoutes(base *ahttp.Base) {
 			payment := paymenthandler.NewHandler()
 			paymentGroup.POST("/notify", payment.PayNotify)           // 支付结果通知
 			paymentGroup.POST("/refund_notify", payment.RefundNotify) // 退款结果通知
+		})
+
+		// 商品与订单管理
+		group.Group("/shop", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(shopGroup *ahttp.Group) {
+			shop := membershop.NewHandler()
+			shopGroup.GET("/goods/list", shop.GoodsList) // 商品列表
+			// 创建预支付订单
+			shopGroup.POST("/order/create", shop.CreateOrder)
 		})
 	})
 }

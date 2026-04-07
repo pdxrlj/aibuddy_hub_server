@@ -49,7 +49,7 @@ func NewRtcHandler() *RtcHandler {
 // GenerateAIAgentCall 与端侧SDK交互，创建AIAgentInstance
 func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgentCallRequest) error {
 	if req.CustomSelfCfg == nil || req.CustomSelfCfg.DeviceID == "" {
-		return state.Resposne().Error(errors.New("缺少自定义的设备的ID"))
+		return state.Response().Error(errors.New("缺少自定义的设备的ID"))
 	}
 
 	resp, err := h.BaiduService.GenerateAIAgentCall(state.Ctx.Request().Context(),
@@ -71,10 +71,10 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 			DeviceID: req.CustomSelfCfg.DeviceID,
 		})
 	if err != nil {
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().
+	return state.Response().
 		Raw(&GenerateAIAgentCallResponse{
 			Code:              0,
 			AiAgentInstanceID: resp.AiAgentInstanceID,
@@ -96,10 +96,10 @@ func (h *RtcHandler) StopAIAgentInstance(state *ahttp.State, req *StopAIAgentIns
 	})
 	if err != nil {
 		slog.Error("Failed to stop AIAgentInstance", "error", err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // InstanceGenerate 创建AI智能体互动实例，返回token和实例上下文
@@ -113,10 +113,10 @@ func (h *RtcHandler) InstanceGenerate(state *ahttp.State, req *AiAgentGenerateRe
 	})
 	if err != nil {
 		slog.Error("Failed to create AIAgentInstance", "error", err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Raw(&AiAgentGenerateResponse{
+	return state.Response().Raw(&AiAgentGenerateResponse{
 		InstanceID:   resp.AiAgentInstanceID,
 		InstanceType: resp.InstanceType,
 		Context:      convertInstanceContext(resp.Context),
@@ -133,10 +133,10 @@ func (h *RtcHandler) InstanceStop(state *ahttp.State, req *AiAgentDestroyRequest
 	})
 	if err != nil {
 		slog.Error("Failed to stop AIAgentInstance", "error", err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // AuthGenerate 获取RTC服务的Token
@@ -145,10 +145,10 @@ func (h *RtcHandler) AuthGenerate(state *ahttp.State, req *AuthGenerateRequest) 
 	authorization, err := client.BuildAuthorization("POST", req.URL)
 	if err != nil {
 		slog.Error("Failed to generate Authorization", "error", err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Raw(&AuthGenerateResponse{
+	return state.Response().Raw(&AuthGenerateResponse{
 		Authorization: authorization,
 	})
 }
@@ -180,7 +180,7 @@ func (h *RtcHandler) InstanceBaidu(state *ahttp.State, req *RtcGenerateRequest) 
 	})
 	if err != nil {
 		slog.Error("Failed to create AIAgentInstance with Baidu model", "error", err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	response := &RtcGenerateResponse{
@@ -193,7 +193,7 @@ func (h *RtcHandler) InstanceBaidu(state *ahttp.State, req *RtcGenerateRequest) 
 		response.TestURL = formatTestURL(req.AppID, resp.AiAgentInstanceID, resp.Context.Token)
 	}
 
-	return state.Resposne().Raw(response)
+	return state.Response().Raw(response)
 }
 
 // InstanceQianwen 使用千问大模型创建RTC实例
@@ -221,7 +221,7 @@ func (h *RtcHandler) InstanceQianwen(state *ahttp.State, req *RtcGenerateRequest
 	})
 	if err != nil {
 		slog.Error("Failed to create AIAgentInstance with Qianwen model", "error", err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	response := &RtcGenerateResponse{
@@ -234,7 +234,7 @@ func (h *RtcHandler) InstanceQianwen(state *ahttp.State, req *RtcGenerateRequest
 		response.TestURL = formatTestURL(req.AppID, resp.AiAgentInstanceID, resp.Context.Token)
 	}
 
-	return state.Resposne().Raw(response)
+	return state.Response().Raw(response)
 }
 
 // InstanceVolc 使用VOLC TTS创建RTC实例
@@ -279,7 +279,7 @@ func (h *RtcHandler) InstanceVolc(state *ahttp.State, req *RtcGenerateRequest) e
 	})
 	if err != nil {
 		slog.Error("Failed to create AIAgentInstance with VOLC TTS", "error", err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	response := &RtcGenerateResponse{
@@ -292,7 +292,7 @@ func (h *RtcHandler) InstanceVolc(state *ahttp.State, req *RtcGenerateRequest) e
 		response.TestURL = formatTestURL(req.AppID, resp.AiAgentInstanceID, resp.Context.Token)
 	}
 
-	return state.Resposne().Raw(response)
+	return state.Response().Raw(response)
 }
 
 // SwitchSceneRole 切换角色（音色）
@@ -312,10 +312,10 @@ func (h *RtcHandler) SwitchSceneRole(state *ahttp.State, req *AgentSwitchConfigR
 	})
 	if err != nil {
 		slog.Error("Failed to switch scene role", "error", err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // convertInstanceContext 转换实例上下文

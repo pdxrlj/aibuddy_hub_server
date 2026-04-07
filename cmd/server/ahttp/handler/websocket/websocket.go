@@ -25,12 +25,12 @@ func (h *Handler) HandleConnect(state *ahttp.State, req *HandleConnectRequest) e
 	claims, err := aiuser.ValidateToken(state.Ctx, req.Token)
 	if err != nil {
 		slog.Error("[Websocket] HandleConnect", "error", err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	if claims == nil {
 		slog.Error("[Websocket] HandleConnect", "error", errors.New("token is invalid"))
-		return state.Resposne().Error(errors.New("无法获取有效的用户信息"))
+		return state.Response().Error(errors.New("无法获取有效的用户信息"))
 	}
 
 	uid := claims.UID

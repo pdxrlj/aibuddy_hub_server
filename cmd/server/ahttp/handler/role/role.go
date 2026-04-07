@@ -38,7 +38,7 @@ func (r *Handler) RoleList(state *ahttp.State) error {
 
 	data, err := r.RoleSerivce.GetRoleListByAPI(ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	var res []RolesResponse
 	for _, v := range data {
@@ -50,7 +50,7 @@ func (r *Handler) RoleList(state *ahttp.State) error {
 		})
 	}
 
-	return state.Resposne().SetData(res).Success()
+	return state.Response().SetData(res).Success()
 }
 
 // ChangeRole 切换角色信息
@@ -62,15 +62,15 @@ func (r *Handler) ChangeRole(state *ahttp.State, req *ChangeRquest) error {
 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	slog.Info("[ChangeRole]", "uid", uid)
 	err = r.RoleSerivce.ChangeRoleName(ctx, uid, req.DeviceID, req.InstanceID, req.RoleName)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // RoleInfo 获取角色信息
@@ -81,14 +81,14 @@ func (r *Handler) RoleInfo(state *ahttp.State, req *InfoRequest) error {
 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	data, err := r.RoleSerivce.GetRoleByID(ctx, uid, req.RoleID)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().SetData(&InfoResponse{
+	return state.Response().SetData(&InfoResponse{
 		ID:               data.ID,
 		AgentName:        data.AgentName,
 		UID:              data.UID,
@@ -108,10 +108,10 @@ func (r *Handler) GetChatAnalysis(state *ahttp.State, req *GetChatAnalysisReques
 
 	data, err := r.RoleSerivce.GetChatAnalysis(ctx, req.DeviceID, req.AgentName)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success(data)
+	return state.Response().Success(data)
 }
 
 // RefreshChatAnalysis 聊天分析
@@ -127,13 +127,13 @@ func (r *Handler) RefreshChatAnalysis(state *ahttp.State, req *RefreshChatAnalys
 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	_, err = r.RoleSerivce.RefreshChatAnalysis(ctx, uid, req.DeviceID, req.StartTime, req.EndTime, req.AgentName)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().SetMessage("正在生成中...").Success()
+	return state.Response().SetMessage("正在生成中...").Success()
 }

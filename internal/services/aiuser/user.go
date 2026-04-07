@@ -24,6 +24,7 @@ import (
 	"log/slog"
 	"regexp"
 	"slices"
+	"sort"
 	"strconv"
 	"time"
 
@@ -41,6 +42,9 @@ var (
 
 	smsCacheKey     = "sms:%s"
 	smsSendCountKey = "sms_count:%s"
+
+	// DefaultDeviceActivateTime 默认设备激活时间 365天
+	DefaultDeviceActivateTime = 365 * 24 * 60 * 60 * time.Second
 )
 
 // getDefaultAgentName 获取默认 Agent 名称
@@ -53,13 +57,14 @@ func getDefaultAgentName() string {
 
 // Service 用户认证服务
 type Service struct {
-	UserRepo         *repository.UserRepo
-	DeviceInfoRepo   *repository.DeviceInfoRepo
-	DeviceRepo       *repository.DeviceRepo
-	BindDeviceSnRepo *repository.BindDeviceSnRepo
-	DeviceMsgRepo    *repository.DeviceMessageRepo
-	GrowthReportRepo *repository.GrowthReportRepo
-	Emotion          *repository.EmotionRepo
+	UserRepo           *repository.UserRepo
+	DeviceInfoRepo     *repository.DeviceInfoRepo
+	DeviceRepo         *repository.DeviceRepo
+	BindDeviceSnRepo   *repository.BindDeviceSnRepo
+	DeviceMsgRepo      *repository.DeviceMessageRepo
+	GrowthReportRepo   *repository.GrowthReportRepo
+	Emotion            *repository.EmotionRepo
+	DeviceActivateRepo *repository.BuddyDeviceActivateRepo
 
 	sms   *sms.AliyunSMS
 	cache flash.Flash
@@ -99,6 +104,7 @@ func New() *Service {
 		DeviceMsgRepo:    repository.NewDeviceMessageRepo(),
 		GrowthReportRepo: repository.NewGrowthReportRepo(),
 		Emotion:          repository.NewEmotionRepo(),
+		DeviceRepo:       repository.NewDeviceRepo(),
 
 		growthReportService: agent.NewGroupReport(),
 		AfterCompleteProfileHook: []AfterCompleteProfileHook{
@@ -393,6 +399,15 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType, rel
 			slog.Info("[CompleteProfile] SetDeviceAgent", "error", err.Error())
 			return err
 		}
+
+		if err := s.CheckAndActivateDevice(ctx, d.DeviceID, tx); err != nil {
+			span.RecordError(err)
+			span.SetAttributes(attribute.String("device_id", d.DeviceID))
+			span.SetAttributes(attribute.String("error", err.Error()))
+			slog.Info("[CompleteProfile] CheckAndActivateDevice", "error", err.Error())
+			return err
+		}
+
 		mMgmt := management.Mgmt{
 			Type:   management.MgmtTypeBound,
 			User:   user.Nickname,
@@ -407,16 +422,6 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType, rel
 			return err
 		}
 
-		// for _, hook := range s.AfterCompleteProfileHook {
-		// 	slog.Info("[CompleteProfile] AfterCompleteProfileHook")
-		// 	if err := hook(ctx, d.DeviceID); err != nil {
-		// 		span.RecordError(err)
-		// 		span.SetAttributes(attribute.String("device_id", d.DeviceID))
-		// 		span.SetAttributes(attribute.String("error", err.Error()))
-		// 		slog.Error("[CompleteProfile] AfterCompleteProfileHook", "error", err.Error())
-		// 		return err
-		// 	}
-		// }
 		return nil
 	})
 }
@@ -1015,6 +1020,11 @@ func (s *Service) GetConvMessageList(ctx context.Context, uid int64, deviceID, t
 	_, span := tracer().Start(ctx, "GetConvMessageList")
 	defer span.End()
 
+	// 如果为空那就是查询与父母的对话
+	if deviceID == "" {
+		deviceID = cast.ToString(uid)
+	}
+
 	devices, err := s.DeviceRepo.GetUserDeviceList(ctx, uid)
 	if err != nil {
 		span.RecordError(err)
@@ -1086,5 +1096,45 @@ func (s *Service) toMessageDTO(messages []*model.DeviceMessage) []*device.Messag
 		}
 		result = append(result, dto)
 	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].CreatedAt > result[j].CreatedAt
+	})
+
 	return result
+}
+
+// CheckAndActivateDevice 判断设备首次是否已经激活了，如果没有激活，buddy_device修改vip过期时间，默认给一年
+func (s *Service) CheckAndActivateDevice(ctx context.Context, deviceID string, tx ...*query.Query) error {
+	_, span := tracer().Start(ctx, "CheckAndActivateDevice")
+	defer span.End()
+
+	if !s.DeviceActivateRepo.IsActivatedDevice(deviceID) {
+		if len(tx) > 0 {
+			// 使用传入的事务
+			if err := s.DeviceActivateRepo.CreateDeviceActivate(deviceID, tx[0]); err != nil {
+				return err
+			}
+
+			if err := s.DeviceRepo.SetDeviceVipExpireTime(ctx, deviceID, time.Now().Add(DefaultDeviceActivateTime), tx[0]); err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		return s.DeviceActivateRepo.Transaction(func(tx *query.Query) error {
+			if err := s.DeviceActivateRepo.CreateDeviceActivate(deviceID, tx); err != nil {
+				return err
+			}
+
+			if err := s.DeviceRepo.SetDeviceVipExpireTime(ctx, deviceID, time.Now().Add(DefaultDeviceActivateTime), tx); err != nil {
+				return err
+			}
+
+			return nil
+		})
+	}
+
+	return nil
 }

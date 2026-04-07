@@ -39,13 +39,13 @@ func (m *Remind) CreateRemind(state *ahttp.State, req *AddRemindRequest) error {
 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	loc, _ := time.LoadLocation("Asia/Shanghai")
 	reminderTime, err := time.ParseInLocation(time.DateTime, req.ReminderTime, loc)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(errors.New("时间格式错误"))
+		return state.Response().SetStatus(http.StatusBadRequest).Error(errors.New("时间格式错误"))
 	}
 
 	if err := m.RemindService.SubmitRemind(ctx, uid, &model.Reminder{
@@ -56,10 +56,10 @@ func (m *Remind) CreateRemind(state *ahttp.State, req *AddRemindRequest) error {
 		DeviceID:        req.DeviceID,
 		Status:          model.ReminderStatus(req.Status),
 	}); err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // UpdateRemind 更新数据
@@ -68,15 +68,15 @@ func (m *Remind) UpdateRemind(state *ahttp.State, req *AddRemindRequest) error {
 	defer span.End()
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	loc, _ := time.LoadLocation("Asia/Shanghai")
 	reminderTime, err := time.ParseInLocation(time.DateTime, req.ReminderTime, loc)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(errors.New("时间格式错误"))
+		return state.Response().SetStatus(http.StatusBadRequest).Error(errors.New("时间格式错误"))
 	}
 	if req.ID <= 0 {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(errors.New("缺少必要参数ID"))
+		return state.Response().SetStatus(http.StatusBadRequest).Error(errors.New("缺少必要参数ID"))
 	}
 
 	if err := m.RemindService.SubmitRemind(ctx, uid, &model.Reminder{
@@ -88,9 +88,9 @@ func (m *Remind) UpdateRemind(state *ahttp.State, req *AddRemindRequest) error {
 		DeviceID:        req.DeviceID,
 		Status:          model.ReminderStatus(req.Status),
 	}); err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // DeleteRemind 删除提醒事件
@@ -100,13 +100,13 @@ func (m *Remind) DeleteRemind(state *ahttp.State, req *RemindRequest) error {
 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	if err := m.RemindService.DeleateRemindByID(ctx, uid, req.ID); err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // ListRemind 提醒事件列表
@@ -119,12 +119,12 @@ func (m *Remind) ListRemind(state *ahttp.State, req *ListReqeust) error {
 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	data, total, err := m.RemindService.GetList(ctx, uid, req.DeviceID, req.Page, req.Size)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	result := &ListResponse{Total: total, Page: req.Page, Size: req.Size, Data: make([]*ReminderInfo, 0)}
@@ -141,5 +141,5 @@ func (m *Remind) ListRemind(state *ahttp.State, req *ListReqeust) error {
 		})
 	}
 
-	return state.Resposne().SetData(result).Success()
+	return state.Response().SetData(result).Success()
 }

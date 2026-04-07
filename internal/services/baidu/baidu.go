@@ -4,13 +4,14 @@ package baidu
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
+	"aibuddy/internal/repository"
 	"aibuddy/internal/services/cache"
 	"aibuddy/internal/services/role"
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
-	"aibuddy/pkg/helpers"
 
 	"log/slog"
 
@@ -62,6 +63,8 @@ type GenerateAIAgentCallResponse struct {
 type Service struct {
 	aiAgent     *baidu.AIAgent
 	RoleService *role.Service
+
+	DeviceRepo *repository.DeviceRepo
 }
 
 // NewService 创建百度云服务实例
@@ -69,6 +72,7 @@ func NewService() *Service {
 	return &Service{
 		aiAgent:     baidu.NewAIAgent(),
 		RoleService: role.NewRoleService(),
+		DeviceRepo:  repository.NewDeviceRepo(),
 	}
 }
 
@@ -130,6 +134,15 @@ func buildConfigStr(cfg *ConfigRequest) (string, error) {
 
 // GenerateAIAgentCall 创建并启动大模型互动实例
 func (s *Service) GenerateAIAgentCall(ctx context.Context, req *GenerateAIAgentCallRequest) (*GenerateAIAgentCallResponse, error) {
+	expired, err := s.DeviceRepo.IsDeviceVipExpired(ctx, req.DeviceID)
+	if err != nil {
+		return nil, err
+	}
+
+	if expired {
+		return nil, errors.New("当前设备已经过期了，请充值后在使用")
+	}
+
 	appID := getDefaultAppID(req.AppID)
 
 	configStr, err := buildConfigStr(req.Config)
@@ -143,7 +156,7 @@ func (s *Service) GenerateAIAgentCall(ctx context.Context, req *GenerateAIAgentC
 		Config:       configStr,
 	}
 
-	helpers.PP(request)
+	slog.Info("[RTC] GenerateAIAgentCall", "request", request)
 
 	resp, err := s.aiAgent.GenerateAIAgentCall(request)
 	if err != nil {

@@ -46,8 +46,8 @@ func (o *Ota) SendToDevice(state *ahttp.State, req *SendToDeviceRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_ids", strings.Join(req.DeviceIDs, ",")))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }

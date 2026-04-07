@@ -20,10 +20,10 @@ func NewHandler() *Handler {
 func (h *Handler) ParseToken(state *ahttp.State, req *ParseTokenRequest) error {
 	claims, err := aiuserService.ValidateToken(state.Ctx, req.Token)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().SetData(&ParseTokenResponse{
+	return state.Response().SetData(&ParseTokenResponse{
 		UID:    claims.UID,
 		Phone:  claims.Phone,
 		OpenID: claims.OpenID,

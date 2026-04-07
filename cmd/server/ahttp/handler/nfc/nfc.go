@@ -27,25 +27,25 @@ func NewHandler() *Handler {
 func (h *Handler) CreateNFC(state *ahttp.State, req *CreateNFCRequest) error {
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	slog.Info("[NFC] CreateNFC", "uid", uid, "device_id", req.DeviceID, "ctype", req.Ctype, "title", req.Title, "content", req.Content)
 	err = h.Service.CreateNFC(uid, req.DeviceID, req.Ctype, req.Title, req.Content, req.Voice, req.Picture, req.Dur)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // GetNFCInfo 获取NFC信息
 func (h *Handler) GetNFCInfo(state *ahttp.State, req *GetNFCInfoRequest) error {
 	nfc, err := h.Service.GetNFCInfoByNFCID(req.NFCID)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success(&GetNFCInfoResponse{
+	return state.Response().Success(&GetNFCInfoResponse{
 		NFCID:   nfc.NFCID,
 		CID:     nfc.Cid,
 		Ctype:   nfc.Ctype,
@@ -61,7 +61,7 @@ func (h *Handler) GetNFCList(state *ahttp.State, req *GetNFCListRequest) error {
 	fmt.Println(dur)
 	list, total, err := h.Service.GetNFCListByDeviceID(req.DeviceID, req.UpdateAt, dur, req.Ctype, req.Page, req.PageSize)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	items := make([]ListItem, len(list))
@@ -79,7 +79,7 @@ func (h *Handler) GetNFCList(state *ahttp.State, req *GetNFCListRequest) error {
 		}
 	}
 
-	return state.Resposne().Success(&GetNFCListResponse{
+	return state.Response().Success(&GetNFCListResponse{
 		Page:     req.Page,
 		PageSize: req.PageSize,
 		Total:    total,
@@ -91,18 +91,18 @@ func (h *Handler) GetNFCList(state *ahttp.State, req *GetNFCListRequest) error {
 func (h *Handler) UpdateNFC(state *ahttp.State, req *UpdateNFCRequest) error {
 	err := h.Service.UpdateNFC(req.CID, req.Ctype, req.Title, req.Content, req.Voice, req.Picture, req.Dur)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // DeleteNFC 删除NFC
 func (h *Handler) DeleteNFC(state *ahttp.State, req *DeleteNFCRequest) error {
 	err := h.Service.DeleteNFC(req.CID)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }

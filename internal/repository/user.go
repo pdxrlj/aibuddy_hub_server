@@ -62,14 +62,22 @@ func (u *UserRepo) Upsert(ctx context.Context, user *model.User) error {
 	_, span := tracer.Start(ctx, "UpsertUser")
 	defer span.End()
 
+	// 构建更新字段，只更新非空字段
+	updates := map[string]any{}
+	if user.OpenID != "" {
+		updates[query.User.OpenID.ColumnName().String()] = user.OpenID
+	}
+	if user.Nickname != "" {
+		updates[query.User.Nickname.ColumnName().String()] = user.Nickname
+	}
+	if user.Avatar != "" {
+		updates[query.User.Avatar.ColumnName().String()] = user.Avatar
+	}
+
 	if err := query.User.Clauses(
 		clause.OnConflict{
-			Columns: []clause.Column{{Name: "id"}},
-			DoUpdates: clause.Assignments(map[string]any{
-				query.User.OpenID.ColumnName().String():   user.OpenID,
-				query.User.Nickname.ColumnName().String(): user.Nickname,
-				query.User.Avatar.ColumnName().String():   user.Avatar,
-			}),
+			Columns:   []clause.Column{{Name: "id"}},
+			DoUpdates: clause.Assignments(updates),
 		},
 	).Create(user); err != nil {
 		span.RecordError(err)

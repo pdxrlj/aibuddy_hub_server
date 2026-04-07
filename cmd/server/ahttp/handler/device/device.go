@@ -45,12 +45,12 @@ func (d *Device) FirstOnline(state *ahttp.State, req *FirstOnlineRequest) error 
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	instanceID := xxhash.Sum64String(req.DeviceID)
 
-	return state.Resposne().Success(&FirstOnlineResponse{
+	return state.Response().Success(&FirstOnlineResponse{
 		MQTTConfig: &MQTTConfig{
 			MQTTURL:      configInfo.MQTTURL,
 			InstanceID:   configInfo.InstanceID,
@@ -73,9 +73,9 @@ func (d *Device) GetLocation(state *ahttp.State, req *GetLocationRequest) error 
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // GetFriends 获取好友列表
@@ -87,7 +87,7 @@ func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	// 把微信用户信息也添加上
@@ -95,14 +95,14 @@ func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	deviceInfo, err := d.Service.GetDeviceInfo(ctx, req.DeviceID)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	friendsResponse := make([]*GetFriendsResponseItem, len(friends)+1)
@@ -130,7 +130,7 @@ func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
 		}
 	}
 
-	return state.Resposne().Success(&GetFriendsResponse{
+	return state.Response().Success(&GetFriendsResponse{
 		Total:   total,
 		Page:    req.Page,
 		Size:    req.Size,
@@ -147,14 +147,14 @@ func (d *Device) GetDeviceInfo(state *ahttp.State, req *GetDeviceInfoRequest) er
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("target_device_id", req.TargetDeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	isFriend, err := d.Service.IsFriend(ctx, req.DeviceID, req.TargetDeviceID)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("target_device_id", req.TargetDeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	relation := "朋友"
@@ -173,7 +173,7 @@ func (d *Device) GetDeviceInfo(state *ahttp.State, req *GetDeviceInfoRequest) er
 		slog.Warn("send target device friend info failed", "error", err)
 	}
 
-	return state.Resposne().Success(&GetDeviceInfoResponse{
+	return state.Response().Success(&GetDeviceInfoResponse{
 		DeviceID:   deviceInfo.DeviceID,
 		DeviceName: nickName,
 		Avatar:     avatar,
@@ -190,15 +190,15 @@ func (d *Device) AddFriend(state *ahttp.State, req *AddFriendRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("target_device_id", req.TargetDeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
 	// 对端设备信息，使用MQTT协议发送给对端
-	if err := d.Service.UseMQTTSendTargetDeviceToFriendInfo(ctx, req.DeviceID, req.TargetDeviceID); err != nil {
+	if err := d.Service.UseMQTTSendTargetDeviceToFriendInfo(ctx, req.TargetDeviceID, req.DeviceID); err != nil {
 		slog.Warn("send target device friend info failed", "error", err)
 	}
 
-	return state.Resposne().Success(&AddFriendResponse{
+	return state.Response().Success(&AddFriendResponse{
 		Name:     targetDevice.DeviceInfo.NickName,
 		Avatar:   targetDevice.DeviceInfo.Avatar,
 		DeviceID: targetDevice.DeviceID,
@@ -214,10 +214,10 @@ func (d *Device) DeleteFriend(state *ahttp.State, req *DeleteFriendRequest) erro
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("target_device_id", req.TargetDeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // SendMessage 发送消息
@@ -232,19 +232,19 @@ func (d *Device) SendMessage(state *ahttp.State, req *SendMessageRequest) error 
 	}
 	if uid > 0 {
 		if err := d.Service.SendMessageToUser(ctx, req.DeviceID, uid, req.Content, req.Fmt, req.Dur); err != nil {
-			return state.Resposne().Error(err)
+			return state.Response().Error(err)
 		}
-		return state.Resposne().Success()
+		return state.Response().Success()
 	}
 
 	err = d.Service.SendMessage(ctx, req.DeviceID, req.TargetDeviceID, req.Content, req.Fmt, req.Dur)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("target_device_id", req.TargetDeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // MessageList 设备消息列表
@@ -260,10 +260,10 @@ func (d *Device) MessageList(state *ahttp.State, req *MessageListRequest) error 
 			attribute.Int("page", req.Page),
 			attribute.Int("size", req.Size),
 		)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Success(&MessageListResponse{
+	return state.Response().Success(&MessageListResponse{
 		Page:  req.Page,
 		Size:  req.Size,
 		Total: total,
@@ -280,10 +280,10 @@ func (d *Device) AccountInfo(state *ahttp.State, req *AccountInfoRequest) error 
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Success(accountInfo)
+	return state.Response().Success(accountInfo)
 }
 
 // OtaCheck ota 升级校验
@@ -295,8 +295,8 @@ func (d *Device) OtaCheck(state *ahttp.State, req *OtaCheckRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().Success(device)
+	return state.Response().Success(device)
 }

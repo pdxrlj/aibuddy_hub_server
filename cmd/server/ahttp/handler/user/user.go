@@ -53,13 +53,13 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 	if req.Source == "phone" {
 		// 验证码登陆
 		if err := h.UserServer.CheckLoginCode(req.Phone, req.PhoneCode); err != nil {
-			return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+			return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 		}
 	} else {
 		// 微信小程序登录
 		wxUser, err := h.UserServer.CheckLoginMiniProgram(ctx, req.WechatCode, req.EncryptedData, req.IV, userInfo)
 		if err != nil || wxUser == nil {
-			return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+			return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 		}
 		userInfo = wxUser
 	}
@@ -67,7 +67,7 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 	user, err := h.UserServer.GetUserByPhone(state.Context(), userInfo.Phone)
 	if err != nil {
 		slog.Error(logger.Authorization, "msg", "Failed to get parent by phone", "error", err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	if user != nil {
 		userInfo.ID = user.ID
@@ -76,17 +76,17 @@ func (h *Handler) Login(state *ahttp.State, req *NewLoginRequest) error {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("error", err.Error()))
 		span.SetAttributes(attribute.String("userinfo", userInfo.String()))
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	// 生成token并返回用户信息
 	token, expires, err := aiuserService.GenerateToken(userInfo.ID, userInfo.Phone, userInfo.OpenID)
 	if err != nil {
 		slog.Error(logger.Authorization, "msg", "Failed to sign JWT token", "error", err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().SetData(LoginResponse{
+	return state.Response().SetData(LoginResponse{
 		Token:    token,
 		Expires:  expires,
 		UID:      userInfo.ID,
@@ -104,10 +104,10 @@ func (h *Handler) SendCode(state *ahttp.State, req *SendCodeRequest) error {
 
 	code, err := h.UserServer.SendPhoneCode(ctx, req.Phone)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	slog.Info(logger.Authorization, "phone", req.Phone, "code", code)
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // RefreshToken 刷新token
@@ -117,10 +117,10 @@ func (h *Handler) RefreshToken(state *ahttp.State, req *TokenRequest) error {
 
 	token, expires, err := aiuserService.RefreshToken(ctx, req.Token)
 	if err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().SetData(TokenResponse{
+	return state.Response().SetData(TokenResponse{
 		Token:   token,
 		Expires: expires,
 	}).Success()
@@ -128,7 +128,7 @@ func (h *Handler) RefreshToken(state *ahttp.State, req *TokenRequest) error {
 
 // Logout 用户退出登录
 func (h *Handler) Logout(state *ahttp.State, _ *TokenRequest) error {
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // CompleteProfile 完善用户信息
@@ -139,13 +139,13 @@ func (h *Handler) CompleteProfile(state *ahttp.State, req *UserinfoRequest) erro
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	birthday, err := time.Parse(time.DateOnly, req.Birthday)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	if err := h.UserServer.CompleteProfile(ctx, uid, req.BoardType, req.Relation, &model.DeviceInfo{
@@ -161,10 +161,10 @@ func (h *Handler) CompleteProfile(state *ahttp.State, req *UserinfoRequest) erro
 		Personality: []string{req.Personality},
 	}); err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // Lost 发送挂失消息给设备
@@ -175,16 +175,16 @@ func (h *Handler) Lost(state *ahttp.State, req *LostRequest) error {
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	err = h.UserServer.Lost(ctx, uid, req.DeviceIDToUpper())
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // Unlost 发送解除挂失消息给设备
@@ -196,9 +196,9 @@ func (h *Handler) Unlost(state *ahttp.State, req *UnlostRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // Unbind 发送解绑消息给设备
@@ -210,9 +210,9 @@ func (h *Handler) Unbind(state *ahttp.State, req *UnbindRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // HaveDevice 用户是否已经绑定了设备
@@ -223,15 +223,15 @@ func (h *Handler) HaveDevice(state *ahttp.State) error {
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	haveDevice, err := h.UserServer.HaveDevice(ctx, uid)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().SetData(HaveDeviceResponse{
+	return state.Response().SetData(HaveDeviceResponse{
 		HaveDevice: haveDevice,
 	}).Success()
 }
@@ -244,13 +244,13 @@ func (h *Handler) DeviceList(state *ahttp.State) error {
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	deviceList, err := h.UserServer.UserDeviceList(ctx, uid)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	deviceListItems := make([]*DeviceInfoListItem, 0)
@@ -280,7 +280,7 @@ func (h *Handler) DeviceList(state *ahttp.State) error {
 		})
 	}
 
-	return state.Resposne().SetData(&DeviceListResponse{
+	return state.Response().SetData(&DeviceListResponse{
 		DeviceList: deviceListItems,
 	}).Success()
 }
@@ -293,7 +293,7 @@ func (h *Handler) SendMessage(state *ahttp.State, req *SendMsgRequest) error {
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	if err := h.UserServer.CreateMessage(ctx, uid, &model.DeviceMessage{
@@ -302,10 +302,10 @@ func (h *Handler) SendMessage(state *ahttp.State, req *SendMsgRequest) error {
 		Content:    req.Content,
 		Dur:        req.Dur,
 	}); err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // MessageList 获取留言列表
@@ -316,16 +316,16 @@ func (h *Handler) MessageList(state *ahttp.State, req *GetMessageRequest) error 
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	data, total, err := h.UserServer.GetMessage(ctx, uid, req.DeviceID, req.Page, req.PageSize)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().SetData(MsgListResponse{
+	return state.Response().SetData(MsgListResponse{
 		Page:     req.Page,
 		PageSize: req.PageSize,
 		Total:    total,
@@ -341,7 +341,7 @@ func (h *Handler) GetConvMessageList(state *ahttp.State, req *GetConvMessageList
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	messages, total, err := h.UserServer.GetConvMessageList(ctx, uid, req.DeviceID, req.TargetDeviceID, req.Page, req.PageSize)
@@ -352,10 +352,10 @@ func (h *Handler) GetConvMessageList(state *ahttp.State, req *GetConvMessageList
 			attribute.String("target_device_id", req.TargetDeviceID),
 			attribute.Int64("uid", uid),
 		)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().SetData(MsgListResponse{
+	return state.Response().SetData(MsgListResponse{
 		Page:     req.Page,
 		PageSize: req.PageSize,
 		Total:    total,
@@ -371,16 +371,16 @@ func (h *Handler) MessageMark(state *ahttp.State, req *MessageMarkRequest) error
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	if err := h.UserServer.MarkMessageRead(ctx, uid, req.MessageIDs); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.Int64("uid", uid))
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // AnalysisGrowthReport 分析用户成长报告
@@ -391,22 +391,22 @@ func (h *Handler) AnalysisGrowthReport(state *ahttp.State, req *AnalysisGrowthRe
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	startTime, endTime, err := req.ParseTime()
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	err = h.UserServer.AnalysisGrowthReport(ctx, uid, req.DeviceID, startTime, endTime)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // GetGrowthReportList 获取用户成长报告列表
@@ -417,10 +417,10 @@ func (h *Handler) GetGrowthReportList(state *ahttp.State, req *GetGrowthReportLi
 	data, total, err := h.UserServer.GetGrowthReportList(ctx, req.DeviceID, req.Page, req.PageSize)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().SetData(GrowthReportListResponse{
+	return state.Response().SetData(GrowthReportListResponse{
 		Page:     req.Page,
 		PageSize: req.PageSize,
 		Total:    total,
@@ -437,9 +437,9 @@ func (h *Handler) DeleteGrowthReport(state *ahttp.State, req *DeleteGrowthReport
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("report_id", req.ReportID))
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // UpdateInfo 更新用户信息
@@ -449,7 +449,7 @@ func (h *Handler) UpdateInfo(state *ahttp.State, req *InfoRequest) error {
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	user := model.User{
 		Nickname: req.NickName,
@@ -463,17 +463,17 @@ func (h *Handler) UpdateInfo(state *ahttp.State, req *InfoRequest) error {
 		birthday, err := time.Parse(time.DateOnly, req.Birthday)
 		if err != nil {
 			span.SetAttributes(attribute.String("Birthday", req.Birthday))
-			return state.Resposne().SetStatus(http.StatusBadRequest).Error(errors.New("生日日期参数格式错误"))
+			return state.Response().SetStatus(http.StatusBadRequest).Error(errors.New("生日日期参数格式错误"))
 		}
 		user.Birthday = birthday
 	}
 
 	if err := h.UserServer.UpdateUserInfo(ctx, uid, &user); err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // GetUserInfo 获取用户信息
@@ -483,13 +483,13 @@ func (h *Handler) GetUserInfo(state *ahttp.State) error {
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	user, err := h.UserServer.GetUserInfoByUID(ctx, uid)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	birthday := ""
@@ -497,7 +497,7 @@ func (h *Handler) GetUserInfo(state *ahttp.State) error {
 		birthday = user.Birthday.Format(time.DateOnly)
 	}
 
-	return state.Resposne().SetData(InfoResponse{
+	return state.Response().SetData(InfoResponse{
 		UID:      uid,
 		Useranem: user.Username,
 		Email:    user.Email,
@@ -516,16 +516,16 @@ func (h *Handler) DeviceProfile(state *ahttp.State, req *DeviceInfoRequest) erro
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	info, device, err := h.UserServer.GetUserDeviceInfo(ctx, uid, req.DeviceID)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().SetData(&DeviceInfoResponse{
+	return state.Response().SetData(&DeviceInfoResponse{
 		Version:     device.Version,
 		BoardType:   device.BoardType,
 		DeviceID:    req.DeviceID,
@@ -549,12 +549,12 @@ func (h *Handler) UpdateDeviceProfile(state *ahttp.State, req *UpdateDeviceInfoR
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	birthday, err := time.Parse(time.DateOnly, req.Birthday)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 	if err := h.UserServer.UpdateDeviceInfo(ctx, uid, &model.DeviceInfo{
 		DeviceID:    req.DeviceID,
@@ -567,10 +567,10 @@ func (h *Handler) UpdateDeviceProfile(state *ahttp.State, req *UpdateDeviceInfoR
 		Skills:      []string{req.Skills},
 		Personality: []string{req.Personality},
 	}, req.Relation); err != nil {
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // UnreadMessageCount 获取未读消息数量
@@ -581,16 +581,16 @@ func (h *Handler) UnreadMessageCount(state *ahttp.State, req *UnreadMessageCount
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	response, err := h.UserServer.GetUnreadMessageCount(ctx, uid, req.DeviceID)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success(response)
+	return state.Response().Success(response)
 }
 
 // Unregister 注销用户帐号
@@ -601,15 +601,15 @@ func (h *Handler) Unregister(state *ahttp.State) error {
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	if err := h.UserServer.ClearUserInfo(ctx, uid); err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
 
 // DownloadChatRecord 下载百度的聊天记录
@@ -634,10 +634,10 @@ func (h *Handler) DownloadChatRecord(state *ahttp.State, req *DownloadChatRecord
 	})
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
 
-	return state.Resposne().SetData(DownloadChatRecordResponse{
+	return state.Response().SetData(DownloadChatRecordResponse{
 		PageNo:   resp.PageNo,
 		PageSize: resp.PageSize,
 		Total:    len(resp.Data),
@@ -653,14 +653,14 @@ func (h *Handler) MyInfo(state *ahttp.State, req *MyInfoRequest) error {
 	uid, err := aiuserService.GetUIDFromContext(state.Ctx)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
 	info, err := h.UserServer.GetMyInfo(ctx, uid, req.DeviceID)
 	if err != nil {
 		span.RecordError(err)
-		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	return state.Resposne().Success(info)
+	return state.Response().Success(info)
 }

@@ -29,6 +29,7 @@ func newOrder(db *gorm.DB, opts ...gen.DOOption) order {
 	tableName := _order.orderDo.TableName()
 	_order.ALL = field.NewAsterisk(tableName)
 	_order.ID = field.NewInt64(tableName, "id")
+	_order.UserID = field.NewInt64(tableName, "user_id")
 	_order.OutTradeNo = field.NewString(tableName, "out_trade_no")
 	_order.OrderNo = field.NewString(tableName, "order_no")
 	_order.Status = field.NewString(tableName, "status")
@@ -56,6 +57,7 @@ type order struct {
 
 	ALL        field.Asterisk
 	ID         field.Int64
+	UserID     field.Int64  // 用户ID
 	OutTradeNo field.String // 微信订单号
 	OrderNo    field.String // 商户订单号
 	Status     field.String // 订单状态
@@ -80,6 +82,7 @@ func (o order) As(alias string) *order {
 func (o *order) updateTableName(table string) *order {
 	o.ALL = field.NewAsterisk(table)
 	o.ID = field.NewInt64(table, "id")
+	o.UserID = field.NewInt64(table, "user_id")
 	o.OutTradeNo = field.NewString(table, "out_trade_no")
 	o.OrderNo = field.NewString(table, "order_no")
 	o.Status = field.NewString(table, "status")
@@ -102,8 +105,9 @@ func (o *order) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (o *order) fillFieldMap() {
-	o.fieldMap = make(map[string]field.Expr, 8)
+	o.fieldMap = make(map[string]field.Expr, 9)
 	o.fieldMap["id"] = o.ID
+	o.fieldMap["user_id"] = o.UserID
 	o.fieldMap["out_trade_no"] = o.OutTradeNo
 	o.fieldMap["order_no"] = o.OrderNo
 	o.fieldMap["status"] = o.Status

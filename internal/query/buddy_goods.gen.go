@@ -34,6 +34,7 @@ func newGoods(db *gorm.DB, opts ...gen.DOOption) goods {
 	_goods.Stock = field.NewInt64(tableName, "stock")
 	_goods.ActivityPrice = field.NewInt64(tableName, "activity_price")
 	_goods.Description = field.NewString(tableName, "description")
+	_goods.Status = field.NewString(tableName, "status")
 	_goods.CreatedAt = field.NewField(tableName, "created_at")
 	_goods.UpdatedAt = field.NewField(tableName, "updated_at")
 
@@ -52,6 +53,7 @@ type goods struct {
 	Stock         field.Int64  // 商品库存
 	ActivityPrice field.Int64  // 活动价格
 	Description   field.String // 商品描述
+	Status        field.String // 商品状态
 	CreatedAt     field.Field  // 创建时间
 	UpdatedAt     field.Field  // 更新时间
 
@@ -76,6 +78,7 @@ func (g *goods) updateTableName(table string) *goods {
 	g.Stock = field.NewInt64(table, "stock")
 	g.ActivityPrice = field.NewInt64(table, "activity_price")
 	g.Description = field.NewString(table, "description")
+	g.Status = field.NewString(table, "status")
 	g.CreatedAt = field.NewField(table, "created_at")
 	g.UpdatedAt = field.NewField(table, "updated_at")
 
@@ -94,13 +97,14 @@ func (g *goods) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (g *goods) fillFieldMap() {
-	g.fieldMap = make(map[string]field.Expr, 8)
+	g.fieldMap = make(map[string]field.Expr, 9)
 	g.fieldMap["id"] = g.ID
 	g.fieldMap["name"] = g.Name
 	g.fieldMap["price"] = g.Price
 	g.fieldMap["stock"] = g.Stock
 	g.fieldMap["activity_price"] = g.ActivityPrice
 	g.fieldMap["description"] = g.Description
+	g.fieldMap["status"] = g.Status
 	g.fieldMap["created_at"] = g.CreatedAt
 	g.fieldMap["updated_at"] = g.UpdatedAt
 }

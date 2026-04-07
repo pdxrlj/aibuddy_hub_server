@@ -41,9 +41,9 @@ func (h *Handler) GetEmotions(state *ahttp.State, req *GetEmotionsRequest) error
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
 		span.SetAttributes(attribute.Int("page", req.Page))
 		span.SetAttributes(attribute.Int("page_size", req.PageSize))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
-	return state.Resposne().Success(GetEmotionsRes{
+	return state.Response().Success(GetEmotionsRes{
 		Data:  emotions,
 		Total: total,
 	})
@@ -58,9 +58,9 @@ func (h *Handler) GetLatestEmotion(state *ahttp.State, req *GetLatestEmotionRequ
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
-	return state.Resposne().Success(GetLatestEmotionRes{
+	return state.Response().Success(GetLatestEmotionRes{
 		Data: emotion,
 	})
 }
@@ -72,7 +72,7 @@ func (h *Handler) MarkEmotionRead(state *ahttp.State, req *MarkEmotionReadReques
 
 	if err := h.EmotionService.MarkEmotionRead(ctx, req.EmotionIDs); err != nil {
 		span.RecordError(err)
-		return state.Resposne().Error(err)
+		return state.Response().Error(err)
 	}
-	return state.Resposne().Success()
+	return state.Response().Success()
 }
