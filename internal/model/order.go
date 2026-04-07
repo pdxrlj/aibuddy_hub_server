@@ -1,0 +1,77 @@
+// Package model 订单模型
+package model
+
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
+
+// DefaultExpireTime 默认过期时间 10分钟
+const DefaultExpireTime = time.Minute * 10
+
+// OrderStatus 订单状态
+type OrderStatus string
+
+const (
+	// OrderStatusPending 待支付
+	OrderStatusPending OrderStatus = "待支付"
+	// OrderStatusPaid 已支付
+	OrderStatusPaid OrderStatus = "已支付"
+	// OrderStatusTimeout 已超时
+	OrderStatusTimeout OrderStatus = "已超时"
+	// OrderStatusRefunded 已退款
+	OrderStatusRefunded OrderStatus = "已退款"
+)
+
+// String 返回订单状态字符串
+func (o OrderStatus) String() string {
+	return string(o)
+}
+
+// Order 订单
+type Order struct {
+	ID         int64  `gorm:"column:id;autoIncrement;primaryKey" json:"id"`
+	OutTradeNo string `gorm:"column:out_trade_no;index;type:varchar(255);comment:微信订单号" json:"out_trade_no"`
+	OrderNo    string `gorm:"column:order_no;uniqueIndex;type:varchar(64);comment:商户订单号" json:"order_no"`
+
+	Status OrderStatus `gorm:"column:status;index;comment:订单状态" json:"status"`
+
+	Goods []*OrderGoods `gorm:"foreignKey:OrderID;references:ID" json:"goods"`
+
+	ExpireTime LocalTime `gorm:"column:expire_time;comment:订单超时时间" json:"expire_time"`
+
+	CreatedAt LocalTime `gorm:"column:created_at;autoCreateTime;comment:创建时间" json:"created_at"`
+	UpdatedAt LocalTime `gorm:"column:updated_at;autoUpdateTime;comment:更新时间" json:"updated_at"`
+}
+
+// TableName 表名
+func (o *Order) TableName() string {
+	return TableName("order")
+}
+
+// BeforeCreate 创建前钩子
+func (o *Order) BeforeCreate(_ *gorm.DB) error {
+	o.ExpireTime = LocalTime(time.Now().Add(DefaultExpireTime))
+	o.Status = OrderStatusPending
+	o.CreatedAt = LocalTime(time.Now())
+	o.UpdatedAt = LocalTime(time.Now())
+	return nil
+}
+
+// BeforeUpdate 更新前钩子
+func (o *Order) BeforeUpdate(_ *gorm.DB) error {
+	o.UpdatedAt = LocalTime(time.Now())
+	return nil
+}
+
+// AfterFind 查询之后，判断订单是否过期
+func (o *Order) AfterFind(_ *gorm.DB) error {
+	if o.Status == OrderStatusPending && !o.ExpireTime.IsZero() {
+		if o.ExpireTime.Before(LocalTime(time.Now())) {
+			o.Status = OrderStatusTimeout
+		}
+	}
+
+	return nil
+}

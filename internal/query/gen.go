@@ -21,6 +21,7 @@ var (
 	AnniversaryReminder *anniversaryReminder
 	ChatDialogue        *chatDialogue
 	Device              *device
+	DeviceActivate      *deviceActivate
 	DeviceInfo          *deviceInfo
 	DeviceMessage       *deviceMessage
 	DeviceOta           *deviceOta
@@ -28,8 +29,11 @@ var (
 	DeviceSN            *deviceSN
 	Emotion             *emotion
 	Feedback            *feedback
+	Goods               *goods
 	GrowthReport        *growthReport
 	NFC                 *nFC
+	Order               *order
+	OrderGoods          *orderGoods
 	OtaResource         *otaResource
 	PomodoroClock       *pomodoroClock
 	Reminder            *reminder
@@ -43,6 +47,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	AnniversaryReminder = &Q.AnniversaryReminder
 	ChatDialogue = &Q.ChatDialogue
 	Device = &Q.Device
+	DeviceActivate = &Q.DeviceActivate
 	DeviceInfo = &Q.DeviceInfo
 	DeviceMessage = &Q.DeviceMessage
 	DeviceOta = &Q.DeviceOta
@@ -50,8 +55,11 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	DeviceSN = &Q.DeviceSN
 	Emotion = &Q.Emotion
 	Feedback = &Q.Feedback
+	Goods = &Q.Goods
 	GrowthReport = &Q.GrowthReport
 	NFC = &Q.NFC
+	Order = &Q.Order
+	OrderGoods = &Q.OrderGoods
 	OtaResource = &Q.OtaResource
 	PomodoroClock = &Q.PomodoroClock
 	Reminder = &Q.Reminder
@@ -66,6 +74,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		AnniversaryReminder: newAnniversaryReminder(db, opts...),
 		ChatDialogue:        newChatDialogue(db, opts...),
 		Device:              newDevice(db, opts...),
+		DeviceActivate:      newDeviceActivate(db, opts...),
 		DeviceInfo:          newDeviceInfo(db, opts...),
 		DeviceMessage:       newDeviceMessage(db, opts...),
 		DeviceOta:           newDeviceOta(db, opts...),
@@ -73,8 +82,11 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		DeviceSN:            newDeviceSN(db, opts...),
 		Emotion:             newEmotion(db, opts...),
 		Feedback:            newFeedback(db, opts...),
+		Goods:               newGoods(db, opts...),
 		GrowthReport:        newGrowthReport(db, opts...),
 		NFC:                 newNFC(db, opts...),
+		Order:               newOrder(db, opts...),
+		OrderGoods:          newOrderGoods(db, opts...),
 		OtaResource:         newOtaResource(db, opts...),
 		PomodoroClock:       newPomodoroClock(db, opts...),
 		Reminder:            newReminder(db, opts...),
@@ -90,6 +102,7 @@ type Query struct {
 	AnniversaryReminder anniversaryReminder
 	ChatDialogue        chatDialogue
 	Device              device
+	DeviceActivate      deviceActivate
 	DeviceInfo          deviceInfo
 	DeviceMessage       deviceMessage
 	DeviceOta           deviceOta
@@ -97,8 +110,11 @@ type Query struct {
 	DeviceSN            deviceSN
 	Emotion             emotion
 	Feedback            feedback
+	Goods               goods
 	GrowthReport        growthReport
 	NFC                 nFC
+	Order               order
+	OrderGoods          orderGoods
 	OtaResource         otaResource
 	PomodoroClock       pomodoroClock
 	Reminder            reminder
@@ -117,6 +133,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		AnniversaryReminder: q.AnniversaryReminder.clone(db),
 		ChatDialogue:        q.ChatDialogue.clone(db),
 		Device:              q.Device.clone(db),
+		DeviceActivate:      q.DeviceActivate.clone(db),
 		DeviceInfo:          q.DeviceInfo.clone(db),
 		DeviceMessage:       q.DeviceMessage.clone(db),
 		DeviceOta:           q.DeviceOta.clone(db),
@@ -124,8 +141,11 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		DeviceSN:            q.DeviceSN.clone(db),
 		Emotion:             q.Emotion.clone(db),
 		Feedback:            q.Feedback.clone(db),
+		Goods:               q.Goods.clone(db),
 		GrowthReport:        q.GrowthReport.clone(db),
 		NFC:                 q.NFC.clone(db),
+		Order:               q.Order.clone(db),
+		OrderGoods:          q.OrderGoods.clone(db),
 		OtaResource:         q.OtaResource.clone(db),
 		PomodoroClock:       q.PomodoroClock.clone(db),
 		Reminder:            q.Reminder.clone(db),
@@ -149,6 +169,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		AnniversaryReminder: q.AnniversaryReminder.replaceDB(db),
 		ChatDialogue:        q.ChatDialogue.replaceDB(db),
 		Device:              q.Device.replaceDB(db),
+		DeviceActivate:      q.DeviceActivate.replaceDB(db),
 		DeviceInfo:          q.DeviceInfo.replaceDB(db),
 		DeviceMessage:       q.DeviceMessage.replaceDB(db),
 		DeviceOta:           q.DeviceOta.replaceDB(db),
@@ -156,8 +177,11 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		DeviceSN:            q.DeviceSN.replaceDB(db),
 		Emotion:             q.Emotion.replaceDB(db),
 		Feedback:            q.Feedback.replaceDB(db),
+		Goods:               q.Goods.replaceDB(db),
 		GrowthReport:        q.GrowthReport.replaceDB(db),
 		NFC:                 q.NFC.replaceDB(db),
+		Order:               q.Order.replaceDB(db),
+		OrderGoods:          q.OrderGoods.replaceDB(db),
 		OtaResource:         q.OtaResource.replaceDB(db),
 		PomodoroClock:       q.PomodoroClock.replaceDB(db),
 		Reminder:            q.Reminder.replaceDB(db),
@@ -171,6 +195,7 @@ type queryCtx struct {
 	AnniversaryReminder IAnniversaryReminderDo
 	ChatDialogue        IChatDialogueDo
 	Device              IDeviceDo
+	DeviceActivate      IDeviceActivateDo
 	DeviceInfo          IDeviceInfoDo
 	DeviceMessage       IDeviceMessageDo
 	DeviceOta           IDeviceOtaDo
@@ -178,8 +203,11 @@ type queryCtx struct {
 	DeviceSN            IDeviceSNDo
 	Emotion             IEmotionDo
 	Feedback            IFeedbackDo
+	Goods               IGoodsDo
 	GrowthReport        IGrowthReportDo
 	NFC                 INFCDo
+	Order               IOrderDo
+	OrderGoods          IOrderGoodsDo
 	OtaResource         IOtaResourceDo
 	PomodoroClock       IPomodoroClockDo
 	Reminder            IReminderDo
@@ -193,6 +221,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		AnniversaryReminder: q.AnniversaryReminder.WithContext(ctx),
 		ChatDialogue:        q.ChatDialogue.WithContext(ctx),
 		Device:              q.Device.WithContext(ctx),
+		DeviceActivate:      q.DeviceActivate.WithContext(ctx),
 		DeviceInfo:          q.DeviceInfo.WithContext(ctx),
 		DeviceMessage:       q.DeviceMessage.WithContext(ctx),
 		DeviceOta:           q.DeviceOta.WithContext(ctx),
@@ -200,8 +229,11 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		DeviceSN:            q.DeviceSN.WithContext(ctx),
 		Emotion:             q.Emotion.WithContext(ctx),
 		Feedback:            q.Feedback.WithContext(ctx),
+		Goods:               q.Goods.WithContext(ctx),
 		GrowthReport:        q.GrowthReport.WithContext(ctx),
 		NFC:                 q.NFC.WithContext(ctx),
+		Order:               q.Order.WithContext(ctx),
+		OrderGoods:          q.OrderGoods.WithContext(ctx),
 		OtaResource:         q.OtaResource.WithContext(ctx),
 		PomodoroClock:       q.PomodoroClock.WithContext(ctx),
 		Reminder:            q.Reminder.WithContext(ctx),
