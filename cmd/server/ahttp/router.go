@@ -247,6 +247,16 @@ func RegisterRoutes(base *ahttp.Base) {
 			shopGroup.GET("/goods/list", shop.GoodsList) // 商品列表
 			// 创建预支付订单
 			shopGroup.POST("/order/create", shop.CreateOrder)
+
+			// 获取订单列表
+			shopGroup.GET("/order/list", shop.OrderList)
+		})
+
+		// 支付回调（无需认证）
+		group.Group("/shop/payment", nil, func(paymentGroup *ahttp.Group) {
+			shop := membershop.NewHandler()
+			paymentGroup.POST("/notify", shop.PaySuccess)           // 支付成功回调
+			paymentGroup.POST("/refund_notify", shop.RefundSuccess) // 退款回调
 		})
 	})
 }

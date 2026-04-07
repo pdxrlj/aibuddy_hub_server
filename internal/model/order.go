@@ -31,10 +31,12 @@ func (o OrderStatus) String() string {
 
 // Order 订单
 type Order struct {
-	ID         int64  `gorm:"column:id;autoIncrement;primaryKey" json:"id"`
-	UserID     int64  `gorm:"column:user_id;index;comment:用户ID" json:"user_id"`
-	OutTradeNo string `gorm:"column:out_trade_no;index;type:varchar(255);comment:微信订单号" json:"out_trade_no"`
-	OrderNo    string `gorm:"column:order_no;uniqueIndex;type:varchar(64);comment:商户订单号" json:"order_no"`
+	ID       int64  `gorm:"column:id;autoIncrement;primaryKey" json:"id"`
+	UserID   int64  `gorm:"column:user_id;index;comment:用户ID" json:"user_id"`
+	DeviceID string `gorm:"column:device_id;index;comment:设备ID" json:"device_id"`
+
+	OutTradeNo    string `gorm:"column:out_trade_no;uniqueIndex;type:varchar(64);comment:商户订单号" json:"out_trade_no"`
+	TransactionID string `gorm:"column:transaction_id;index;type:varchar(64);comment:微信支付订单号" json:"transaction_id"`
 
 	Status OrderStatus `gorm:"column:status;index;comment:订单状态" json:"status"`
 
@@ -67,10 +69,11 @@ func (o *Order) BeforeUpdate(_ *gorm.DB) error {
 }
 
 // AfterFind 查询之后，判断订单是否过期
-func (o *Order) AfterFind(_ *gorm.DB) error {
+func (o *Order) AfterFind(tx *gorm.DB) error {
 	if o.Status == OrderStatusPending && !o.ExpireTime.IsZero() {
 		if o.ExpireTime.Before(LocalTime(time.Now())) {
 			o.Status = OrderStatusTimeout
+			tx.Model(o).Update("status", OrderStatusTimeout)
 		}
 	}
 

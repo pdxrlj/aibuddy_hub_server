@@ -3,6 +3,7 @@ package membershop
 
 import (
 	"aibuddy/internal/model"
+	"aibuddy/internal/query"
 	"aibuddy/internal/repository"
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/pay"
@@ -12,6 +13,8 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-pay/gopay/wechat/v3"
@@ -33,7 +36,9 @@ var tracer = func() trace.Tracer {
 type Service struct {
 	MemberShopRepository *repository.MemberShopRepository
 	UserRepository       *repository.UserRepo
-	WxMinPayService      *pay.WxMinPay
+	DeviceRepo           *repository.DeviceRepo
+
+	WxMinPayService *pay.WxMinPay
 }
 
 // NewService 实例化
@@ -60,7 +65,9 @@ func NewService() *Service {
 	return &Service{
 		MemberShopRepository: repository.NewMemberShopRepository(),
 		UserRepository:       repository.NewUserRepo(),
-		WxMinPayService:      WxMinPayService,
+		DeviceRepo:           repository.NewDeviceRepo(),
+
+		WxMinPayService: WxMinPayService,
 	}
 }
 
@@ -83,8 +90,8 @@ func (s *Service) GoodsList(ctx context.Context, page, pageSize int) (*GoodsList
 }
 
 // CreateOrder 创建订单
-func (s *Service) CreateOrder(ctx context.Context, userID, goodsID int64) (*CreateOrderResponse, error) {
-	slog.Info("[Shop] CreateOrder", "userID", userID, "goodsID", goodsID)
+func (s *Service) CreateOrder(ctx context.Context, userID, goodsID int64, deviceID string) (*CreateOrderResponse, error) {
+	slog.Info("[Shop] CreateOrder", "userID", userID, "goodsID", goodsID, "deviceID", deviceID)
 	ctx, span := tracer().Start(ctx, "ShopService.CreateOrder")
 	defer span.End()
 
@@ -105,7 +112,7 @@ func (s *Service) CreateOrder(ctx context.Context, userID, goodsID int64) (*Crea
 	orderNo := s.GenerateOrderNo(userID)
 
 	// 4. 执行事务创建订单
-	wxPreResp, err := s.ExecuteOrderTransaction(ctx, userID, goods, orderNo, price, userInfo.OpenID)
+	wxPreResp, err := s.ExecuteOrderTransaction(ctx, userID, deviceID, goods, orderNo, price, userInfo.OpenID)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +152,7 @@ func (s *Service) CalculatePrice(goods *model.Goods) int64 {
 }
 
 // ExecuteOrderTransaction 执行订单事务
-func (s *Service) ExecuteOrderTransaction(ctx context.Context, userID int64, goods *model.Goods, orderNo string, price int64, openID string) (*wechat.PrepayRsp, error) {
+func (s *Service) ExecuteOrderTransaction(ctx context.Context, userID int64, deviceID string, goods *model.Goods, orderNo string, price int64, openID string) (*wechat.PrepayRsp, error) {
 	_, span := tracer().Start(ctx, "ShopService.ExecuteOrderTransaction")
 	defer span.End()
 
@@ -153,8 +160,7 @@ func (s *Service) ExecuteOrderTransaction(ctx context.Context, userID int64, goo
 
 	err := s.MemberShopRepository.Transaction(func(tx *gorm.DB) error {
 		// 创建订单记录
-		order, err := s.CreateOrderRecord(tx, userID, goods, orderNo, price)
-		if err != nil {
+		if _, err := s.CreateOrderRecord(tx, userID, deviceID, goods, orderNo, price); err != nil {
 			return fmt.Errorf("创建订单记录失败: %w", err)
 		}
 
@@ -170,11 +176,6 @@ func (s *Service) ExecuteOrderTransaction(ctx context.Context, userID int64, goo
 		}
 
 		wxPreResp = wxResp
-
-		// 更新订单的微信订单号
-		if err := s.UpdateOutTradeNo(tx, order.ID, wxPreResp.Response.PrepayId); err != nil {
-			return fmt.Errorf("更新订单号失败: %w", err)
-		}
 
 		return nil
 	})
@@ -237,11 +238,12 @@ func (s *Service) GenerateOrderNo(userID int64) string {
 }
 
 // CreateOrderRecord 创建订单记录
-func (s *Service) CreateOrderRecord(tx *gorm.DB, userID int64, goods *model.Goods, orderNo string, price int64) (*model.Order, error) {
+func (s *Service) CreateOrderRecord(tx *gorm.DB, userID int64, deviceID string, goods *model.Goods, outTradeNo string, price int64) (*model.Order, error) {
 	order := &model.Order{
-		UserID:  userID,
-		OrderNo: orderNo,
-		Status:  model.OrderStatusPending,
+		UserID:     userID,
+		DeviceID:   deviceID,
+		OutTradeNo: outTradeNo,
+		Status:     model.OrderStatusPending,
 		Goods: []*model.OrderGoods{
 			{
 				GoodsID:    goods.ID,
@@ -297,9 +299,260 @@ func (s *Service) CreateWxPrepayOrder(ctx context.Context, orderNo, description 
 	return wxPreResp, nil
 }
 
-// UpdateOutTradeNo 更新订单的微信订单号
-func (s *Service) UpdateOutTradeNo(tx *gorm.DB, orderID int64, prepayID string) error {
-	return tx.Model(&model.Order{}).
-		Where("id = ?", orderID).
-		Update("out_trade_no", prepayID).Error
+// OrderList 订单列表响应
+type OrderList struct {
+	Total int              `json:"total"`
+	List  []*OrderListItem `json:"list"`
+}
+
+// OrderListItem 订单列表项
+type OrderListItem struct {
+	OrderNo   string `json:"orderNo"` // 商户订单号
+	Status    string `json:"status"`
+	Amount    int64  `json:"amount"`
+	CreatedAt string `json:"createdAt"`
+
+	GoodsName  string `json:"goodsName"`
+	GoodsNum   int64  `json:"goodsNum"`
+	GoodsPrice int64  `json:"goodsPrice"`
+}
+
+// OrderList 获取订单列表
+func (s *Service) OrderList(ctx context.Context, page, pageSize int, status string) (*OrderList, error) {
+	ctx, span := tracer().Start(ctx, "ShopService.OrderList")
+	defer span.End()
+
+	orders, count, err := s.MemberShopRepository.OrderList(ctx, page, pageSize, status)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(
+			attribute.Int("page", page),
+			attribute.Int("pageSize", pageSize),
+			attribute.String("status", status),
+		)
+		return nil, err
+	}
+
+	// 转换为简化的订单列表项
+	list := make([]*OrderListItem, 0, len(orders))
+	for _, order := range orders {
+		item := &OrderListItem{
+			OrderNo:   order.OutTradeNo, // 使用 OutTradeNo 作为商户订单号
+			Status:    string(order.Status),
+			CreatedAt: order.CreatedAt.Format("2006-01-02 15:04:05"),
+		}
+
+		// 处理商品信息
+		var totalAmount int64
+		var totalNum int64
+		var goodsNames []string
+		for _, goods := range order.Goods {
+			totalAmount += goods.GoodsPrice * goods.GoodsNum
+			totalNum += goods.GoodsNum
+			goodsNames = append(goodsNames, goods.GoodsName)
+		}
+
+		item.Amount = totalAmount
+		item.GoodsNum = totalNum
+		item.GoodsName = strings.Join(goodsNames, ",")
+		// 如果只有一个商品，显示单价；多个商品显示总价
+		if len(order.Goods) == 1 {
+			item.GoodsPrice = order.Goods[0].GoodsPrice
+		} else {
+			item.GoodsPrice = totalAmount
+		}
+
+		list = append(list, item)
+	}
+
+	return &OrderList{
+		Total: int(count),
+		List:  list,
+	}, nil
+}
+
+// PaySuccess 支付成功回调
+func (s *Service) PaySuccess(ctx context.Context, w http.ResponseWriter, request *http.Request) error {
+	ctx, span := tracer().Start(ctx, "ShopService.PaySuccess")
+	defer span.End()
+
+	// 验证并解析支付通知
+	notifyData, err := s.VerifyAndParsePayNotify(ctx, w, request)
+	if err != nil {
+		span.RecordError(err)
+		return err
+	}
+
+	// 处理订单支付
+	if err := s.ProcessOrderPayment(ctx, notifyData); err != nil {
+		span.RecordError(err)
+		slog.Error("[Shop] ProcessOrderPayment failed", "err", err, "out_trade_no", notifyData.OutTradeNo)
+		_ = PayResponse(w, "FAIL", "处理订单失败")
+		return err
+	}
+
+	// 返回微信支付回调成功响应
+	return PayResponse(w, "SUCCESS", "成功")
+}
+
+// VerifyAndParsePayNotify 验证并解析支付通知
+func (s *Service) VerifyAndParsePayNotify(_ context.Context, w http.ResponseWriter, request *http.Request) (*PayNotifyData, error) {
+	notify, err := wechat.V3ParseNotify(request)
+	if err != nil {
+		_ = PayResponse(w, "FAIL", "解析通知失败")
+		return nil, err
+	}
+
+	notifyData := NewPayNotifyData(notify)
+
+	if err := notifyData.VerifySign(s.WxMinPayService); err != nil {
+		_ = PayResponse(w, "FAIL", "验签失败")
+		return nil, err
+	}
+
+	if err := notifyData.Decrypt(); err != nil {
+		_ = PayResponse(w, "FAIL", "解密失败")
+		return nil, err
+	}
+
+	slog.Info("[Shop] PaySuccess", "notifyData", notifyData)
+
+	// 验证交易状态
+	if notifyData.TradeState != "SUCCESS" {
+		_ = PayResponse(w, "FAIL", notifyData.TradeStateDesc)
+		return nil, fmt.Errorf("交易状态异常: %s", notifyData.TradeStateDesc)
+	}
+
+	return notifyData, nil
+}
+
+// ProcessOrderPayment 处理订单支付
+func (s *Service) ProcessOrderPayment(ctx context.Context, notifyData *PayNotifyData) error {
+	return query.Q.Transaction(func(tx *query.Query) error {
+		// 更新订单状态
+		result, err := tx.Order.
+			Where(tx.Order.OutTradeNo.Eq(notifyData.OutTradeNo),
+				tx.Order.Status.Eq(string(model.OrderStatusPending))).
+			Updates(map[string]any{
+				tx.Order.Status.ColumnName().String():        model.OrderStatusPaid.String(),
+				tx.Order.TransactionID.ColumnName().String(): notifyData.TransactionId,
+			})
+		if err != nil {
+			return fmt.Errorf("更新订单状态失败: %w", err)
+		}
+
+		// 如果影响行数为0，说明订单已处理过，直接返回成功（幂等性）
+		if result.RowsAffected == 0 {
+			slog.Info("[Shop] order already processed", "out_trade_no", notifyData.OutTradeNo)
+			return nil
+		}
+
+		// 查询订单详情，获取商品信息和设备ID
+		order, err := tx.Order.
+			Where(tx.Order.OutTradeNo.Eq(notifyData.OutTradeNo)).
+			Preload(tx.Order.Goods).
+			Preload(tx.Order.Goods.GoodsInfo).
+			First()
+		if err != nil {
+			return fmt.Errorf("获取订单详情失败: %w", err)
+		}
+
+		// 开通会员：根据商品类型设置设备VIP过期时间
+		if err := s.ActivateMembership(ctx, order, tx); err != nil {
+			return fmt.Errorf("激活会员失败: %w", err)
+		}
+
+		return nil
+	})
+}
+
+// ActivateMembership 激活会员
+func (s *Service) ActivateMembership(ctx context.Context, order *model.Order, tx ...*query.Query) error {
+	ctx, span := tracer().Start(ctx, "ShopService.activateMembership")
+	defer span.End()
+
+	if order.DeviceID == "" {
+		return fmt.Errorf("订单缺少设备ID")
+	}
+
+	// 根据商品名称计算VIP过期时间
+	var vipDuration time.Duration
+	for _, goods := range order.Goods {
+		switch goods.GoodsName {
+		case "月卡":
+			vipDuration = 30 * 24 * time.Hour // 30天
+		case "年卡":
+			vipDuration = 365 * 24 * time.Hour // 365天
+		case "终身":
+			vipDuration = 100 * 365 * 24 * time.Hour // 100年
+		default:
+			slog.Warn("[Shop] unknown goods name", "goods_name", goods.GoodsName)
+			continue
+		}
+		break // 只处理第一个商品
+	}
+
+	if vipDuration == 0 {
+		return fmt.Errorf("无法识别商品类型")
+	}
+
+	// 为指定设备设置VIP过期时间
+	if err := s.DeviceRepo.SetDeviceVipExpireTime(ctx, order.DeviceID, vipDuration, tx...); err != nil {
+		slog.Error("[Shop] SetDeviceVipExpireTime", "err", err, "device_id", order.DeviceID)
+		return fmt.Errorf("设置设备VIP过期时间失败: %w", err)
+	}
+
+	slog.Info("[Shop] SetDeviceVipExpireTime success",
+		"device_id", order.DeviceID,
+		"duration", vipDuration.String(),
+		"goods_name", order.Goods[0].GoodsName)
+
+	return nil
+}
+
+// RefundNotify 退款回调
+func (s *Service) RefundNotify(ctx context.Context, w http.ResponseWriter, request *http.Request) error {
+	ctx, span := tracer().Start(ctx, "ShopService.RefundNotify")
+	defer span.End()
+
+	notify, err := wechat.V3ParseNotify(request)
+	if err != nil {
+		span.RecordError(err)
+		_ = PayResponse(w, "FAIL", "解析通知失败")
+		return err
+	}
+
+	notifyData := NewPayRefundNotifyData(notify)
+
+	if err := notifyData.VerifySign(s.WxMinPayService); err != nil {
+		span.RecordError(err)
+		_ = PayResponse(w, "FAIL", "验签失败")
+		return err
+	}
+
+	if err := notifyData.Decrypt(); err != nil {
+		span.RecordError(err)
+		_ = PayResponse(w, "FAIL", "解密失败")
+		return err
+	}
+
+	slog.Info("[Shop] RefundNotify", "notifyData", notifyData)
+
+	// 验证退款状态
+	if notifyData.RefundStatus != "SUCCESS" {
+		err := fmt.Errorf("退款状态异常: %s", notifyData.RefundStatus)
+		span.RecordError(err)
+		_ = PayResponse(w, "FAIL", notifyData.RefundStatus)
+		return err
+	}
+
+	// 更新订单状态为已退款
+	if err := s.MemberShopRepository.UpdateOrderStatusToRefunded(ctx, notifyData.OutTradeNo); err != nil {
+		span.RecordError(err)
+		_ = PayResponse(w, "FAIL", "更新订单状态失败")
+		return err
+	}
+
+	// 返回微信支付回调成功响应
+	return PayResponse(w, "SUCCESS", "成功")
 }
