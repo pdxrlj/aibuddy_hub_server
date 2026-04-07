@@ -9,6 +9,7 @@ import (
 	"aibuddy/internal/services/websocket"
 	"aibuddy/pkg/mqtt"
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/spf13/cast"
@@ -37,6 +38,11 @@ func (h *NFCHandler) Handle(ctx *mqtt.Context) {
 
 	if err := msg.Decode(ctx.Payload); err != nil {
 		slog.Error("[MQTT] NFC", "device_id", deviceID, "error", err)
+		return
+	}
+
+	if msg.NFCID == "" {
+		slog.Warn("[MQTT] NFC", "device_id", deviceID, "error", errors.New("server info nfc id is null"))
 		return
 	}
 
