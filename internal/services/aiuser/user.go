@@ -992,7 +992,7 @@ func (s *Service) GetMyInfo(ctx context.Context, uid int64, deviceID string) (*M
 }
 
 // MarkMessageRead 标记消息已读
-func (s *Service) MarkMessageRead(ctx context.Context, uid int64, deviceID string, messageIDs []string) error {
+func (s *Service) MarkMessageRead(ctx context.Context, uid int64, messageIDs []string) error {
 	_, span := tracer().Start(ctx, "MarkMessageRead")
 	defer span.End()
 
@@ -1000,12 +1000,10 @@ func (s *Service) MarkMessageRead(ctx context.Context, uid int64, deviceID strin
 		return nil
 	}
 
-	// TODO: 可以在这里添加权限验证，确保 uid 有权限标记 deviceID 的消息
-
-	err := s.DeviceMsgRepo.BatchMessageRead(ctx, deviceID, messageIDs)
+	err := s.DeviceMsgRepo.BatchMessageRead(ctx, messageIDs)
 	if err != nil {
 		span.RecordError(err)
-		span.SetAttributes(attribute.String("device_id", deviceID), attribute.Int64("uid", uid), attribute.StringSlice("message_ids", messageIDs))
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.StringSlice("message_ids", messageIDs))
 		return err
 	}
 

@@ -374,9 +374,9 @@ func (h *Handler) MessageMark(state *ahttp.State, req *MessageMarkRequest) error
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
-	if err := h.UserServer.MarkMessageRead(ctx, uid, req.DeviceID, req.MessageIDs); err != nil {
+	if err := h.UserServer.MarkMessageRead(ctx, uid, req.MessageIDs); err != nil {
 		span.RecordError(err)
-		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.Int64("uid", uid))
+		span.SetAttributes(attribute.Int64("uid", uid))
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
 

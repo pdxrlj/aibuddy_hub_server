@@ -31,7 +31,7 @@ func (h *MsgHandler) Handle(ctx *mqtt.Context) {
 		return
 	}
 	slog.Info("[MQTT] MsgHandler Handle", "device_id", deviceID, "payload", msg.Mids)
-	if err := h.DeviceMsg.BatchMessageRead(context.Background(), deviceID, msg.Mids); err != nil {
+	if err := h.DeviceMsg.BatchMessageRead(context.Background(), msg.Mids); err != nil {
 		slog.Error("[MQTT] HbHandler read device message failed", "device_id", deviceID, "error", err)
 		return
 	}

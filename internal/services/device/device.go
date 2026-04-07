@@ -2,6 +2,7 @@
 package device
 
 import (
+	"aibuddy/aiframe/friend"
 	"aibuddy/aiframe/location"
 	mqttmessage "aibuddy/aiframe/message"
 	"aibuddy/internal/model"
@@ -274,6 +275,42 @@ func (d *Service) GetDeviceInfo(ctx context.Context, deviceID string) (*model.De
 	}
 
 	return device, nil
+}
+
+// UseMQTTSendTargetDeviceToFriendInfo 查询设备信息后给对端发送好友信息,通过MQTT发送
+func (d *Service) UseMQTTSendTargetDeviceToFriendInfo(ctx context.Context, deviceID, targetDeviceID string) error {
+	_, span := tracer().Start(ctx, "DeviceService.SendTargetDeviceToFriendInfo")
+	defer span.End()
+
+	deviceInfo, err := d.DeviceRepo.GetDeviceInfo(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return err
+	}
+
+	if deviceInfo.DeviceInfo == nil {
+		return nil
+	}
+
+	isFriend, err := d.DeviceRelationshipRepo.IsFriend(ctx, deviceID, targetDeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID), attribute.String("target_device_id", targetDeviceID))
+		return err
+	}
+
+	relation := "朋友"
+	if !isFriend {
+		relation = "陌生人"
+	}
+
+	if err := friend.SendFriendIfo(deviceID, targetDeviceID, deviceInfo.DeviceInfo.NickName, deviceInfo.DeviceInfo.Avatar, relation); err != nil {
+		slog.Warn("send friend info via mqtt failed", "error", err)
+		return err
+	}
+
+	return nil
 }
 
 // AddFriend 添加好友

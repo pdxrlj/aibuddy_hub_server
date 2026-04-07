@@ -63,6 +63,11 @@ var (
 	MQTTInitInfoTopic = func(deviceID string) string {
 		return GetTopic(fmt.Sprintf("%s/init/info", deviceID))
 	}
+
+	// MQTTAddFriendTopic 添加好友信息，有对端设备收到设备信息
+	MQTTAddFriendTopic = func(deviceID string) string {
+		return GetTopic(fmt.Sprintf("%s/add/friend", deviceID))
+	}
 )
 
 // GetTopic 获取 MQTT 主题

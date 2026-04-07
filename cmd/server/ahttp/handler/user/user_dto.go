@@ -314,6 +314,5 @@ type MyInfoRequest struct {
 
 // MessageMarkRequest 消息标记请求
 type MessageMarkRequest struct {
-	DeviceID   string   `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空|aimac:设备ID格式无效"`
 	MessageIDs []string `json:"message_ids" form:"message_ids" param:"message_ids" query:"message_ids" validate:"required" msg:"required:消息ID不能为空"`
 }

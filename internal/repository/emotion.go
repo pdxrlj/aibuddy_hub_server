@@ -42,7 +42,7 @@ func (r *EmotionRepo) GetUnreadCount(ctx context.Context, deviceID string) (int6
 }
 
 // MarkEmotionRead 标记情绪预警已读
-func (r *EmotionRepo) MarkEmotionRead(ctx context.Context, deviceID string, emotionIDs []string) error {
+func (r *EmotionRepo) MarkEmotionRead(ctx context.Context, emotionIDs []string) error {
 	if len(emotionIDs) == 0 {
 		return nil
 	}
@@ -60,7 +60,7 @@ func (r *EmotionRepo) MarkEmotionRead(ctx context.Context, deviceID string, emot
 	}
 
 	_, err := query.Emotion.WithContext(ctx).
-		Where(query.Emotion.DeviceID.Eq(deviceID), query.Emotion.ID.In(ids...)).
+		Where(query.Emotion.ID.In(ids...)).
 		Updates(map[string]any{
 			query.Emotion.UpdatedAt.ColumnName().String(): time.Now(),
 			query.Emotion.Read.ColumnName().String():      true,

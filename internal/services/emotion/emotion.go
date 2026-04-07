@@ -30,6 +30,6 @@ func (s *Service) GetLatestEmotion(ctx context.Context, deviceID string) (*model
 }
 
 // MarkEmotionRead 标记情绪预警已读
-func (s *Service) MarkEmotionRead(ctx context.Context, deviceID string, emotionIDs []string) error {
-	return s.emotionRepo.MarkEmotionRead(ctx, deviceID, emotionIDs)
+func (s *Service) MarkEmotionRead(ctx context.Context, emotionIDs []string) error {
+	return s.emotionRepo.MarkEmotionRead(ctx, emotionIDs)
 }
