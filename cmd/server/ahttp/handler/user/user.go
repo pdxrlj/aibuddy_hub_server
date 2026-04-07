@@ -451,14 +451,13 @@ func (h *Handler) UpdateInfo(state *ahttp.State, req *InfoRequest) error {
 		span.RecordError(err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
-
-	user := &model.User{
+	user := model.User{
 		Nickname: req.NickName,
 		Avatar:   req.Avatar,
 		Phone:    req.Phone,
 		Email:    req.Email,
 		Username: req.Username,
-		Gender:   *req.Gender,
+		Gender:   req.Gender,
 	}
 	if req.Birthday != "" {
 		birthday, err := time.Parse(time.DateOnly, req.Birthday)
@@ -469,7 +468,7 @@ func (h *Handler) UpdateInfo(state *ahttp.State, req *InfoRequest) error {
 		user.Birthday = birthday
 	}
 
-	if err := h.UserServer.UpdateUserInfo(ctx, uid, user); err != nil {
+	if err := h.UserServer.UpdateUserInfo(ctx, uid, &user); err != nil {
 		span.RecordError(err)
 		return state.Resposne().SetStatus(http.StatusBadRequest).Error(err)
 	}
