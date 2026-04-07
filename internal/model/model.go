@@ -59,6 +59,16 @@ func (t LocalTime) Time() time.Time {
 	return time.Time(t)
 }
 
+// Before 判断时间是否在给定时间之前
+func (t LocalTime) Before(other LocalTime) bool {
+	return time.Time(t).Before(time.Time(other))
+}
+
+// IsZero 判断时间是否为零值
+func (t LocalTime) IsZero() bool {
+	return time.Time(t).IsZero()
+}
+
 // TableName returns the table name with the default prefix.
 func TableName(name string) string {
 	return defaultTableNamePrefix + name
@@ -130,6 +140,12 @@ func (d *DB) GenerateQuery() {
 		GrowthReport{},
 
 		Feedback{},
+
+		// 商品管理
+		Order{},
+		OrderGoods{},
+		Goods{},
+		DeviceActivate{},
 	}
 
 	_ = d.db.AutoMigrate(models...)

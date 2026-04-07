@@ -43,6 +43,7 @@ func newDevice(db *gorm.DB, opts ...gen.DOOption) device {
 	_device.Status = field.NewString(tableName, "status")
 	_device.IsAdmin = field.NewBool(tableName, "is_admin")
 	_device.AgentName = field.NewString(tableName, "agent_name")
+	_device.ExpireTime = field.NewTime(tableName, "expire_time")
 	_device.CreatedAt = field.NewTime(tableName, "created_at")
 	_device.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_device.DeviceInfo = deviceHasOneDeviceInfo{
@@ -81,6 +82,7 @@ type device struct {
 	Status       field.String // 状态:未知
 	IsAdmin      field.Bool   // 是否管理员设备,首次绑定的用户是管理员
 	AgentName    field.String // 角色名称
+	ExpireTime   field.Time   // 会员到期时间
 	CreatedAt    field.Time   // 创建时间
 	UpdatedAt    field.Time   // 更新时间
 	DeviceInfo   deviceHasOneDeviceInfo
@@ -117,6 +119,7 @@ func (d *device) updateTableName(table string) *device {
 	d.Status = field.NewString(table, "status")
 	d.IsAdmin = field.NewBool(table, "is_admin")
 	d.AgentName = field.NewString(table, "agent_name")
+	d.ExpireTime = field.NewTime(table, "expire_time")
 	d.CreatedAt = field.NewTime(table, "created_at")
 	d.UpdatedAt = field.NewTime(table, "updated_at")
 
@@ -135,7 +138,7 @@ func (d *device) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (d *device) fillFieldMap() {
-	d.fieldMap = make(map[string]field.Expr, 19)
+	d.fieldMap = make(map[string]field.Expr, 20)
 	d.fieldMap["id"] = d.ID
 	d.fieldMap["device_id"] = d.DeviceID
 	d.fieldMap["sim_card"] = d.SIMCard
@@ -151,6 +154,7 @@ func (d *device) fillFieldMap() {
 	d.fieldMap["status"] = d.Status
 	d.fieldMap["is_admin"] = d.IsAdmin
 	d.fieldMap["agent_name"] = d.AgentName
+	d.fieldMap["expire_time"] = d.ExpireTime
 	d.fieldMap["created_at"] = d.CreatedAt
 	d.fieldMap["updated_at"] = d.UpdatedAt
 
