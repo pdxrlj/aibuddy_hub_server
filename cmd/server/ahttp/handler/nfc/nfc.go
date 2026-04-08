@@ -73,7 +73,7 @@ func (h *Handler) GetNFCList(state *ahttp.State, req *GetNFCListRequest) error {
 			Content:   item.Content,
 			Voice:     item.Voice,
 			Picture:   item.Picture,
-			Status:    string(item.Status),
+			Status:    item.Status.String(),
 			Dur:       item.Dur,
 			CreatedAt: item.CreatedAt.Format(time.DateTime),
 		}
