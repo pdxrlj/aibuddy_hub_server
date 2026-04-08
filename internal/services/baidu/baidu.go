@@ -85,7 +85,7 @@ func getDefaultAppID(appID string) string {
 }
 
 // buildConfigStr 构建配置字符串
-func buildConfigStr(cfg *ConfigRequest) (string, error) {
+func buildConfigStr(cfg *ConfigRequest, voiceID string) (string, error) {
 	if cfg == nil {
 		return "", nil
 	}
@@ -95,11 +95,12 @@ func buildConfigStr(cfg *ConfigRequest) (string, error) {
 		cfg.TTS = "DEFAULT"
 	}
 
+	vcn := config.Instance.Baidu.TTS.Vcn
+	if voiceID != "" {
+		vcn = voiceID
+	}
+
 	if cfg.TTSURL == "" {
-		vcn := config.Instance.Baidu.TTS.Vcn
-		if vcn == "" {
-			vcn = "1000578"
-		}
 		// cfg.TTSURL = fmt.Sprintf(`DEFAULT{"vcn":"%s","vol":2.0,"spd":1.0,"emotion":"fluent"}`, vcn)
 		cfg.TTSURL = fmt.Sprintf(`DEFAULT{"vcn":"%s","emotion":"calm","pit":-1}`, vcn)
 		// cfg.TTSURL = fmt.Sprintf(`PRIVATE_EXTEND{"vcn":"%s"}`, vcn)
@@ -143,9 +144,14 @@ func (s *Service) GenerateAIAgentCall(ctx context.Context, req *GenerateAIAgentC
 		return nil, errors.New("当前设备已经过期了，请充值后在使用")
 	}
 
+	device, err := s.DeviceRepo.GetDeviceInfo(ctx, req.DeviceID)
+	if err != nil {
+		return nil, err
+	}
+
 	appID := getDefaultAppID(req.AppID)
 
-	configStr, err := buildConfigStr(req.Config)
+	configStr, err := buildConfigStr(req.Config, device.VoiceID)
 	if err != nil {
 		return nil, err
 	}

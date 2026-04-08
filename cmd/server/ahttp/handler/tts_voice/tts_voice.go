@@ -2,12 +2,14 @@
 package ttsvoice
 
 import (
+	voiceclone "aibuddy/internal/services/voice_clone"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
 	"net/http"
 	"strconv"
 
+	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -20,12 +22,15 @@ var tracer = func() trace.Tracer {
 // Handler TTS语音处理器
 type Handler struct {
 	ttsVoice *baidu.TTSVoice
+
+	TTSService *voiceclone.VoiceClone
 }
 
 // New 创建TTS语音处理器实例
 func New() *Handler {
 	return &Handler{
-		ttsVoice: baidu.NewTTSVoice(),
+		ttsVoice:   baidu.NewTTSVoice(),
+		TTSService: voiceclone.NewVoiceClone(),
 	}
 }
 
@@ -56,6 +61,10 @@ func (h *Handler) CreateCloneVoice(state *ahttp.State, req *CreateCloneVoiceRequ
 	})
 	if err != nil {
 		span.RecordError(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	if err := h.TTSService.SetDeviceVoiceID(state.Ctx.Request().Context(), req.UniqID, cast.ToString(result.VoiceID)); err != nil {
 		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
 
