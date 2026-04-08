@@ -65,7 +65,7 @@ type GetNFCListResponse struct {
 // UpdateNFCRequest 更新NFC请求
 type UpdateNFCRequest struct {
 	CID     string `param:"cid" validate:"required" msg:"required:CID不能为空"`
-	Ctype   string `json:"ctype" form:"ctype" validate:"required,oneof==明信片 生日卡片 自定义 每日鼓励 悄悄话 成长日记"`
+	Ctype   string `json:"ctype" form:"ctype" validate:"required,oneof=明信片 生日卡片 自定义 每日鼓励 悄悄话 成长日记"`
 	Title   string `json:"title" form:"title" validate:"required,max=8" msg:"required:标题不能为空|max:8:标题不能超过8个字符"`
 	Content string `json:"content" form:"content" validate:"required,max=50" msg:"required:内容不能为空|max:50:内容不能超过50个字符"`
 	Voice   string `json:"voice" form:"voice"`
