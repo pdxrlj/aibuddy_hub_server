@@ -72,7 +72,8 @@ func (s *Service) UpdateNFC(cid, ctype, title, content string, voice string, pic
 	nfc.Picture = picture
 	nfc.Dur = dur
 
-	if nfc.Status != model.NFCPaid { //失效后重新制作
+	// 失效后重新制作
+	if nfc.Status != model.NFCPaid {
 		// 发送MQTT信息
 		if err := nfcframe.SendNFCCreate(nfc.DeviceID, cid, ctype); err != nil {
 			return err
