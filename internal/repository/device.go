@@ -252,6 +252,13 @@ func (d *DeviceRepo) EraseDevice(ctx context.Context, deviceID string) error {
 			return err
 		}
 
+		// 成长报告
+		_, err = tx.GrowthReport.Where(tx.NFC.DeviceID.Eq(deviceID)).
+			Delete()
+		if err != nil {
+			return err
+		}
+
 		_, err = tx.DeviceRelationship.
 			Where(tx.DeviceRelationship.DeviceID.Eq(deviceID)).
 			Or(query.DeviceRelationship.TargetDeviceID.Eq(deviceID)).
