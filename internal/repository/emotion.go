@@ -34,11 +34,23 @@ func (r *EmotionRepo) GetEmotions(ctx context.Context, page, pageSize int, devic
 }
 
 // GetUnreadCount 获取未读情绪预警数量
-func (r *EmotionRepo) GetUnreadCount(ctx context.Context, deviceID string) (int64, error) {
-	return query.Emotion.WithContext(ctx).
+func (r *EmotionRepo) GetUnreadCount(ctx context.Context, deviceID string) (int64, *model.Emotion, error) {
+	emotion, err := query.Emotion.WithContext(ctx).
+		Where(query.Emotion.DeviceID.Eq(deviceID)).
+		Where(query.Emotion.Read.Is(false)).
+		Order(query.Emotion.ID.Desc()).
+		First()
+	if err != nil {
+		return 0, nil, err
+	}
+	count, err := query.Emotion.WithContext(ctx).
 		Where(query.Emotion.DeviceID.Eq(deviceID)).
 		Where(query.Emotion.Read.Is(false)).
 		Count()
+	if err != nil {
+		return 0, nil, err
+	}
+	return count, emotion, nil
 }
 
 // MarkEmotionRead 标记情绪预警已读

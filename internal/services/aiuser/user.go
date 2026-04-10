@@ -63,7 +63,7 @@ type Service struct {
 	BindDeviceSnRepo   *repository.BindDeviceSnRepo
 	DeviceMsgRepo      *repository.DeviceMessageRepo
 	GrowthReportRepo   *repository.GrowthReportRepo
-	Emotion            *repository.EmotionRepo
+	EmotionRepo        *repository.EmotionRepo
 	DeviceActivateRepo *repository.BuddyDeviceActivateRepo
 
 	sms   *sms.AliyunSMS
@@ -103,7 +103,7 @@ func New() *Service {
 		deviceService:    device.NewService(),
 		DeviceMsgRepo:    repository.NewDeviceMessageRepo(),
 		GrowthReportRepo: repository.NewGrowthReportRepo(),
-		Emotion:          repository.NewEmotionRepo(),
+		EmotionRepo:      repository.NewEmotionRepo(),
 		DeviceRepo:       repository.NewDeviceRepo(),
 
 		growthReportService: agent.NewGroupReport(),
@@ -925,6 +925,9 @@ func makeConversationKey(id1, id2 string) string {
 type UnreadCountResponse struct {
 	MessageCount int64 `json:"message_count"` // 消息未读数量
 	EmotionCount int64 `json:"emotion_count"` // 情绪预警未读数量
+
+	LastUnreadMsg *model.DeviceMessage `json:"last_unread_msg"` // 最后一条未读消息
+	LastEmotion   *model.Emotion       `json:"last_emotion"`    // 最后一条未读情绪预警
 }
 
 // GetUnreadMessageCount 获取未读消息数量
@@ -935,16 +938,17 @@ func (s *Service) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID
 	response := &UnreadCountResponse{}
 
 	// 对话消息未读数量
-	msgCount, err := s.DeviceMsgRepo.GetUnreadMessageCount(ctx, uid, deviceID)
+	msgCount, lastUnreadMsg, err := s.DeviceMsgRepo.GetUnreadMessageCount(ctx, uid, deviceID)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", deviceID))
 		return nil, err
 	}
 	response.MessageCount = msgCount
+	response.LastUnreadMsg = lastUnreadMsg
 
 	// 情绪预警未读数量
-	emotionCount, err := s.Emotion.GetUnreadCount(ctx, deviceID)
+	emotionCount, lastEmotion, err := s.EmotionRepo.GetUnreadCount(ctx, deviceID)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
@@ -952,6 +956,7 @@ func (s *Service) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID
 		emotionCount = 0
 	}
 	response.EmotionCount = emotionCount
+	response.LastEmotion = lastEmotion
 
 	return response, nil
 }

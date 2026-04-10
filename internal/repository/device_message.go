@@ -144,13 +144,14 @@ func (r *DeviceMessageRepo) GetConvMessageList(ctx context.Context, deviceID, ta
 }
 
 // GetUnreadMessageCount 获取未读消息数量
-func (r *DeviceMessageRepo) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID string) (int64, error) {
+func (r *DeviceMessageRepo) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID string) (int64, *model.DeviceMessage, error) {
 	_, span := tracer.Start(ctx, "DeviceMessageRepo.GetUnreadMessageCount")
 	defer span.End()
 
 	uidStr := cast.ToString(uid)
-	return query.DeviceMessage.WithContext(ctx).
+	deviceMessages, err := query.DeviceMessage.WithContext(ctx).
 		Debug().
+		Order(query.DeviceMessage.ID.Desc()).
 		Where(
 			field.Or(
 				// FromDeviceID=uid AND ToDeviceID=deviceID
@@ -166,5 +167,16 @@ func (r *DeviceMessageRepo) GetUnreadMessageCount(ctx context.Context, uid int64
 			),
 		).
 		Where(query.DeviceMessage.Read.Is(false)).
-		Count()
+		Find()
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("device_id", deviceID))
+		return 0, nil, err
+	}
+	if len(deviceMessages) == 0 {
+		return 0, nil, nil
+	}
+	LastUnreadMsg := deviceMessages[0]
+
+	return int64(len(deviceMessages)), LastUnreadMsg, nil
 }
