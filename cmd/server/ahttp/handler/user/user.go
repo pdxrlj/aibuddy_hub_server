@@ -12,6 +12,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -354,7 +355,7 @@ func (h *Handler) GetConvMessageList(state *ahttp.State, req *GetConvMessageList
 		)
 		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
 	}
-
+	slices.Reverse(messages)
 	return state.Response().SetData(MsgListResponse{
 		Page:     req.Page,
 		PageSize: req.PageSize,
