@@ -26,6 +26,7 @@ import (
 	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -926,8 +927,14 @@ type UnreadCountResponse struct {
 	MessageCount int64 `json:"message_count"` // 消息未读数量
 	EmotionCount int64 `json:"emotion_count"` // 情绪预警未读数量
 
-	LastUnreadMsg *model.DeviceMessage `json:"last_unread_msg"` // 最后一条未读消息
-	LastEmotion   *model.Emotion       `json:"last_emotion"`    // 最后一条未读情绪预警
+	LastUnreadMsg *UnreadCountMsgItem `json:"last_unread_msg"` // 最后一条未读消息
+	LastEmotion   *UnreadCountMsgItem `json:"last_emotion"`    // 最后一条未读情绪预警
+}
+
+// UnreadCountMsgItem 未读消息项
+type UnreadCountMsgItem struct {
+	Content   string `json:"content"`    // 消息内容
+	CreatedAt string `json:"created_at"` // 消息创建时间
 }
 
 // GetUnreadMessageCount 获取未读消息数量
@@ -945,7 +952,12 @@ func (s *Service) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID
 		return nil, err
 	}
 	response.MessageCount = msgCount
-	response.LastUnreadMsg = lastUnreadMsg
+	if lastUnreadMsg != nil {
+		response.LastUnreadMsg = &UnreadCountMsgItem{
+			Content:   lastUnreadMsg.Content,
+			CreatedAt: lastUnreadMsg.CreatedAt.Format(time.DateTime),
+		}
+	}
 
 	// 情绪预警未读数量
 	emotionCount, lastEmotion, err := s.EmotionRepo.GetUnreadCount(ctx, deviceID)
@@ -956,7 +968,19 @@ func (s *Service) GetUnreadMessageCount(ctx context.Context, uid int64, deviceID
 		emotionCount = 0
 	}
 	response.EmotionCount = emotionCount
-	response.LastEmotion = lastEmotion
+	if lastEmotion != nil {
+		// 解析WarningTypes JSON数组
+		var warningTypes []string
+		if err := json.Unmarshal(lastEmotion.WarningTypes, &warningTypes); err != nil {
+			// 如果解析失败，使用原始字符串
+			warningTypes = []string{lastEmotion.WarningTypes.String()}
+		}
+		content := strings.Join(warningTypes, ", ")
+		response.LastEmotion = &UnreadCountMsgItem{
+			Content:   content,
+			CreatedAt: lastEmotion.CreatedAt.Format(time.DateTime),
+		}
+	}
 
 	return response, nil
 }
