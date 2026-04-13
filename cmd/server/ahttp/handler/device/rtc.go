@@ -51,6 +51,17 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 	if req.CustomSelfCfg == nil || req.CustomSelfCfg.DeviceID == "" {
 		return state.Response().Error(errors.New("缺少自定义的设备的ID"))
 	}
+	// request="&{AppID:appsb9k48q8kxxr InstanceType: Config:{\"llm_token\":\"no\",\"tts_url\":\"DEFAULT{\\\"vcn\\\":\\\"1000578\\\",\\\"emotion\\\":\\\"calm\\\",\\\"pit\\\":-1}\",\"rtc_ac\":\"g722\",\"remote_music_player\":true,\"enable_visual\":\"false\",\"dfda\":\"false\",\"tts\":\"DEFAULT\",\"tts_end_delay_ms\":50,\"emotion_recognition_cfg\":{\"enable\":true,\"inject_to_llm\":true,\"tts_with_emotion\":true}}}"
+	// reqConfig := &ConfigRequest{
+	// 	LLMToken:          "no",
+	// 	TTSURL:            `DEFAULT{"vcn":"1000578","emotion":"calm","pit":-1}`,
+	// 	RTCAC:             "g722",
+	// 	RemoteMusicPlayer: true,
+	// 	EnableVisual:      "false",
+	// 	DFDA:              "false",
+	// 	TTS:               "DEFAULT",
+	// 	TTSEndDelayMS:     50,
+	// }
 
 	resp, err := h.BaiduService.GenerateAIAgentCall(state.Ctx.Request().Context(),
 		&baiduservice.GenerateAIAgentCallRequest{
@@ -67,8 +78,18 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 				DFDA:              req.Config.DFDA,
 				TTS:               req.Config.TTS,
 				TTSEndDelayMs:     req.Config.TTSEndDelayMS,
+
+				// LLMToken:          reqConfig.LLMToken,
+				// TTSURL:            reqConfig.TTSURL,
+				// RTCAC:             reqConfig.RTCAC,
+				// RemoteMusicPlayer: reqConfig.RemoteMusicPlayer,
+				// EnableVisual:      reqConfig.EnableVisual,
+				// DFDA:              reqConfig.DFDA,
+				// TTS:               reqConfig.TTS,
+				// TTSEndDelayMs:     reqConfig.TTSEndDelayMS,
 			},
 			DeviceID: req.CustomSelfCfg.DeviceID,
+			// DeviceID: "30:ED:A0:E9:F3:03",
 		})
 	if err != nil {
 		return state.Response().Error(err)
@@ -89,6 +110,8 @@ func (h *RtcHandler) StopAIAgentInstance(state *ahttp.State, req *StopAIAgentIns
 	if appID == "" {
 		appID = config.Instance.Baidu.AppID
 	}
+
+	slog.Info("[RTC] StopAIAgentInstance", "appID", appID, "AiAgentInstanceID", req.AiAgentInstanceID)
 
 	err := h.aiAgent.StopAIAgentInstance(&baidu.StopAIAgentInstanceRequest{
 		AppID:             appID,

@@ -10,7 +10,6 @@ import (
 	membershop "aibuddy/cmd/server/ahttp/handler/member"
 	"aibuddy/cmd/server/ahttp/handler/nfc"
 	otahandler "aibuddy/cmd/server/ahttp/handler/ota"
-	paymenthandler "aibuddy/cmd/server/ahttp/handler/payment"
 	remindhandler "aibuddy/cmd/server/ahttp/handler/remind"
 
 	ttsvoicehandler "aibuddy/cmd/server/ahttp/handler/tts_voice"
@@ -234,20 +233,12 @@ func RegisterRoutes(base *ahttp.Base) {
 		// Debug
 		group.GET("/debug/token", debugHandler.ParseToken)
 
-		// 支付回调
-		group.Group("/payment", nil, func(paymentGroup *ahttp.Group) {
-			payment := paymenthandler.NewHandler()
-			paymentGroup.POST("/notify", payment.PayNotify)           // 支付结果通知
-			paymentGroup.POST("/refund_notify", payment.RefundNotify) // 退款结果通知
-		})
-
 		// 商品与订单管理
 		group.Group("/shop", []echo.MiddlewareFunc{middleware.UnifiedAuthMiddleware()}, func(shopGroup *ahttp.Group) {
 			shop := membershop.NewHandler()
 			shopGroup.GET("/goods/list", shop.GoodsList) // 商品列表
 			// 创建预支付订单
 			shopGroup.POST("/order/create", shop.CreateOrder)
-
 			// 获取订单列表
 			shopGroup.GET("/order/list", shop.OrderList)
 		})
