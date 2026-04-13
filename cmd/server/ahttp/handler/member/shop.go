@@ -68,7 +68,6 @@ func (h *Handler) PaySuccess(state *ahttp.State, _ *PaySuccessRequest) error {
 	ctx, span := tracer().Start(state.Ctx.Request().Context(), "Shop.PaySuccess")
 	defer span.End()
 
-	// Service 层已经处理了所有响应（成功和失败），无需再处理 error
 	_ = h.MemberService.PaySuccess(ctx, state.Ctx.Response(), state.RawRequest())
 	return nil
 }
@@ -78,7 +77,6 @@ func (h *Handler) RefundSuccess(state *ahttp.State, _ *RefundSuccessRequest) err
 	ctx, span := tracer().Start(state.Ctx.Request().Context(), "Shop.RefundSuccess")
 	defer span.End()
 
-	// Service 层已经处理了所有响应（成功和失败），无需再处理 error
 	_ = h.MemberService.RefundNotify(ctx, state.Ctx.Response(), state.RawRequest())
 	return nil
 }
