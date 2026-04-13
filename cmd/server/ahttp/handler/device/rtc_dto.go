@@ -67,9 +67,12 @@ type ConfigRequest struct {
 type GenerateAIAgentCallRequest struct {
 	CustomSelfCfg *GenerateAIAgentCallCustomSelfTagRequest `json:"custom_self_cfg"`
 	Config        *ConfigRequest                           `json:"config,omitempty"` // 大模型互动实例级别配置
-	QuickStart    bool                                     `json:"quick_start"`      // 快速启动
-	AppID         string                                   `json:"app_id"`           // 大模型互动应用ID
-	InstanceType  string                                   `json:"instance_type"`    // 实例类型
+
+	// Config any `json:"config,omitempty"` // 大模型互动实例级别配置
+
+	QuickStart   bool   `json:"quick_start"`   // 快速启动
+	AppID        string `json:"app_id"`        // 大模型互动应用ID
+	InstanceType string `json:"instance_type"` // 实例类型
 }
 
 // GenerateAIAgentCallCustomSelfTagRequest 前端创建Agent的请求参数
