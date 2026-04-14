@@ -5,7 +5,9 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
+	"fmt"
 	"log/slog"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gen"
@@ -22,11 +24,14 @@ func NewMemberShopRepository() *MemberShopRepository {
 }
 
 // GoodsList 获取商品列表
-func (r *MemberShopRepository) GoodsList(ctx context.Context, page, pageSize int) ([]*model.Goods, int64, error) {
+func (r *MemberShopRepository) GoodsList(ctx context.Context, page, pageSize int) ([]*model.GoodsActivity, int64, error) {
 	_, span := tracer.Start(ctx, "MemberShopRepository.GoodsList")
 
 	offset := (page - 1) * pageSize
-	goods, count, err := query.Goods.FindByPage(offset, pageSize)
+	goods, count, err := query.GoodsActivity.Preload(query.GoodsActivity.GoodsInfo).FindByPage(offset, pageSize)
+	for _, v := range goods {
+		fmt.Printf("%+v\n", v)
+	}
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(
@@ -35,7 +40,6 @@ func (r *MemberShopRepository) GoodsList(ctx context.Context, page, pageSize int
 		)
 		return nil, 0, err
 	}
-
 	return goods, count, err
 }
 
@@ -156,4 +160,28 @@ func (r *MemberShopRepository) GetOrderByOutTradeNo(ctx context.Context, outTrad
 	}
 
 	return order, nil
+}
+
+// GetActvityByGoodsID 根据商品ID查询活动信息
+func (r *MemberShopRepository) GetActvityByGoodsID(ctx context.Context, goodsID int64) ([]*model.GoodsActivity, error) {
+	_, span := tracer.Start(ctx, "MemberShopRepository.GetActvityByGoodsID")
+	defer span.End()
+
+	actvityList, err := query.GoodsActivity.
+		Where(query.GoodsActivity.GoodsID.Eq(goodsID),
+			query.GoodsActivity.StartTime.Lte(time.Now()),
+			query.GoodsActivity.EndTime.Gte(time.Now()),
+		).Preload(query.GoodsActivity.GoodsInfo).Find()
+	if err != nil {
+		return nil, err
+	}
+	return actvityList, nil
+}
+
+// SubActivityCount 活动购买成功后，扣减活动库存
+func (r *MemberShopRepository) SubActivityCount(ctx context.Context, aid int64) error {
+	_, span := tracer.Start(ctx, "MemberShopRepository.SubActivityCount")
+	defer span.End()
+	_, err := query.GoodsActivity.Where(query.GoodsActivity.ID.Eq(aid), query.GoodsActivity.Count_.Gte(0)).Update(query.GoodsActivity.Count_, gorm.Expr("count - 1"))
+	return err
 }

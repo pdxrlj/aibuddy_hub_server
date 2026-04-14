@@ -145,6 +145,7 @@ func (d *DB) GenerateQuery() {
 		Order{},
 		OrderGoods{},
 		Goods{},
+		GoodsActivity{},
 		DeviceActivate{},
 	}
 

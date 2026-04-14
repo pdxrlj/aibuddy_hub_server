@@ -37,6 +37,7 @@ type Service struct {
 	MemberShopRepository *repository.MemberShopRepository
 	UserRepository       *repository.UserRepo
 	DeviceRepo           *repository.DeviceRepo
+	OrderRepo            *repository.OrderRepo
 
 	WxMinPayService *pay.WxMinPay
 }
@@ -66,6 +67,7 @@ func NewService() *Service {
 		MemberShopRepository: repository.NewMemberShopRepository(),
 		UserRepository:       repository.NewUserRepo(),
 		DeviceRepo:           repository.NewDeviceRepo(),
+		OrderRepo:            repository.NewOrderRepo(),
 
 		WxMinPayService: WxMinPayService,
 	}
@@ -74,7 +76,7 @@ func NewService() *Service {
 // GoodsListResponse 商品列表响应
 type GoodsListResponse struct {
 	Total int64
-	List  []*model.Goods
+	List  []*model.GoodsActivity
 }
 
 // GoodsList 获取商品列表
@@ -108,11 +110,11 @@ func (s *Service) CreateOrder(ctx context.Context, userID, goodsID int64, device
 	}
 
 	// 3. 计算价格并生成订单号
-	price := s.CalculatePrice(goods)
+	price, aid := s.CalculatePrice(ctx, userID, deviceID, goods)
 	orderNo := s.GenerateOrderNo(userID)
 
 	// 4. 执行事务创建订单
-	wxPreResp, err := s.ExecuteOrderTransaction(ctx, userID, deviceID, goods, orderNo, price, userInfo.OpenID)
+	wxPreResp, err := s.ExecuteOrderTransaction(ctx, userID, deviceID, goods, orderNo, price, userInfo.OpenID, aid)
 	if err != nil {
 		return nil, err
 	}
@@ -144,15 +146,52 @@ func (s *Service) GetUserInfo(ctx context.Context, userID int64) (*model.User, e
 }
 
 // CalculatePrice 计算价格（支持活动价）
-func (s *Service) CalculatePrice(goods *model.Goods) int64 {
-	if goods.ActivityPrice > 0 {
-		return goods.ActivityPrice
+func (s *Service) CalculatePrice(ctx context.Context, userID int64, deviceID string, goods *model.Goods) (int64, int64) {
+	// 是否已开通会员
+	ctx, span := tracer().Start(ctx, "ShopService.CalculatePrice")
+	defer span.End()
+	activityList, err := s.MemberShopRepository.GetActvityByGoodsID(ctx, goods.ID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("goodsID", goods.ID), attribute.String("msg", "暂无活动"))
+		return goods.Price, 0
 	}
-	return goods.Price
+
+	memberLevel := s.OrderRepo.GetMemberLevel(ctx, userID, deviceID)
+	var aid int64
+	for _, v := range activityList {
+		switch v.Type {
+		case 0:
+			if v.Count > 0 {
+				if err := s.MemberShopRepository.SubActivityCount(ctx, v.ID); err != nil {
+					span.RecordError(err)
+					return goods.Price, 0
+				}
+				goods.ActivityPrice = v.Pirce
+				aid = v.ID
+			}
+		case 1:
+			if memberLevel == 1 {
+				goods.ActivityPrice = v.Pirce
+				aid = v.ID
+			}
+		case 2:
+			if memberLevel == 2 {
+				goods.ActivityPrice = v.Pirce
+				aid = v.ID
+			}
+		}
+	}
+	span.SetAttributes(attribute.Int64("goodsID", goods.ID),
+		attribute.Int("memberLevel", memberLevel),
+		attribute.Int64("activity_id", aid),
+		attribute.Int64("order_price", goods.ActivityPrice),
+	)
+	return goods.ActivityPrice, aid
 }
 
 // ExecuteOrderTransaction 执行订单事务
-func (s *Service) ExecuteOrderTransaction(ctx context.Context, userID int64, deviceID string, goods *model.Goods, orderNo string, price int64, openID string) (*wechat.PrepayRsp, error) {
+func (s *Service) ExecuteOrderTransaction(ctx context.Context, userID int64, deviceID string, goods *model.Goods, orderNo string, price int64, openID string, aid int64) (*wechat.PrepayRsp, error) {
 	_, span := tracer().Start(ctx, "ShopService.ExecuteOrderTransaction")
 	defer span.End()
 
@@ -160,7 +199,7 @@ func (s *Service) ExecuteOrderTransaction(ctx context.Context, userID int64, dev
 
 	err := s.MemberShopRepository.Transaction(func(tx *gorm.DB) error {
 		// 创建订单记录
-		if _, err := s.CreateOrderRecord(tx, userID, deviceID, goods, orderNo, price); err != nil {
+		if _, err := s.CreateOrderRecord(tx, userID, deviceID, goods, orderNo, price, aid); err != nil {
 			return fmt.Errorf("创建订单记录失败: %w", err)
 		}
 
@@ -238,12 +277,13 @@ func (s *Service) GenerateOrderNo(userID int64) string {
 }
 
 // CreateOrderRecord 创建订单记录
-func (s *Service) CreateOrderRecord(tx *gorm.DB, userID int64, deviceID string, goods *model.Goods, outTradeNo string, price int64) (*model.Order, error) {
+func (s *Service) CreateOrderRecord(tx *gorm.DB, userID int64, deviceID string, goods *model.Goods, outTradeNo string, price int64, aid int64) (*model.Order, error) {
 	order := &model.Order{
 		UserID:     userID,
 		DeviceID:   deviceID,
 		OutTradeNo: outTradeNo,
 		Status:     model.OrderStatusPending,
+		ActivityID: aid,
 		Goods: []*model.OrderGoods{
 			{
 				GoodsID:    goods.ID,
