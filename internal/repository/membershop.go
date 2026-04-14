@@ -5,6 +5,7 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
