@@ -31,6 +31,7 @@ func newOrder(db *gorm.DB, opts ...gen.DOOption) order {
 	_order.ID = field.NewInt64(tableName, "id")
 	_order.UserID = field.NewInt64(tableName, "user_id")
 	_order.DeviceID = field.NewString(tableName, "device_id")
+	_order.ActivityID = field.NewInt64(tableName, "activity_id")
 	_order.OutTradeNo = field.NewString(tableName, "out_trade_no")
 	_order.TransactionID = field.NewString(tableName, "transaction_id")
 	_order.Status = field.NewString(tableName, "status")
@@ -48,6 +49,17 @@ func newOrder(db *gorm.DB, opts ...gen.DOOption) order {
 		},
 	}
 
+	_order.ActivityInfo = orderBelongsToActivityInfo{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("ActivityInfo", "model.GoodsActivity"),
+		GoodsInfo: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("ActivityInfo.GoodsInfo", "model.Goods"),
+		},
+	}
+
 	_order.fillFieldMap()
 
 	return _order
@@ -60,6 +72,7 @@ type order struct {
 	ID            field.Int64
 	UserID        field.Int64  // 用户ID
 	DeviceID      field.String // 设备ID
+	ActivityID    field.Int64  // 活动ID
 	OutTradeNo    field.String // 商户订单号
 	TransactionID field.String // 微信支付订单号
 	Status        field.String // 订单状态
@@ -67,6 +80,8 @@ type order struct {
 	CreatedAt     field.Field  // 创建时间
 	UpdatedAt     field.Field  // 更新时间
 	Goods         orderHasManyGoods
+
+	ActivityInfo orderBelongsToActivityInfo
 
 	fieldMap map[string]field.Expr
 }
@@ -86,6 +101,7 @@ func (o *order) updateTableName(table string) *order {
 	o.ID = field.NewInt64(table, "id")
 	o.UserID = field.NewInt64(table, "user_id")
 	o.DeviceID = field.NewString(table, "device_id")
+	o.ActivityID = field.NewInt64(table, "activity_id")
 	o.OutTradeNo = field.NewString(table, "out_trade_no")
 	o.TransactionID = field.NewString(table, "transaction_id")
 	o.Status = field.NewString(table, "status")
@@ -108,10 +124,11 @@ func (o *order) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (o *order) fillFieldMap() {
-	o.fieldMap = make(map[string]field.Expr, 10)
+	o.fieldMap = make(map[string]field.Expr, 12)
 	o.fieldMap["id"] = o.ID
 	o.fieldMap["user_id"] = o.UserID
 	o.fieldMap["device_id"] = o.DeviceID
+	o.fieldMap["activity_id"] = o.ActivityID
 	o.fieldMap["out_trade_no"] = o.OutTradeNo
 	o.fieldMap["transaction_id"] = o.TransactionID
 	o.fieldMap["status"] = o.Status
@@ -125,12 +142,15 @@ func (o order) clone(db *gorm.DB) order {
 	o.orderDo.ReplaceConnPool(db.Statement.ConnPool)
 	o.Goods.db = db.Session(&gorm.Session{Initialized: true})
 	o.Goods.db.Statement.ConnPool = db.Statement.ConnPool
+	o.ActivityInfo.db = db.Session(&gorm.Session{Initialized: true})
+	o.ActivityInfo.db.Statement.ConnPool = db.Statement.ConnPool
 	return o
 }
 
 func (o order) replaceDB(db *gorm.DB) order {
 	o.orderDo.ReplaceDB(db)
 	o.Goods.db = db.Session(&gorm.Session{})
+	o.ActivityInfo.db = db.Session(&gorm.Session{})
 	return o
 }
 
@@ -215,6 +235,91 @@ func (a orderHasManyGoodsTx) Count() int64 {
 }
 
 func (a orderHasManyGoodsTx) Unscoped() *orderHasManyGoodsTx {
+	a.tx = a.tx.Unscoped()
+	return &a
+}
+
+type orderBelongsToActivityInfo struct {
+	db *gorm.DB
+
+	field.RelationField
+
+	GoodsInfo struct {
+		field.RelationField
+	}
+}
+
+func (a orderBelongsToActivityInfo) Where(conds ...field.Expr) *orderBelongsToActivityInfo {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a orderBelongsToActivityInfo) WithContext(ctx context.Context) *orderBelongsToActivityInfo {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a orderBelongsToActivityInfo) Session(session *gorm.Session) *orderBelongsToActivityInfo {
+	a.db = a.db.Session(session)
+	return &a
+}
+
+func (a orderBelongsToActivityInfo) Model(m *model.Order) *orderBelongsToActivityInfoTx {
+	return &orderBelongsToActivityInfoTx{a.db.Model(m).Association(a.Name())}
+}
+
+func (a orderBelongsToActivityInfo) Unscoped() *orderBelongsToActivityInfo {
+	a.db = a.db.Unscoped()
+	return &a
+}
+
+type orderBelongsToActivityInfoTx struct{ tx *gorm.Association }
+
+func (a orderBelongsToActivityInfoTx) Find() (result *model.GoodsActivity, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a orderBelongsToActivityInfoTx) Append(values ...*model.GoodsActivity) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a orderBelongsToActivityInfoTx) Replace(values ...*model.GoodsActivity) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a orderBelongsToActivityInfoTx) Delete(values ...*model.GoodsActivity) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a orderBelongsToActivityInfoTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a orderBelongsToActivityInfoTx) Count() int64 {
+	return a.tx.Count()
+}
+
+func (a orderBelongsToActivityInfoTx) Unscoped() *orderBelongsToActivityInfoTx {
 	a.tx = a.tx.Unscoped()
 	return &a
 }

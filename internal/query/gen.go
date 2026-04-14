@@ -30,6 +30,7 @@ var (
 	Emotion             *emotion
 	Feedback            *feedback
 	Goods               *goods
+	GoodsActivity       *goodsActivity
 	GrowthReport        *growthReport
 	NFC                 *nFC
 	Order               *order
@@ -56,6 +57,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	Emotion = &Q.Emotion
 	Feedback = &Q.Feedback
 	Goods = &Q.Goods
+	GoodsActivity = &Q.GoodsActivity
 	GrowthReport = &Q.GrowthReport
 	NFC = &Q.NFC
 	Order = &Q.Order
@@ -83,6 +85,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		Emotion:             newEmotion(db, opts...),
 		Feedback:            newFeedback(db, opts...),
 		Goods:               newGoods(db, opts...),
+		GoodsActivity:       newGoodsActivity(db, opts...),
 		GrowthReport:        newGrowthReport(db, opts...),
 		NFC:                 newNFC(db, opts...),
 		Order:               newOrder(db, opts...),
@@ -111,6 +114,7 @@ type Query struct {
 	Emotion             emotion
 	Feedback            feedback
 	Goods               goods
+	GoodsActivity       goodsActivity
 	GrowthReport        growthReport
 	NFC                 nFC
 	Order               order
@@ -142,6 +146,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		Emotion:             q.Emotion.clone(db),
 		Feedback:            q.Feedback.clone(db),
 		Goods:               q.Goods.clone(db),
+		GoodsActivity:       q.GoodsActivity.clone(db),
 		GrowthReport:        q.GrowthReport.clone(db),
 		NFC:                 q.NFC.clone(db),
 		Order:               q.Order.clone(db),
@@ -178,6 +183,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		Emotion:             q.Emotion.replaceDB(db),
 		Feedback:            q.Feedback.replaceDB(db),
 		Goods:               q.Goods.replaceDB(db),
+		GoodsActivity:       q.GoodsActivity.replaceDB(db),
 		GrowthReport:        q.GrowthReport.replaceDB(db),
 		NFC:                 q.NFC.replaceDB(db),
 		Order:               q.Order.replaceDB(db),
@@ -204,6 +210,7 @@ type queryCtx struct {
 	Emotion             IEmotionDo
 	Feedback            IFeedbackDo
 	Goods               IGoodsDo
+	GoodsActivity       IGoodsActivityDo
 	GrowthReport        IGrowthReportDo
 	NFC                 INFCDo
 	Order               IOrderDo
@@ -230,6 +237,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		Emotion:             q.Emotion.WithContext(ctx),
 		Feedback:            q.Feedback.WithContext(ctx),
 		Goods:               q.Goods.WithContext(ctx),
+		GoodsActivity:       q.GoodsActivity.WithContext(ctx),
 		GrowthReport:        q.GrowthReport.WithContext(ctx),
 		NFC:                 q.NFC.WithContext(ctx),
 		Order:               q.Order.WithContext(ctx),

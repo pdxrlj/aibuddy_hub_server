@@ -31,16 +31,18 @@ func (o OrderStatus) String() string {
 
 // Order 订单
 type Order struct {
-	ID       int64  `gorm:"column:id;autoIncrement;primaryKey" json:"id"`
-	UserID   int64  `gorm:"column:user_id;index;comment:用户ID" json:"user_id"`
-	DeviceID string `gorm:"column:device_id;index;comment:设备ID" json:"device_id"`
+	ID         int64  `gorm:"column:id;autoIncrement;primaryKey" json:"id"`
+	UserID     int64  `gorm:"column:user_id;index;comment:用户ID" json:"user_id"`
+	DeviceID   string `gorm:"column:device_id;index;comment:设备ID" json:"device_id"`
+	ActivityID int64  `gorm:"column:activity_id;index;comment:活动ID" json:"activity_id"`
 
 	OutTradeNo    string `gorm:"column:out_trade_no;uniqueIndex;type:varchar(64);comment:商户订单号" json:"out_trade_no"`
 	TransactionID string `gorm:"column:transaction_id;index;type:varchar(64);comment:微信支付订单号" json:"transaction_id"`
 
 	Status OrderStatus `gorm:"column:status;index;comment:订单状态" json:"status"`
 
-	Goods []*OrderGoods `gorm:"foreignKey:OrderID;references:ID" json:"goods"`
+	Goods        []*OrderGoods  `gorm:"foreignKey:OrderID;references:ID" json:"goods"`
+	ActivityInfo *GoodsActivity `gorm:"foreignKey:ActivityID;references:ID" json:"activity_info"`
 
 	ExpireTime LocalTime `gorm:"column:expire_time;comment:订单超时时间" json:"expire_time"`
 
