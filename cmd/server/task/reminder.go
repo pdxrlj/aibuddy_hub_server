@@ -56,6 +56,9 @@ func ReminderHandler(_ context.Context, t *asynq.Task) error {
 	slog.Info("[Reminder] ReminderHandler")
 
 	if !payload.Scheduled {
+		if _, err := r.UpdateStatus(info.ID, "已完成"); err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -70,7 +73,7 @@ func ReminderHandler(_ context.Context, t *asynq.Task) error {
 		return err
 	}
 
-	_, err = r.UpdateRemindTask(info.ID, result.ID, info.NextReminderTime, "已完成")
+	_, err = r.UpdateRemindTask(info.ID, result.ID, info.NextReminderTime)
 	if err != nil {
 		return err
 	}

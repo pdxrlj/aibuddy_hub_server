@@ -112,10 +112,14 @@ func (r *RemindRepo) GetRemindByID(id int64) (*model.Reminder, error) {
 }
 
 // UpdateRemindTask 更新定时任务信息
-func (r *RemindRepo) UpdateRemindTask(id int64, entryID string, nextReminderTime time.Time, status string) (gen.ResultInfo, error) {
+func (r *RemindRepo) UpdateRemindTask(id int64, entryID string, nextReminderTime time.Time) (gen.ResultInfo, error) {
 	return query.Reminder.Where(query.Reminder.ID.Eq(id)).Updates(map[string]any{
 		query.Reminder.EntryID.ColumnName().String():          entryID,
 		query.Reminder.NextReminderTime.ColumnName().String(): nextReminderTime,
-		query.Reminder.Status.ColumnName().String():           status,
 	})
+}
+
+// UpdateStatus 更新定时任务ID
+func (r *RemindRepo) UpdateStatus(id int64, status string) (gen.ResultInfo, error) {
+	return query.Reminder.Where(query.Reminder.ID.Eq(id)).Update(query.Reminder.Status, status)
 }
