@@ -5,7 +5,6 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -29,9 +28,6 @@ func (r *MemberShopRepository) GoodsList(ctx context.Context, page, pageSize int
 
 	offset := (page - 1) * pageSize
 	goods, count, err := query.GoodsActivity.Preload(query.GoodsActivity.GoodsInfo).FindByPage(offset, pageSize)
-	for _, v := range goods {
-		fmt.Printf("%+v\n", v)
-	}
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(
