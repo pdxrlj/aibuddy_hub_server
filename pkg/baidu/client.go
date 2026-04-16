@@ -111,7 +111,7 @@ func (c *Client) RequestWithHeader(method, path string, query url.Values, body a
 
 // buildRequest 构建请求
 func (c *Client) buildRequest(auth *AuthResult, query url.Values, body any) *resty.Request {
-	req := c.httpClient.R().
+	req := c.httpClient.R().SetDebug(true).
 		SetHeader("Authorization", auth.Authorization).
 		SetHeader("Content-Type", "application/json").
 		SetHeader("x-bce-date", auth.Timestamp)

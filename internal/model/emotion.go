@@ -3,7 +3,6 @@ package model
 
 import (
 	"strings"
-	"time"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -55,8 +54,8 @@ type Emotion struct {
 	// 阅读状态
 	Read bool `gorm:"column:read;type:boolean;default:false;comment:是否已读;" json:"read"`
 
-	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;comment:创建时间;" json:"created_at"`
-	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;comment:更新时间;" json:"updated_at"`
+	CreatedAt LocalTime `gorm:"column:created_at;type:timestamp;not null;comment:创建时间;" json:"created_at"`
+	UpdatedAt LocalTime `gorm:"column:updated_at;type:timestamp;not null;comment:更新时间;" json:"updated_at"`
 }
 
 // TableName 表名

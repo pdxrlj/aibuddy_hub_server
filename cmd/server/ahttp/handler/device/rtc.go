@@ -51,27 +51,17 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 	if req.CustomSelfCfg == nil || req.CustomSelfCfg.DeviceID == "" {
 		return state.Response().Error(errors.New("缺少自定义的设备的ID"))
 	}
-	// request="&{AppID:appsb9k48q8kxxr InstanceType: Config:{\"llm_token\":\"no\",\"tts_url\":\"DEFAULT{\\\"vcn\\\":\\\"1000578\\\",\\\"emotion\\\":\\\"calm\\\",\\\"pit\\\":-1}\",\"rtc_ac\":\"g722\",\"remote_music_player\":true,\"enable_visual\":\"false\",\"dfda\":\"false\",\"tts\":\"DEFAULT\",\"tts_end_delay_ms\":50,\"emotion_recognition_cfg\":{\"enable\":true,\"inject_to_llm\":true,\"tts_with_emotion\":true}}}"
-	// reqConfig := &ConfigRequest{
-	// 	LLMToken:          "no",
-	// 	TTSURL:            `DEFAULT{"vcn":"1000578","emotion":"calm","pit":-1}`,
-	// 	RTCAC:             "g722",
-	// 	RemoteMusicPlayer: true,
-	// 	EnableVisual:      "false",
-	// 	DFDA:              "false",
-	// 	TTS:               "DEFAULT",
-	// 	TTSEndDelayMS:     50,
-	// }
 
 	resp, err := h.BaiduService.GenerateAIAgentCall(state.Ctx.Request().Context(),
 		&baiduservice.GenerateAIAgentCallRequest{
 			AppID:        req.AppID,
 			InstanceType: req.InstanceType,
 			Config: &baiduservice.ConfigRequest{
-				LLM:               req.Config.LLM,
-				LLMToken:          req.Config.LLMToken,
-				TTSURL:            req.Config.TTSURL,
-				RTCAC:             req.Config.RTCAC,
+				LLM:      req.Config.LLM,
+				LLMToken: req.Config.LLMToken,
+				TTSURL:   req.Config.TTSURL,
+				// RTCAC:    req.Config.RTCAC,
+				RTCAC:             "g722",
 				Lang:              req.Config.Lang,
 				RemoteMusicPlayer: req.Config.RemoteMusicPlayer,
 				EnableVisual:      req.Config.EnableVisual,

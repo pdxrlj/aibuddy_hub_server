@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"aibuddy/pkg/config"
+	"aibuddy/pkg/helpers"
 )
 
 // AIAgent 大模型互动实例API
@@ -122,6 +123,9 @@ func (a *AIAgent) GenerateAIAgentCall(req *GenerateAIAgentCallRequest) (*Generat
 	}
 
 	var result GenerateAIAgentCallResponse
+	fmt.Println("============GenerateAIAgentCall====================")
+	helpers.PP(body)
+
 	requestID, err := a.client.RequestWithHeader("POST", path, nil, body, &result, "x-bce-request-id")
 	if err != nil {
 		return nil, fmt.Errorf("创建大模型互动实例失败: %w", err)
