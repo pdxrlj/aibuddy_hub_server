@@ -191,7 +191,6 @@ const StageOnePrompt = `
     "confidence": "low"
   }
 }
-
 `
 
 // GrowthPrompt is the prompt for the growth report generation agent

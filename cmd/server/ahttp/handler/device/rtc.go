@@ -68,18 +68,8 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 				DFDA:              req.Config.DFDA,
 				TTS:               req.Config.TTS,
 				TTSEndDelayMs:     req.Config.TTSEndDelayMS,
-
-				// LLMToken:          reqConfig.LLMToken,
-				// TTSURL:            reqConfig.TTSURL,
-				// RTCAC:             reqConfig.RTCAC,
-				// RemoteMusicPlayer: reqConfig.RemoteMusicPlayer,
-				// EnableVisual:      reqConfig.EnableVisual,
-				// DFDA:              reqConfig.DFDA,
-				// TTS:               reqConfig.TTS,
-				// TTSEndDelayMs:     reqConfig.TTSEndDelayMS,
 			},
 			DeviceID: req.CustomSelfCfg.DeviceID,
-			// DeviceID: "30:ED:A0:E9:F3:03",
 		})
 	if err != nil {
 		return state.Response().Error(err)
