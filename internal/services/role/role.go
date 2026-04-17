@@ -125,6 +125,18 @@ func (r *Service) GetDeviceAgentName(ctx context.Context, deviceID string) (stri
 	return device.AgentName, nil
 }
 
+// GetDeviceAgentNameWithDefault 获取设备角色名称，若为空则返回默认角色
+func (r *Service) GetDeviceAgentNameWithDefault(ctx context.Context, deviceID string) (string, error) {
+	agentName, err := r.GetDeviceAgentName(ctx, deviceID)
+	if err != nil {
+		return config.Instance.Baidu.Agent.Default, err
+	}
+	if agentName == "" {
+		agentName = config.Instance.Baidu.Agent.Default
+	}
+	return agentName, nil
+}
+
 // DeviceInstanceSwitchDefRole 切换设备实例到默认角色
 func (r *Service) DeviceInstanceSwitchDefRole(ctx context.Context, instanceID uint64, deviceID string) error {
 	ctx, span := tracer().Start(ctx, "DeviceInstanceSwitchDefRole")
@@ -135,15 +147,17 @@ func (r *Service) DeviceInstanceSwitchDefRole(ctx context.Context, instanceID ui
 		slog.Info("[RoleService] 设备角色不存在，不进行角色切换", "device_id", deviceID)
 		return nil
 	}
-
+	slog.Info("[RTC] Switch Role", "instance_id", instanceID, "agent_name", agentName, "tts", defaultTTS())
 	if agentName != "" {
 		if err := r.SwitchRole.SwitchSceneRole(&baidu.SwitchRoleRequest{
 			AiAgentInstanceID: instanceID,
 			SceneRole:         agentName,
-			TTS:               `DEFAULT{"vcn":"1000454"}`,
+			TTS:               defaultTTS(),
 		}); err != nil {
 			return errors.New("切换角色失败:" + err.Error())
 		}
+		slog.Info("[RTC] Switch Role",
+			"state", "success", "instance_id", instanceID, "agent_name", agentName, "tts", defaultTTS())
 	}
 
 	return nil

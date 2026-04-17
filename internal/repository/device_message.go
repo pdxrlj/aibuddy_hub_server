@@ -153,20 +153,28 @@ func (r *DeviceMessageRepo) GetUnreadMessageCount(ctx context.Context, uid int64
 		Debug().
 		Order(query.DeviceMessage.ID.Desc()).
 		Where(
-			field.Or(
-				// FromDeviceID=uid AND ToDeviceID=deviceID
-				field.And(
-					query.DeviceMessage.FromDeviceID.Eq(uidStr),
-					query.DeviceMessage.ToDeviceID.Eq(deviceID),
-				),
-				// FromDeviceID=deviceID AND ToDeviceID=uid
-				field.And(
-					query.DeviceMessage.FromDeviceID.Eq(deviceID),
-					query.DeviceMessage.ToDeviceID.Eq(uidStr),
-				),
-			),
+		// field.Or(
+		// FromDeviceID=uid AND ToDeviceID=deviceID
+		// field.And(
+		// 	query.DeviceMessage.FromDeviceID.Eq(uidStr),
+		// 	query.DeviceMessage.ToDeviceID.Eq(deviceID),
+		// ),
+
+		// field.And(
+		// 	query.DeviceMessage.ToDeviceID.Eq(deviceID),
+		// ),
+		// field.And(
+		// 	query.DeviceMessage.ToDeviceID.Eq(uidStr),
+		// ),
+		// FromDeviceID=deviceID AND ToDeviceID=uid
+		// field.And(
+		// 	query.DeviceMessage.FromDeviceID.Eq(deviceID),
+		// 	query.DeviceMessage.ToDeviceID.Eq(uidStr),
+		// ),
+		// ),
 		).
 		Where(query.DeviceMessage.Read.Is(false)).
+		Where(query.DeviceMessage.ToDeviceID.Eq(uidStr)).
 		Find()
 	if err != nil {
 		span.RecordError(err)
