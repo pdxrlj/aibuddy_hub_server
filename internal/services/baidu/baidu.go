@@ -33,6 +33,8 @@ type ConfigRequest struct {
 	TTS               string `json:"tts,omitempty"`
 	TTSEndDelayMs     int    `json:"tts_end_delay_ms,omitempty"`
 
+	SceneRole string `json:"sceneRole,omitempty"`
+
 	EmotionRecognitionCfg *EmotionRecognitionCfg `json:"emotion_recognition_cfg,omitempty"`
 }
 
@@ -85,14 +87,30 @@ func getDefaultAppID(appID string) string {
 }
 
 // buildConfigStr 构建配置字符串
-func buildConfigStr(cfg *ConfigRequest, voiceID string) (string, error) {
+func buildConfigStr(cfg *ConfigRequest, voiceID, roleName string) (string, error) {
 	if cfg == nil {
 		return "", nil
 	}
 
+	fillTTSDefaults(cfg, voiceID)
+	fillEmotionDefaults(cfg)
+
+	if roleName != "" {
+		cfg.SceneRole = roleName
+	}
+
+	configBytes, err := json.Marshal(cfg)
+	if err != nil {
+		return "", fmt.Errorf("序列化配置失败: %w", err)
+	}
+	return string(configBytes), nil
+}
+
+// fillTTSDefaults 填充TTS相关默认配置
+func fillTTSDefaults(cfg *ConfigRequest, voiceID string) {
 	if cfg.TTS == "" {
-		// cfg.TTS = "PRIVATE_EXTEND" // DEFAULT 默认音色
-		cfg.TTS = "DEFAULT"
+		cfg.TTS = "PRIVATE_EXTEND" // DEFAULT 默认音色
+		// cfg.TTS = "DEFAULT"
 	}
 
 	vcn := config.Instance.Baidu.TTS.Vcn
@@ -117,7 +135,10 @@ func buildConfigStr(cfg *ConfigRequest, voiceID string) (string, error) {
 		}
 		cfg.TTSEndDelayMs = TTsEndDelayMs
 	}
+}
 
+// fillEmotionDefaults 填充情感识别默认配置
+func fillEmotionDefaults(cfg *ConfigRequest) {
 	if cfg.EmotionRecognitionCfg == nil {
 		cfg.EmotionRecognitionCfg = &EmotionRecognitionCfg{
 			Enable:         true,
@@ -125,12 +146,6 @@ func buildConfigStr(cfg *ConfigRequest, voiceID string) (string, error) {
 			TTSWithEmotion: true,
 		}
 	}
-
-	configBytes, err := json.Marshal(cfg)
-	if err != nil {
-		return "", fmt.Errorf("序列化配置失败: %w", err)
-	}
-	return string(configBytes), nil
 }
 
 // GenerateAIAgentCall 创建并启动大模型互动实例
@@ -151,7 +166,12 @@ func (s *Service) GenerateAIAgentCall(ctx context.Context, req *GenerateAIAgentC
 
 	appID := getDefaultAppID(req.AppID)
 
-	configStr, err := buildConfigStr(req.Config, device.VoiceID)
+	roleName, err := s.RoleService.GetDeviceAgentNameWithDefault(ctx, req.DeviceID)
+	if err != nil {
+		return nil, err
+	}
+
+	configStr, err := buildConfigStr(req.Config, device.VoiceID, roleName)
 	if err != nil {
 		return nil, err
 	}
@@ -175,11 +195,14 @@ func (s *Service) GenerateAIAgentCall(ctx context.Context, req *GenerateAIAgentC
 	_ = cache.StoreRTCInstanceID(req.DeviceID, cast.ToString(resp.AiAgentInstanceID))
 
 	// 切换到小程序选择的角色
-	err = s.RoleService.DeviceInstanceSwitchDefRole(ctx, resp.AiAgentInstanceID, req.DeviceID)
-	if err != nil {
-		slog.Error("Failed to switch default role", "error", err)
-		return nil, fmt.Errorf("切换默认角色失败: %w", err)
-	}
+	// err = s.RoleService.DeviceInstanceSwitchDefRole(ctx, resp.AiAgentInstanceID, req.DeviceID)
+	// if err != nil {
+	// 	slog.Error("Failed to switch default role", "error", err)
+	// 	return nil, fmt.Errorf("切换默认角色失败: %w", err)
+	// }
+
+	// // 休眠 1 秒，等待角色切换完成
+	// time.Sleep(time.Second * 1)
 
 	return &GenerateAIAgentCallResponse{
 		AiAgentInstanceID: resp.AiAgentInstanceID,

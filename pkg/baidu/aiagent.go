@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"aibuddy/pkg/config"
-	"aibuddy/pkg/helpers"
 )
 
 // AIAgent 大模型互动实例API
@@ -123,8 +122,8 @@ func (a *AIAgent) GenerateAIAgentCall(req *GenerateAIAgentCallRequest) (*Generat
 	}
 
 	var result GenerateAIAgentCallResponse
-	fmt.Println("============GenerateAIAgentCall====================")
-	helpers.PP(body)
+	// fmt.Println("============GenerateAIAgentCall====================")
+	// helpers.PP(body)
 
 	requestID, err := a.client.RequestWithHeader("POST", path, nil, body, &result, "x-bce-request-id")
 	if err != nil {

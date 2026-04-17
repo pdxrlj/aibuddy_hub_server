@@ -125,6 +125,18 @@ func (r *Service) GetDeviceAgentName(ctx context.Context, deviceID string) (stri
 	return device.AgentName, nil
 }
 
+// GetDeviceAgentNameWithDefault 获取设备角色名称，若为空则返回默认角色
+func (r *Service) GetDeviceAgentNameWithDefault(ctx context.Context, deviceID string) (string, error) {
+	agentName, err := r.GetDeviceAgentName(ctx, deviceID)
+	if err != nil {
+		return config.Instance.Baidu.Agent.Default, err
+	}
+	if agentName == "" {
+		agentName = config.Instance.Baidu.Agent.Default
+	}
+	return agentName, nil
+}
+
 // DeviceInstanceSwitchDefRole 切换设备实例到默认角色
 func (r *Service) DeviceInstanceSwitchDefRole(ctx context.Context, instanceID uint64, deviceID string) error {
 	ctx, span := tracer().Start(ctx, "DeviceInstanceSwitchDefRole")
