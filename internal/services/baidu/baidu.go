@@ -12,6 +12,7 @@ import (
 	"aibuddy/internal/services/role"
 	"aibuddy/pkg/baidu"
 	"aibuddy/pkg/config"
+	"aibuddy/pkg/helpers"
 
 	"log/slog"
 
@@ -98,6 +99,8 @@ func buildConfigStr(cfg *ConfigRequest, voiceID, roleName string) (string, error
 	if roleName != "" {
 		cfg.SceneRole = roleName
 	}
+	fmt.Println("当前构建的房间的请求参数信息:")
+	helpers.PP(cfg)
 
 	configBytes, err := json.Marshal(cfg)
 	if err != nil {

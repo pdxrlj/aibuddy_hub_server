@@ -5,7 +5,6 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
-	"strings"
 	"time"
 
 	"github.com/spf13/cast"
@@ -46,10 +45,9 @@ func (r *DeviceMessageRepo) MarkMessageRead(ctx context.Context, messageID strin
 
 // BatchMessageRead 批量已读消息
 func (r *DeviceMessageRepo) BatchMessageRead(ctx context.Context, messageID []string) error {
-	ids := strings.Join(messageID, ",")
 	_, err := query.DeviceMessage.WithContext(ctx).Debug().
 		Where(
-			query.DeviceMessage.MsgID.In(ids),
+			query.DeviceMessage.MsgID.In(messageID...),
 		).
 		Updates(map[string]any{
 			query.DeviceMessage.UpdatedAt.ColumnName().String(): time.Now(),
