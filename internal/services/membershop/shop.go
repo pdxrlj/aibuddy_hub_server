@@ -497,6 +497,16 @@ func (s *Service) ProcessOrderPayment(ctx context.Context, notifyData *PayNotify
 			return fmt.Errorf("获取订单详情失败: %w", err)
 		}
 
+		// 设备增加音色复制次数
+		for _, v := range order.Goods {
+			if v.GoodsInfo.Name == "音色复刻" {
+				if err := s.DeviceRepo.IncrementSurplusNum(ctx, order.DeviceID, v.GoodsInfo.UsageLimit); err != nil {
+					slog.Error("[Shop] IncrementSurplusNum failed", "err", err, "device_id", order.DeviceID, "increment", v.GoodsNum)
+					return fmt.Errorf("增加设备音色复制次数失败: %w", err)
+				}
+			}
+		}
+
 		// 开通会员：根据商品类型设置设备VIP过期时间
 		if err := s.ActivateMembership(ctx, order, tx); err != nil {
 			return fmt.Errorf("激活会员失败: %w", err)
@@ -595,4 +605,9 @@ func (s *Service) RefundNotify(ctx context.Context, w http.ResponseWriter, reque
 
 	// 返回微信支付回调成功响应
 	return PayResponse(w, "SUCCESS", "成功")
+}
+
+// GetProduetList 获取特定商品列表（如音色复刻）
+func (s *Service) GetProduetList(ctx context.Context) ([]*model.Goods, error) {
+	return s.MemberShopRepository.GetGoodsByName(ctx, "音色复刻")
 }

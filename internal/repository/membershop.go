@@ -181,3 +181,14 @@ func (r *MemberShopRepository) SubActivityCount(ctx context.Context, aid int64) 
 	_, err := query.GoodsActivity.Where(query.GoodsActivity.ID.Eq(aid), query.GoodsActivity.Count_.Gte(0)).Update(query.GoodsActivity.Count_, gorm.Expr("count - 1"))
 	return err
 }
+
+// GetGoodsByName 根据名称查询商品列表
+func (r *MemberShopRepository) GetGoodsByName(ctx context.Context, name string) ([]*model.Goods, error) {
+	_, span := tracer.Start(ctx, "MemberShopRepository.SubActivityCount")
+	defer span.End()
+	produets, err := query.Goods.Where(query.Goods.Name.Eq(name)).Find()
+	if err != nil {
+		return nil, err
+	}
+	return produets, nil
+}

@@ -241,6 +241,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			shopGroup.POST("/order/create", shop.CreateOrder)
 			// 获取订单列表
 			shopGroup.GET("/order/list", shop.OrderList)
+			shopGroup.GET("/goods/produet", shop.ProduetList) // 音色复刻接口
 		})
 
 		// 支付回调（无需认证）

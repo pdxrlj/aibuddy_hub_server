@@ -62,7 +62,8 @@ type Device struct {
 	IsAdmin   bool         `gorm:"column:is_admin;type:boolean;not null;default:false;comment:是否管理员设备,首次绑定的用户是管理员;"`
 	AgentName string       `gorm:"column:agent_name;index;type:varchar(255);not null;comment:角色名称;"`
 
-	VoiceID string `gorm:"column:voice_id;type:varchar(255);default:1000578;comment:语音音色ID;"`
+	VoiceID    string `gorm:"column:voice_id;type:varchar(255);default:1000578;comment:语音音色ID;"`
+	SurplusNum int    `gorm:"column:surplus_num;type:int;default:0;comment:剩余使用次数;"`
 
 	// 会员到期时间
 	ExpireTime time.Time `gorm:"column:expire_time;type:timestamp;comment:会员到期时间;"`
