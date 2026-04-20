@@ -96,3 +96,16 @@ func (h *Handler) OrderList(state *ahttp.State, req *OrderListRequest) error {
 
 	return state.Response().Success(orders)
 }
+
+// ProduetList 获取音色复刻接口
+func (h *Handler) ProduetList(state *ahttp.State) error {
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "Shop.ProduetList")
+	defer span.End()
+
+	produets, err := h.MemberService.GetProduetList(ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Response().Error(err)
+	}
+	return state.Response().Success(produets)
+}

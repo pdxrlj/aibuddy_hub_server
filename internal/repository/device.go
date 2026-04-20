@@ -552,3 +552,18 @@ func (d *DeviceRepo) SetVoiceID(ctx context.Context, deviceID string, voiceID st
 	}
 	return nil
 }
+
+// IncrementSurplusNum 增加设备的音色复制次数
+func (d *DeviceRepo) IncrementSurplusNum(ctx context.Context, deviceID string, increment int64) error {
+	_, span := tracer.Start(ctx, "DeviceService.SetVoiceID")
+	defer span.End()
+	return query.Q.Transaction(func(tx *query.Query) error {
+		// 更新数据库
+		_, err := tx.Device.Where(tx.Device.DeviceID.Eq(deviceID)).
+			Update(tx.Device.SurplusNum, gorm.Expr("surplus_num + ?", increment))
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}

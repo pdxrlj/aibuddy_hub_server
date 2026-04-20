@@ -29,7 +29,8 @@ type Goods struct {
 	Description string `gorm:"column:description;type:text;comment:商品描述" json:"description"`
 
 	// 商品状态
-	Status GoodsStatus `gorm:"column:status;type:string;comment:商品状态" json:"status"`
+	Status     GoodsStatus `gorm:"column:status;type:string;comment:商品状态" json:"status"`
+	UsageLimit int64       `gorm:"column:usage_limit;type:int;default:0;comment:可使用次数" json:"usage_limit"`
 
 	CreatedAt LocalTime `gorm:"column:created_at;autoCreateTime;comment:创建时间" json:"created_at"`
 	UpdatedAt LocalTime `gorm:"column:updated_at;autoUpdateTime;comment:更新时间" json:"updated_at"`
