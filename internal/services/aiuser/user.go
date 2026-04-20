@@ -66,6 +66,7 @@ type Service struct {
 	GrowthReportRepo   *repository.GrowthReportRepo
 	EmotionRepo        *repository.EmotionRepo
 	DeviceActivateRepo *repository.BuddyDeviceActivateRepo
+	MemberShopRepo     *repository.MemberShopRepository
 
 	sms   *sms.AliyunSMS
 	cache flash.Flash
@@ -106,6 +107,7 @@ func New() *Service {
 		GrowthReportRepo: repository.NewGrowthReportRepo(),
 		EmotionRepo:      repository.NewEmotionRepo(),
 		DeviceRepo:       repository.NewDeviceRepo(),
+		MemberShopRepo:   repository.NewMemberShopRepository(),
 
 		growthReportService: agent.NewGroupReport(),
 		AfterCompleteProfileHook: []AfterCompleteProfileHook{
@@ -1014,6 +1016,24 @@ func (s *Service) GetMyInfo(ctx context.Context, uid int64, deviceID string) (*M
 		return nil, err
 	}
 
+	// 获取VIP信息
+	var memberInfo = map[string]any{
+		"member_type": "",
+		"member_name": "",
+		"expire_time": "",
+		"role_num":    0,
+	}
+	member, err := s.MemberShopRepo.GetMemberByDeviceID(ctx, deviceID)
+	if err != nil {
+		return nil, err
+	}
+	if member != nil {
+		memberInfo["member_type"] = member.Goods[0].GoodsInfo.Name
+		memberInfo["member_name"] = member.Goods[0].GoodsInfo.Name
+		memberInfo["expire_time"] = member.ExpireTime.Format(time.DateOnly)
+	}
+	memberInfo["role_num"] = s.MemberShopRepo.GetMemberRoleNum(ctx, deviceID)
+
 	return &MyInfoResponse{
 		DeviceName:        info.NickName,
 		DeviceAvatar:      info.Avatar,
@@ -1021,7 +1041,7 @@ func (s *Service) GetMyInfo(ctx context.Context, uid int64, deviceID string) (*M
 		DeviceID:          deviceID,
 		Sex:               info.Gender,
 		FamilyMemberCount: 1,
-		MembershipInfo:    nil,
+		MembershipInfo:    memberInfo,
 	}, nil
 }
 

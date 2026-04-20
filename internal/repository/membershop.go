@@ -5,6 +5,7 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -191,4 +192,40 @@ func (r *MemberShopRepository) GetGoodsByName(ctx context.Context, name string) 
 		return nil, err
 	}
 	return produets, nil
+}
+
+// GetMemberByDeviceID 根据设备ID查询会员信息
+func (r *MemberShopRepository) GetMemberByDeviceID(ctx context.Context, deviceID string) (*model.Order, error) {
+	_, span := tracer.Start(ctx, "MemberShopRepository.GetMemberByDeviceID")
+	defer span.End()
+
+	member, err := query.Order.Where(query.Order.DeviceID.Eq(deviceID)).
+		Where(query.Order.Status.Eq(model.OrderStatusPaid.String())).
+		Preload(query.Order.Goods).
+		Preload(query.Order.Goods.GoodsInfo).
+		Order(query.Order.ExpireTime.Desc()).
+		First()
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	return member, nil
+}
+
+// GetMemberRoleNum 根据设备ID查询会员拥有的角色数量
+func (r *MemberShopRepository) GetMemberRoleNum(ctx context.Context, deviceID string) int {
+	_, span := tracer.Start(ctx, "MemberShopRepository.GetMemberRoleNum")
+	defer span.End()
+	num := 0
+
+	result, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).First()
+	if err != nil {
+		return num
+	}
+	if result != nil {
+		num = result.SurplusNum
+	}
+
+	return num
 }
