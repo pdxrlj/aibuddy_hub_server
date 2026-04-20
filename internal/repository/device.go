@@ -560,7 +560,7 @@ func (d *DeviceRepo) IncrementSurplusNum(ctx context.Context, deviceID string, i
 	return query.Q.Transaction(func(tx *query.Query) error {
 		// 更新数据库
 		_, err := tx.Device.Where(tx.Device.DeviceID.Eq(deviceID)).
-			Update(tx.Device.SurplusNum, gorm.Expr("surplus_num + ?", increment))
+			Update(tx.Device.SurplusNum, gorm.Expr(tx.Device.SurplusNum.ColumnName().String()+" + ?", increment))
 		if err != nil {
 			return err
 		}
