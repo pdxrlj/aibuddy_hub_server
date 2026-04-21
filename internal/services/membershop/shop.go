@@ -637,11 +637,15 @@ func (s *Service) OrderPay(ctx context.Context, orderID string, uid int64) (*Cre
 		return nil, fmt.Errorf("获取订单详情失败: %w", err)
 	}
 
+	if order != nil && order.IsPayTimeExpired() {
+		return nil, errors.New("订单支付时间已过期")
+	}
+
 	goods, err := s.OrderRepo.GetOrderGoodsInfo(ctx, order.ID)
 	if err != nil {
 		return nil, fmt.Errorf("获取订单详情失败: %w", err)
 	}
-	fmt.Printf("%+v\n", goods)
+
 	// 创建微信预支付订单
 	wxResp, err := s.CreateWxPrepayOrder(ctx, orderID, order.Goods[0].GoodsName, goods.GoodsPrice, userInfo.OpenID)
 	if err != nil {

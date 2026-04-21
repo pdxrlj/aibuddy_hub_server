@@ -59,6 +59,11 @@ func (t LocalTime) Time() time.Time {
 	return time.Time(t)
 }
 
+// NowLocal 返回当前本地时间的 LocalTime，与数据库 NowFunc 保持时区一致
+func NowLocal() LocalTime {
+	return LocalTime(time.Now().In(time.Local))
+}
+
 // Before 判断时间是否在给定时间之前
 func (t LocalTime) Before(other LocalTime) bool {
 	return time.Time(t).Before(time.Time(other))

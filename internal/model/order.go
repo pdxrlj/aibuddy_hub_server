@@ -55,25 +55,31 @@ func (o *Order) TableName() string {
 	return TableName("order")
 }
 
+// IsPayTimeExpired 订单支付时间是否已经过期
+func (o *Order) IsPayTimeExpired() bool {
+	return o.Status == OrderStatusPending && !o.ExpireTime.IsZero() && o.ExpireTime.Before(NowLocal())
+}
+
 // BeforeCreate 创建前钩子
 func (o *Order) BeforeCreate(_ *gorm.DB) error {
-	o.ExpireTime = LocalTime(time.Now().Add(DefaultExpireTime))
+	now := NowLocal()
+	o.ExpireTime = LocalTime(now.Time().Add(DefaultExpireTime))
 	o.Status = OrderStatusPending
-	o.CreatedAt = LocalTime(time.Now())
-	o.UpdatedAt = LocalTime(time.Now())
+	o.CreatedAt = now
+	o.UpdatedAt = now
 	return nil
 }
 
 // BeforeUpdate 更新前钩子
 func (o *Order) BeforeUpdate(_ *gorm.DB) error {
-	o.UpdatedAt = LocalTime(time.Now())
+	o.UpdatedAt = NowLocal()
 	return nil
 }
 
 // AfterFind 查询之后，判断订单是否过期
 func (o *Order) AfterFind(tx *gorm.DB) error {
 	if o.Status == OrderStatusPending && !o.ExpireTime.IsZero() {
-		if o.ExpireTime.Before(LocalTime(time.Now())) {
+		if o.ExpireTime.Before(NowLocal()) {
 			o.Status = OrderStatusTimeout
 			tx.Model(o).Update("status", OrderStatusTimeout)
 		}
