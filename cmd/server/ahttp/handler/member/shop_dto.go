@@ -17,17 +17,13 @@ type CreateOrderRequest struct {
 type PaySuccessRequest struct{}
 
 // SkipBodyBind 跳过参数绑定
-func (p *PaySuccessRequest) SkipBodyBind() bool {
-	return true
-}
+func (p *PaySuccessRequest) SkipBodyBind() {}
 
 // RefundSuccessRequest 退款成功请求
 type RefundSuccessRequest struct{}
 
 // SkipBodyBind 跳过参数绑定
-func (r *RefundSuccessRequest) SkipBodyBind() bool {
-	return true
-}
+func (r *RefundSuccessRequest) SkipBodyBind() {}
 
 // OrderListRequest 获取订单列表请求
 type OrderListRequest struct {

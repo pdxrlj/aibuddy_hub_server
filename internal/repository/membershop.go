@@ -179,7 +179,7 @@ func (r *MemberShopRepository) GetActvityByGoodsID(ctx context.Context, goodsID 
 func (r *MemberShopRepository) SubActivityCount(ctx context.Context, aid int64) error {
 	_, span := tracer.Start(ctx, "MemberShopRepository.SubActivityCount")
 	defer span.End()
-	_, err := query.GoodsActivity.Where(query.GoodsActivity.ID.Eq(aid), query.GoodsActivity.Count_.Gte(0)).Update(query.GoodsActivity.Count_, gorm.Expr("count - 1"))
+	_, err := query.GoodsActivity.Where(query.GoodsActivity.ID.Eq(aid), query.GoodsActivity.Count_.Gte(0)).Update(query.GoodsActivity.Count_, gorm.Expr(query.GoodsActivity.Count_.ColumnName().String()+" - 1"))
 	return err
 }
 

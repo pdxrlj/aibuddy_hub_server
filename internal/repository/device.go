@@ -228,6 +228,7 @@ func (d *DeviceRepo) EraseDevice(ctx context.Context, deviceID string) error {
 			Or(tx.DeviceMessage.ToDeviceID.Eq(deviceID)).
 			Delete()
 		if err != nil {
+			slog.Info("[Device] EraseDevice delete error", "event", "message", "device_id", deviceID, "error", err.Error())
 			return err
 		}
 
@@ -235,6 +236,7 @@ func (d *DeviceRepo) EraseDevice(ctx context.Context, deviceID string) error {
 		_, err = tx.Reminder.Where(tx.Reminder.DeviceID.Eq(deviceID)).
 			Delete()
 		if err != nil {
+			slog.Info("[Device] EraseDevice delete error", "event", "reminder", "device_id", deviceID, "error", err.Error())
 			return err
 		}
 
@@ -242,6 +244,7 @@ func (d *DeviceRepo) EraseDevice(ctx context.Context, deviceID string) error {
 		_, err = tx.Emotion.Where(tx.Emotion.DeviceID.Eq(deviceID)).
 			Delete()
 		if err != nil {
+			slog.Info("[Device] EraseDevice delete error", "event", "emotion", "device_id", deviceID, "error", err.Error())
 			return err
 		}
 
@@ -249,13 +252,15 @@ func (d *DeviceRepo) EraseDevice(ctx context.Context, deviceID string) error {
 		_, err = tx.NFC.Where(tx.NFC.DeviceID.Eq(deviceID)).
 			Delete()
 		if err != nil {
+			slog.Info("[Device] EraseDevice delete error", "event", "nfc", "device_id", deviceID, "error", err.Error())
 			return err
 		}
 
 		// 成长报告
-		_, err = tx.GrowthReport.Where(tx.NFC.DeviceID.Eq(deviceID)).
+		_, err = tx.GrowthReport.Where(tx.GrowthReport.DeviceID.Eq(deviceID)).
 			Delete()
 		if err != nil {
+			slog.Info("[Device] EraseDevice delete error", "event", "growth_report", "device_id", deviceID, "error", err.Error())
 			return err
 		}
 
@@ -264,6 +269,7 @@ func (d *DeviceRepo) EraseDevice(ctx context.Context, deviceID string) error {
 			Or(query.DeviceRelationship.TargetDeviceID.Eq(deviceID)).
 			Delete()
 		if err != nil {
+			slog.Info("[Device] EraseDevice delete error", "event", "relationship", "device_id", deviceID, "error", err.Error())
 			return err
 		}
 
@@ -554,16 +560,22 @@ func (d *DeviceRepo) SetVoiceID(ctx context.Context, deviceID string, voiceID st
 }
 
 // IncrementSurplusNum 增加设备的音色复制次数
-func (d *DeviceRepo) IncrementSurplusNum(ctx context.Context, deviceID string, increment int64) error {
-	_, span := tracer.Start(ctx, "DeviceService.SetVoiceID")
+func (d *DeviceRepo) IncrementSurplusNum(ctx context.Context, deviceID string, increment int64, tx ...*query.Query) error {
+	_, span := tracer.Start(ctx, "DeviceService.IncrementSurplusNum")
 	defer span.End()
-	return query.Q.Transaction(func(tx *query.Query) error {
-		// 更新数据库
-		_, err := tx.Device.Where(tx.Device.DeviceID.Eq(deviceID)).
-			Update(tx.Device.SurplusNum, gorm.Expr("surplus_num + ?", increment))
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+
+	db := query.Q
+	if len(tx) > 0 {
+		db = tx[0]
+	}
+
+	_, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID)).
+		Update(db.Device.SurplusNum, gorm.Expr("surplus_num + ?", increment))
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		span.SetAttributes(attribute.Int64("increment", increment))
+		return err
+	}
+	return nil
 }

@@ -303,9 +303,10 @@ func (s *Service) CreateOrderRecord(tx *gorm.DB, userID int64, deviceID string, 
 
 // DeductStock 扣减库存
 func (s *Service) DeductStock(tx *gorm.DB, goodsID int64) error {
+	g := query.Goods
 	result := tx.Model(&model.Goods{}).
-		Where("id = ? AND stock > 0", goodsID).
-		Update("stock", gorm.Expr("stock - 1"))
+		Where(g.ID.Eq(goodsID)).Where(g.Stock.Gt(0)).
+		Update(g.Stock.ColumnName().String(), gorm.Expr(g.Stock.ColumnName().String()+" - 1"))
 
 	if result.Error != nil {
 		return result.Error
@@ -413,6 +414,7 @@ func (s *Service) OrderList(ctx context.Context, page, pageSize int, status stri
 
 // PaySuccess 支付成功回调
 func (s *Service) PaySuccess(ctx context.Context, w http.ResponseWriter, request *http.Request) error {
+	slog.Info("[Shop] PaySuccess", "event", "支付成功回调")
 	ctx, span := tracer().Start(ctx, "ShopService.PaySuccess")
 	defer span.End()
 
@@ -500,7 +502,7 @@ func (s *Service) ProcessOrderPayment(ctx context.Context, notifyData *PayNotify
 		// 设备增加音色复制次数
 		for _, v := range order.Goods {
 			if v.GoodsInfo.Name == "音色复刻" {
-				if err := s.DeviceRepo.IncrementSurplusNum(ctx, order.DeviceID, v.GoodsInfo.UsageLimit); err != nil {
+				if err := s.DeviceRepo.IncrementSurplusNum(ctx, order.DeviceID, v.GoodsInfo.UsageLimit, tx); err != nil {
 					slog.Error("[Shop] IncrementSurplusNum failed", "err", err, "device_id", order.DeviceID, "increment", v.GoodsNum)
 					return fmt.Errorf("增加设备音色复制次数失败: %w", err)
 				}
@@ -562,6 +564,8 @@ func (s *Service) ActivateMembership(ctx context.Context, order *model.Order, tx
 
 // RefundNotify 退款回调
 func (s *Service) RefundNotify(ctx context.Context, w http.ResponseWriter, request *http.Request) error {
+	slog.Info("[Shop] RefundNotify")
+
 	ctx, span := tracer().Start(ctx, "ShopService.RefundNotify")
 	defer span.End()
 

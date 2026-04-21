@@ -6,6 +6,7 @@ import (
 	"aibuddy/internal/services/membershop"
 	"aibuddy/pkg/ahttp"
 	"aibuddy/pkg/config"
+	"log/slog"
 	"net/http"
 
 	"go.opentelemetry.io/otel"
@@ -65,6 +66,7 @@ func (h *Handler) CreateOrder(state *ahttp.State, req *CreateOrderRequest) error
 
 // PaySuccess 支付成功回调
 func (h *Handler) PaySuccess(state *ahttp.State, _ *PaySuccessRequest) error {
+	slog.Info("PaySuccess", "state", "start")
 	ctx, span := tracer().Start(state.Ctx.Request().Context(), "Shop.PaySuccess")
 	defer span.End()
 
@@ -74,6 +76,7 @@ func (h *Handler) PaySuccess(state *ahttp.State, _ *PaySuccessRequest) error {
 
 // RefundSuccess 退款成功回调
 func (h *Handler) RefundSuccess(state *ahttp.State, _ *RefundSuccessRequest) error {
+	slog.Info("RefundSuccess", "state", "start")
 	ctx, span := tracer().Start(state.Ctx.Request().Context(), "Shop.RefundSuccess")
 	defer span.End()
 

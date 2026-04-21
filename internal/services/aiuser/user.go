@@ -514,7 +514,7 @@ func (s *Service) Unbind(ctx context.Context, deviceID string) error {
 		slog.Error("[CompleteProfile] HaveDevice", "error", err.Error())
 		return err
 	}
-
+	slog.Info("[Unbind] SendUnboundToDevice success", "device_id", deviceID)
 	if err := s.DeviceRepo.EraseDevice(ctx, deviceID); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))

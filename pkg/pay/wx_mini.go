@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rsa"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/go-pay/gopay"
@@ -250,6 +251,7 @@ func (p *WxMinPay) CreateOrder(ctx context.Context, req *CreateOrderRequest, opt
 		SetBodyMap("payer", func(bm gopay.BodyMap) {
 			bm.Set("openid", req.Payer.OpenID)
 		})
+	slog.Info("[WxMinPay] 创建支付订单", "notify_url", p.OrderNotifyURL, "out_trade_no", req.OutTradeNo)
 	if req.ExtraFields != nil {
 		for k, v := range req.ExtraFields {
 			bm.Set(k, v)
@@ -278,6 +280,8 @@ func (p *WxMinPay) RefundOrder(ctx context.Context, req *RefundOrderRequest) (an
 				Set("total", req.OriginalAmount)
 		}).
 		Set("notify_url", p.RefundNotifyURL)
+
+	slog.Info("[WxMinPay] 创建退款订单", "notify_url", p.RefundNotifyURL, "out_trade_no", req.OutTradeNo, "out_refund_no", req.OutRefundNo)
 
 	if req.Reason != "" {
 		bm.Set("reason", req.Reason)
