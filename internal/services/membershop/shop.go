@@ -615,3 +615,37 @@ func (s *Service) RefundNotify(ctx context.Context, w http.ResponseWriter, reque
 func (s *Service) GetProduetList(ctx context.Context) ([]*model.Goods, error) {
 	return s.MemberShopRepository.GetGoodsByName(ctx, "音色复刻")
 }
+
+// OrderPay 待支付订单支付
+func (s *Service) OrderPay(ctx context.Context, orderID string, uid int64) (*CreateOrderResponse, error) {
+	userInfo, err := s.GetUserInfo(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	if userInfo.OpenID == "" {
+		return nil, errors.New("用户未绑定微信，无法支付")
+	}
+
+	// 查询订单详情，获取商品信息和设备ID
+	order, err := query.Order.
+		Where(query.Order.OutTradeNo.Eq(orderID)).
+		Preload(query.Order.Goods).
+		Preload(query.Order.Goods.GoodsInfo).
+		First()
+	if err != nil {
+		return nil, fmt.Errorf("获取订单详情失败: %w", err)
+	}
+
+	goods, err := s.OrderRepo.GetOrderGoodsInfo(ctx, order.ID)
+	if err != nil {
+		return nil, fmt.Errorf("获取订单详情失败: %w", err)
+	}
+	fmt.Printf("%+v\n", goods)
+	// 创建微信预支付订单
+	wxResp, err := s.CreateWxPrepayOrder(ctx, orderID, order.Goods[0].GoodsName, goods.GoodsPrice, userInfo.OpenID)
+	if err != nil {
+		return nil, fmt.Errorf("创建微信预支付订单失败: %w", err)
+	}
+	return s.BuildOrderResponse(orderID, wxResp, goods.GoodsPrice, order.Goods[0].GoodsName)
+}

@@ -13,6 +13,11 @@ type CreateOrderRequest struct {
 	DeviceID string `json:"device_id" query:"device_id" validate:"required"`
 }
 
+// OrderPayRequest 待支付订单支付请求
+type OrderPayRequest struct {
+	OrderID string `json:"order_id" query:"order_id" validate:"required"`
+}
+
 // PaySuccessRequest 支付成功请求
 type PaySuccessRequest struct{}
 

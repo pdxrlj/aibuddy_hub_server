@@ -112,3 +112,22 @@ func (h *Handler) ProduetList(state *ahttp.State) error {
 	}
 	return state.Response().Success(produets)
 }
+
+// OrderPay 待支付订单支付
+func (h *Handler) OrderPay(state *ahttp.State, req *OrderPayRequest) error {
+	ctx, span := tracer().Start(state.Ctx.Request().Context(), "Shop.ProduetList")
+	defer span.End()
+	uid, err := aiuser.GetUIDFromContext(state.Ctx)
+	if err != nil {
+		span.RecordError(err)
+		return state.Response().SetStatus(http.StatusBadRequest).Error(err)
+	}
+
+	order, err := h.MemberService.OrderPay(ctx, req.OrderID, uid)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.Int64("uid", uid), attribute.String("order_id", req.OrderID))
+		return state.Response().Error(err)
+	}
+	return state.Response().Success(order)
+}

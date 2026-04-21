@@ -239,6 +239,7 @@ func RegisterRoutes(base *ahttp.Base) {
 			shopGroup.GET("/goods/list", shop.GoodsList) // 商品列表
 			// 创建预支付订单
 			shopGroup.POST("/order/create", shop.CreateOrder)
+			shopGroup.GET("/goods/pay", shop.OrderPay) // 待支付订单支付
 			// 获取订单列表
 			shopGroup.GET("/order/list", shop.OrderList)
 			shopGroup.GET("/goods/produet", shop.ProduetList) // 音色复刻接口

@@ -34,3 +34,10 @@ func (o *OrderRepo) GetMemberLevel(ctx context.Context, userID int64, deviceID s
 	}
 	return 2
 }
+
+// GetOrderGoodsInfo 获取订单商品信息
+func (o *OrderRepo) GetOrderGoodsInfo(ctx context.Context, orderID int64) (*model.OrderGoods, error) {
+	_, span := tracer.Start(ctx, "ShopService.GetMemberLevel")
+	defer span.End()
+	return query.OrderGoods.Where(query.OrderGoods.OrderID.Eq(orderID)).First()
+}
