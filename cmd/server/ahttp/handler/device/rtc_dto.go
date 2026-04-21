@@ -61,6 +61,15 @@ type ConfigRequest struct {
 	EnableVisual      string `json:"enable_visual,omitempty"`       // 是否启用视觉
 	DFDA              string `json:"dfda,omitempty"`                // DFDA配置
 	TTSEndDelayMS     int    `json:"tts_end_delay_ms,omitempty"`
+	InterruptionWords string `json:"interruption_words,omitempty"` // 在线打断词，多个用逗号分割
+}
+
+// GetInterruptionWords 获取打断词
+func (c *ConfigRequest) GetInterruptionWords() string {
+	if c.InterruptionWords == "" || len(c.InterruptionWords) == 0 {
+		return "奶龙奶龙"
+	}
+	return c.InterruptionWords
 }
 
 // GenerateAIAgentCallRequest 前端创建Agent的请求参数
