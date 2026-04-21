@@ -645,7 +645,6 @@ func (s *Service) OrderPay(ctx context.Context, orderID string, uid int64) (*Cre
 	if err != nil {
 		return nil, fmt.Errorf("获取订单详情失败: %w", err)
 	}
-
 	// 创建微信预支付订单
 	wxResp, err := s.CreateWxPrepayOrder(ctx, orderID, order.Goods[0].GoodsName, goods.GoodsPrice, userInfo.OpenID)
 	if err != nil {
