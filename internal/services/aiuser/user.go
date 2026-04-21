@@ -355,7 +355,7 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType, rel
 			return err
 		}
 
-		simCard, version, err := s.deviceService.FromCacheGetDeviceInfo(d.DeviceID)
+		simCard, version, err := s.deviceService.FromCacheGetDeviceInfo(strings.ToUpper(d.DeviceID))
 		if err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))

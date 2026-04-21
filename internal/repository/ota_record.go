@@ -3,7 +3,10 @@ package repository
 import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
+	"aibuddy/pkg/helpers"
 	"context"
+
+	"gorm.io/gorm"
 )
 
 // OtaResourceRepo OTA资源仓库
@@ -15,12 +18,19 @@ func NewOtaResourceRepo() *OtaResourceRepo {
 }
 
 // GetLatestOtaResource 获取最新的OTA资源
-func (r *OtaResourceRepo) GetLatestOtaResource(ctx context.Context) (*model.OtaResource, error) {
-	otaResource, err := query.OtaResource.WithContext(ctx).
+func (r *OtaResourceRepo) GetLatestOtaResource(ctx context.Context, currentVersion string) (*model.OtaResource, error) {
+	resources, err := query.OtaResource.WithContext(ctx).
 		Order(query.OtaResource.ID.Desc()).
-		First()
+		Find()
 	if err != nil {
 		return nil, err
 	}
-	return otaResource, nil
+
+	for _, res := range resources {
+		if helpers.CompareVersion(res.Version, currentVersion) > 0 {
+			return res, nil
+		}
+	}
+
+	return nil, gorm.ErrRecordNotFound
 }

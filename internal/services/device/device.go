@@ -163,13 +163,13 @@ func (d *Service) cacheDeviceInfo(deviceID, simCard, version string) error {
 	if err != nil {
 		return err
 	}
-	deviceID = strings.ReplaceAll(deviceID, ":", "-")
+	deviceID = strings.ToUpper(strings.ReplaceAll(deviceID, ":", "-"))
 	return d.cache.Set("device_info:"+deviceID, jsonData)
 }
 
 // FromCacheGetDeviceInfo 获取设备 SIM 卡号和版本号信息
 func (d *Service) FromCacheGetDeviceInfo(deviceID string) (simCard, version string, err error) {
-	data, err := d.cache.Get("device_info:" + strings.ReplaceAll(deviceID, ":", "-"))
+	data, err := d.cache.Get("device_info:" + strings.ToUpper(strings.ReplaceAll(deviceID, ":", "-")))
 	if err != nil {
 		return "", "", fmt.Errorf("无法从缓存信息获取设备的 SIM 卡号: %w", err)
 	}
@@ -634,7 +634,7 @@ func (d *Service) OtaCheck(ctx context.Context, deviceID, currentVersion string)
 
 	_ = deviceID
 
-	latestOta, err := d.OtaResourceRepo.GetLatestOtaResource(ctx)
+	latestOta, err := d.OtaResourceRepo.GetLatestOtaResource(ctx, currentVersion)
 	if err != nil {
 		span.RecordError(err)
 		slog.Error("[OtaCheck] get latest ota resource failed", "error", err)
