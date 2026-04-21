@@ -68,6 +68,7 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 				DFDA:              req.Config.DFDA,
 				TTS:               req.Config.TTS,
 				TTSEndDelayMs:     req.Config.TTSEndDelayMS,
+				InterruptionWords: req.Config.GetInterruptionWords(),
 			},
 			DeviceID: req.CustomSelfCfg.DeviceID,
 		})
