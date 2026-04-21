@@ -1005,7 +1005,7 @@ func (s *Service) GetMyInfo(ctx context.Context, uid int64, deviceID string) (*M
 	_, span := tracer().Start(ctx, "GetMyInfo")
 	defer span.End()
 
-	info, err := s.DeviceInfoRepo.GetUserInfoByDeivceID(ctx, deviceID)
+	info, err := s.DeviceRepo.GetDeviceInfo(ctx, deviceID)
 	if err != nil {
 		return nil, err
 	}
@@ -1015,13 +1015,15 @@ func (s *Service) GetMyInfo(ctx context.Context, uid int64, deviceID string) (*M
 	if err != nil {
 		return nil, err
 	}
-
 	// 获取VIP信息
 	var memberInfo = map[string]any{
 		"member_type": "",
 		"member_name": "",
 		"expire_time": "",
 		"role_num":    0,
+	}
+	if info.ExpireTime.Unix() > 0 {
+		memberInfo["expire_time"] = info.ExpireTime.Format(time.DateOnly)
 	}
 	member, err := s.MemberShopRepo.GetMemberByDeviceID(ctx, deviceID)
 	if err != nil {
@@ -1030,16 +1032,15 @@ func (s *Service) GetMyInfo(ctx context.Context, uid int64, deviceID string) (*M
 	if member != nil {
 		memberInfo["member_type"] = member.Goods[0].GoodsInfo.Name
 		memberInfo["member_name"] = member.Goods[0].GoodsInfo.Name
-		memberInfo["expire_time"] = member.ExpireTime.Format(time.DateOnly)
 	}
 	memberInfo["role_num"] = s.MemberShopRepo.GetMemberRoleNum(ctx, deviceID)
 
 	return &MyInfoResponse{
-		DeviceName:        info.NickName,
-		DeviceAvatar:      info.Avatar,
+		DeviceName:        info.DeviceInfo.NickName,
+		DeviceAvatar:      info.DeviceInfo.Avatar,
 		FriendCount:       friendCount,
 		DeviceID:          deviceID,
-		Sex:               info.Gender,
+		Sex:               info.DeviceInfo.Gender,
 		FamilyMemberCount: 1,
 		MembershipInfo:    memberInfo,
 	}, nil
