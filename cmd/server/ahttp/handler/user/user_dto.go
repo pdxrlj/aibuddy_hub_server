@@ -316,3 +316,8 @@ type MyInfoRequest struct {
 type MessageMarkRequest struct {
 	MessageIDs []string `json:"message_ids" form:"message_ids" param:"message_ids" query:"message_ids" validate:"required" msg:"required:消息ID不能为空"`
 }
+
+// ClearChatMemoryRequest 清除聊天记忆请求
+type ClearChatMemoryRequest struct {
+	UserID string `json:"user_id" form:"user_id" query:"user_id" validate:"required" msg:"required:用户ID不能为空"`
+}

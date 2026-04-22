@@ -666,3 +666,21 @@ func (h *Handler) MyInfo(state *ahttp.State, req *MyInfoRequest) error {
 
 	return state.Response().Success(info)
 }
+
+// ClearChatMemory 清除百度存储的记忆
+func (h *Handler) ClearChatMemory(state *ahttp.State, req *ClearChatMemoryRequest) error {
+	_, span := tracer().Start(state.Context(), "User.ClearChatMemory")
+	defer span.End()
+
+	span.SetAttributes(attribute.String("user_id", req.UserID))
+
+	memory := baidu.NewMemory()
+	if err := memory.ClearCharacterPortrait(&baidu.ClearCharacterPortraitRequest{
+		UserID: req.UserID,
+	}); err != nil {
+		span.RecordError(err)
+		return state.Response().Error(err)
+	}
+
+	return state.Response().Success()
+}

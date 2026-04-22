@@ -13,7 +13,7 @@ func TestMemory_ClearCharacterPortrait(t *testing.T) {
 
 	// 测试清空人物画像
 	err := memory.ClearCharacterPortrait(&ClearCharacterPortraitRequest{
-		UserID: "test_user_001",
+		UserID: "30:ED:A0:E9:F2:12",
 	})
 	if err != nil {
 		t.Fatalf("ClearCharacterPortrait failed: %v", err)

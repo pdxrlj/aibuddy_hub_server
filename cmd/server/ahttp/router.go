@@ -161,6 +161,9 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 下载百度的聊天记录
 			userGroup.GET("/download_chat_record", h.DownloadChatRecord)
+
+			// 清除百度存储的记忆
+			userGroup.POST("/clear_chat_memory", h.ClearChatMemory)
 		})
 
 		// 情绪

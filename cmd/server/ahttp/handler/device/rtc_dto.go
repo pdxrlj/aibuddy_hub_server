@@ -51,21 +51,23 @@ type InstanceContext struct {
 
 // ConfigRequest 配置请求参数
 type ConfigRequest struct {
-	LLM               string `json:"llm,omitempty"`       // 大模型配置
-	LLMToken          string `json:"llm_token,omitempty"` // 大模型Token
-	TTSURL            string `json:"tts_url,omitempty"`   // TTS配置详情
-	TTS               string `json:"tts,omitempty"`
-	RTCAC             string `json:"rtc_ac,omitempty"`              // RTC音频编码
-	Lang              string `json:"lang,omitempty"`                // 语言设置
-	RemoteMusicPlayer bool   `json:"remote_music_player,omitempty"` // 音乐播放是否支持云端播放
-	EnableVisual      string `json:"enable_visual,omitempty"`       // 是否启用视觉
-	DFDA              string `json:"dfda,omitempty"`                // DFDA配置
-	TTSEndDelayMS     int    `json:"tts_end_delay_ms,omitempty"`
-	InterruptionWords string `json:"interruption_words,omitempty"` // 在线打断词，多个用逗号分割
+	LLM                       string `json:"llm,omitempty"`       // 大模型配置
+	LLMToken                  string `json:"llm_token,omitempty"` // 大模型Token
+	TTSURL                    string `json:"tts_url,omitempty"`   // TTS配置详情
+	TTS                       string `json:"tts,omitempty"`
+	RTCAC                     string `json:"rtc_ac,omitempty"`              // RTC音频编码
+	Lang                      string `json:"lang,omitempty"`                // 语言设置
+	RemoteMusicPlayer         bool   `json:"remote_music_player,omitempty"` // 音乐播放是否支持云端播放
+	EnableVisual              string `json:"enable_visual,omitempty"`       // 是否启用视觉
+	DFDA                      string `json:"dfda,omitempty"`                // DFDA配置
+	TTSEndDelayMS             int    `json:"tts_end_delay_ms,omitempty"`
+	InterruptionWords         string `json:"interruption_words,omitempty"`     // 在线打断词，多个用逗号分割
+	DisableVoiceAutoInterrupt bool   `json:"disable_voice_auto_int,omitempty"` // 关闭自动打断
 }
 
 // GetInterruptionWords 获取打断词
 func (c *ConfigRequest) GetInterruptionWords() string {
+	c.DisableVoiceAutoInterrupt = false
 	if c.InterruptionWords == "" || len(c.InterruptionWords) == 0 {
 		return "奶龙奶龙"
 	}

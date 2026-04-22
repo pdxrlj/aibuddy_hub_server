@@ -34,7 +34,8 @@ type ConfigRequest struct {
 	TTS               string `json:"tts,omitempty"`
 	TTSEndDelayMs     int    `json:"tts_end_delay_ms,omitempty"`
 
-	InterruptionWords string `json:"interruption_words,omitempty"` // 在线打断词，多个用逗号分割
+	InterruptionWords         string `json:"interruption_words,omitempty"`     // 在线打断词，多个用逗号分割
+	DisableVoiceAutoInterrupt bool   `json:"disable_voice_auto_int,omitempty"` // 关闭自动打断
 
 	SceneRole string `json:"sceneRole,omitempty"`
 
