@@ -235,6 +235,12 @@ func (b *Base) RequestValidator(ctx echo.Context, requestType any, request refle
 				// 优先使用 msg tag 中的自定义消息
 				customMsg := validationErrors.GetFirstErrorMsg()
 				if customMsg != "" {
+					slog.Info("[RequestValidator] 参数校验失败",
+						"field", validationErrors.Errors[0].StructField(),
+						"value", validationErrors.Errors[0].Value(),
+						"tag", validationErrors.Errors[0].ActualTag(),
+						"message", customMsg,
+					)
 					return NewResponse(ctx).SetStatus(buddyerror.GetBuddyErrorCode(buddyerror.ErrParamError)).
 						SetMessage(customMsg).
 						Error(errors.New(customMsg))
@@ -247,12 +253,20 @@ func (b *Base) RequestValidator(ctx echo.Context, requestType any, request refle
 
 				validationFieldTag, validationRule := getValidationFieldTag(request, fieldType, actualTag)
 
+				slog.Info("[RequestValidator] 参数校验失败",
+					"field", fieldType,
+					"value", firstError.Value(),
+					"tag", actualTag,
+					"param", firstError.Param(),
+				)
+
 				err = fmt.Errorf("参数 %s 无法通过 %s 规则的验证", validationFieldTag, validationRule)
 				return NewResponse(ctx).SetStatus(buddyerror.GetBuddyErrorCode(buddyerror.ErrParamError)).
 					SetMessage(buddyerror.ErrParamError.Error()).
 					Error(err)
 			}
 
+			slog.Warn("[RequestValidator] 参数校验失败", "error", err)
 			return NewResponse(ctx).
 				SetStatus(buddyerror.GetBuddyErrorCode(buddyerror.ErrParamError)).
 				SetMessage(buddyerror.ErrParamError.Error()).Error(err)

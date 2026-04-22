@@ -69,17 +69,11 @@ func (n *NFC) AfterFind(_ *gorm.DB) error {
 	}
 	slog.Info("[NFC] AfterFind", "voice", n.Voice, "picture", n.Picture)
 	if n.Voice != "" {
-		deviceID, _, found := strings.Cut(n.Voice, "/")
-		if found {
-			n.Voice = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Voice)
-		}
+		n.Voice = fmt.Sprintf("%s/api/v1/file/file_proxy?filename=%s", domainname, n.Voice)
 	}
 
 	if n.Picture != "" {
-		deviceID, _, found := strings.Cut(n.Picture, "/")
-		if found {
-			n.Picture = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, n.Picture)
-		}
+		n.Picture = fmt.Sprintf("%s/api/v1/file/file_proxy?filename=%s", domainname, n.Picture)
 	}
 	return nil
 }

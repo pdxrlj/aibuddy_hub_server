@@ -87,6 +87,7 @@ func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		slog.Error("[GetFriends] GetFriends", "device_id", req.DeviceID, "error", err)
 		return state.Response().Error(err)
 	}
 
@@ -95,6 +96,7 @@ func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		slog.Info("[GetFriends] FindUserInfoByDeviceID", "device_id", req.DeviceID, "error", err)
 		return state.Response().Error(err)
 	}
 
@@ -102,6 +104,7 @@ func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
+		slog.Info("[GetFriends] GetDeviceInfo", "device_id", req.DeviceID, "error", err)
 		return state.Response().Error(err)
 	}
 

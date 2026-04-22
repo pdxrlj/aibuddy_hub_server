@@ -122,6 +122,14 @@ func (r *Response) Raw(data any) error {
 	return nil
 }
 
+// SetHeaders 批量设置响应头
+func (r *Response) SetHeaders(headers map[string]string) *Response {
+	for k, v := range headers {
+		r.Ctx.Response().Header().Set(k, v)
+	}
+	return r
+}
+
 // File 返回文件响应（流式）
 func (r *Response) File(reader io.Reader, filename string) error {
 	if r.Ctx.Response().Committed {
@@ -134,8 +142,14 @@ func (r *Response) File(reader io.Reader, filename string) error {
 			contentType = mime
 		}
 	}
-	r.Ctx.Response().Header().Set(echo.HeaderContentType, contentType)
-	r.Ctx.Response().Header().Set(echo.HeaderContentDisposition, "inline; filename="+filepath.Base(filename))
+	r.SetHeaders(map[string]string{
+		echo.HeaderContentType:        contentType,
+		echo.HeaderContentDisposition: "inline; filename=" + filepath.Base(filename),
+	})
+	// 如果设置了非默认状态码（如 206 Partial Content），先写入状态码
+	if r.Status != 0 && r.Status != http.StatusOK {
+		r.Ctx.Response().WriteHeader(r.Status)
+	}
 	_, err := io.Copy(r.Ctx.Response(), reader)
 	return err
 }

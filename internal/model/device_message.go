@@ -63,7 +63,7 @@ func (d *DeviceMessage) AfterFind(_ *gorm.DB) error {
 			domainname = config.Instance.App.DomainName
 		}
 
-		d.Content = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, d.FromDeviceID, d.Content)
+		d.Content = fmt.Sprintf("%s/api/v1/file/file_proxy?filename=%s", domainname, d.Content)
 	}
 	return nil
 }

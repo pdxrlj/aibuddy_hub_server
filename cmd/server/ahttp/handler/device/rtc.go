@@ -14,6 +14,8 @@ import (
 	"aibuddy/pkg/config"
 	"aibuddy/pkg/flash"
 	"log/slog"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 const (
@@ -87,11 +89,18 @@ func (h *RtcHandler) GenerateAIAgentCall(state *ahttp.State, req *GenerateAIAgen
 
 // StopAIAgentInstance 与端侧SDK交互，停止AIAgentInstance
 func (h *RtcHandler) StopAIAgentInstance(state *ahttp.State, req *StopAIAgentInstanceRequest) error {
+	_, span := tracer().Start(state.Context(), "RtcHandler.StopAIAgentInstance")
+	defer span.End()
+
 	appID := req.AppID
 	if appID == "" {
 		appID = config.Instance.Baidu.AppID
 	}
 
+	span.SetAttributes(
+		attribute.String("app_id", appID),
+		attribute.String("ai_agent_instance_id", req.AiAgentInstanceID),
+	)
 	slog.Info("[RTC] StopAIAgentInstance", "appID", appID, "AiAgentInstanceID", req.AiAgentInstanceID)
 
 	err := h.aiAgent.StopAIAgentInstance(&baidu.StopAIAgentInstanceRequest{
@@ -99,6 +108,7 @@ func (h *RtcHandler) StopAIAgentInstance(state *ahttp.State, req *StopAIAgentIns
 		AiAgentInstanceID: req.AiAgentInstanceID,
 	})
 	if err != nil {
+		span.RecordError(err)
 		slog.Error("Failed to stop AIAgentInstance", "error", err)
 		return state.Response().Error(err)
 	}

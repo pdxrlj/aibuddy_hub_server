@@ -74,7 +74,7 @@ func (o *OSS) PresignURL(ctx context.Context, key string, expires time.Duration,
 }
 
 // Download 下载文件（流式）
-func (o *OSS) Download(ctx context.Context, key string, wbytesRange string, process ...string) (io.ReadCloser, error) {
+func (o *OSS) Download(ctx context.Context, key string, wbytesRange string, process ...string) (*DownloadResult[io.ReadCloser], error) {
 	result, err := o.Client.GetObject(ctx, &oss.GetObjectRequest{
 		Bucket: oss.Ptr(o.bucket),
 		Key:    oss.Ptr(key),
@@ -96,7 +96,18 @@ func (o *OSS) Download(ctx context.Context, key string, wbytesRange string, proc
 		return nil, err
 	}
 
-	return result.Body, nil
+	dr := &DownloadResult[io.ReadCloser]{
+		Body:          result.Body,
+		ContentLength: result.ContentLength,
+	}
+	if result.ContentRange != nil {
+		dr.ContentRange = *result.ContentRange
+	}
+	if result.ContentType != nil {
+		dr.ContentType = *result.ContentType
+	}
+
+	return dr, nil
 }
 
 // Delete 删除文件

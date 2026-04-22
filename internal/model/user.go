@@ -4,7 +4,6 @@ import (
 	"aibuddy/pkg/config"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -45,10 +44,7 @@ func (u *User) AfterFind(_ *gorm.DB) (err error) {
 	}
 	slog.Info("[User] AfterFind", "avatar", u.Avatar)
 	if u.Avatar != "" {
-		deviceID, _, found := strings.Cut(u.Avatar, "/")
-		if found {
-			u.Avatar = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, deviceID, u.Avatar)
-		}
+		u.Avatar = fmt.Sprintf("%s/api/v1/file/file_proxy?filename=%s", domainname, u.Avatar)
 	}
 	return nil
 }

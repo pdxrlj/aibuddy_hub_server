@@ -230,7 +230,7 @@ func (d *Service) GetFriends(ctx context.Context, deviceID string, page, size in
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
-		return nil, 0, err
+		return nil, 0, errors.New("你还没有好友")
 	}
 	return friends, total, nil
 }
@@ -257,7 +257,8 @@ func (d *Service) FindUserInfoByDeviceID(ctx context.Context, deviceID string) (
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
-		return nil, err
+		slog.Info("[Device] FindUserInfoByDeviceID", "error", err)
+		return nil, errors.New("没有查询到有效的设备信息")
 	}
 
 	return user, nil

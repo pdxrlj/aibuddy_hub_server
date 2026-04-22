@@ -103,7 +103,7 @@ type GenerateAIAgentCallResponse struct {
 // StopAIAgentInstanceRequest 前端销毁Agent请求参数
 type StopAIAgentInstanceRequest struct {
 	AppID             string `json:"app_id"`               // 应用ID
-	AiAgentInstanceID uint64 `json:"ai_agent_instance_id"` // AI智能体实例ID
+	AiAgentInstanceID string `json:"ai_agent_instance_id"` // AI智能体实例ID
 }
 
 // ================== /userserver/instance/generate 接口 ==================

@@ -69,7 +69,7 @@ func (d *DeviceInfo) AfterFind(_ *gorm.DB) error {
 	}
 
 	if d.Avatar != "" {
-		d.Avatar = fmt.Sprintf("%s/api/v1/file/%s/file_proxy?filename=%s", domainname, d.DeviceID, d.Avatar)
+		d.Avatar = fmt.Sprintf("%s/api/v1/file/file_proxy?filename=%s", domainname, d.Avatar)
 	}
 	return nil
 }

@@ -7,7 +7,9 @@ import (
 	"aibuddy/pkg/config"
 	"errors"
 	"log/slog"
+	"net/http"
 
+	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -105,15 +107,28 @@ func (f *File) FileProxy(state *ahttp.State, req *FileProxyRequest) error {
 	// 获取 Range header
 	bytesRange := state.Ctx.Request().Header.Get("Range")
 
-	file, err := f.Service.FileProxy(ctx, req.DeviceID, req.Filename, bytesRange, req.Process)
+	result, err := f.Service.FileProxy(ctx, req.DeviceID, req.Filename, bytesRange, req.Process)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
 		return state.Response().Error(err)
 	}
 	defer func() {
-		_ = file.Close()
+		_ = result.Body.Close()
 	}()
 
-	return state.Response().File(file, req.Filename)
+	resp := state.Response().SetHeaders(func() map[string]string {
+		headers := map[string]string{}
+		if result.ContentLength > 0 {
+			headers["Content-Length"] = cast.ToString(result.ContentLength)
+		}
+		if result.ContentRange != "" {
+			headers["Content-Range"] = result.ContentRange
+		}
+		return headers
+	}())
+	if result.ContentRange != "" {
+		resp.SetStatus(http.StatusPartialContent)
+	}
+	return resp.File(result.Body, req.Filename)
 }
