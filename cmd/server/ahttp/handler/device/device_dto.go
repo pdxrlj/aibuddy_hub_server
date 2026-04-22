@@ -149,3 +149,10 @@ type OtaCheckRequest struct {
 	DeviceID string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
 	Version  string `json:"version" form:"version" param:"version" query:"version" validate:"required,semver" msg:"required:版本号不能为空|semver:版本号格式无效"`
 }
+
+// SendMessageByNameRequest 根据用户或者好友家庭名称发送消息 ---- 设备到设备端请求
+type SendMessageByNameRequest struct {
+	DeviceID     string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
+	ReceiverName string `json:"receiver_name" form:"receiver_name" param:"receiver_name" query:"receiver_name" validate:"required" msg:"required:接收人名称不能为空"`
+	Content      string `json:"content" form:"content" validate:"required" msg:"required:消息内容不能为空"`
+}

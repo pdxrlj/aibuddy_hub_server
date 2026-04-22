@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -660,4 +661,113 @@ func (d *Service) OtaCheck(ctx context.Context, deviceID, currentVersion string)
 		ResourceURL: latestOta.ResourceURL,
 		Force:       force,
 	}, nil
+}
+
+// SendMessageByName 根据接收消息的人的名称/或者父母名称发送消息
+func (d *Service) SendMessageByName(ctx context.Context, deviceID, receiverName, content string) error {
+	_, span := tracer().Start(ctx, "DeviceService.SendMessageByName")
+	defer span.End()
+
+	slog.Info("[SendMessageByName]", "device_id", deviceID, "receiver_name", receiverName)
+
+	// 1. 获取发送设备信息
+	deviceInfo, err := d.GetDeviceInfo(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return errors.New("无法查询到设备信息")
+	}
+	if deviceInfo == nil || deviceInfo.DeviceInfo == nil {
+		span.RecordError(errors.New("无法查询到完整的设备信息"))
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		return errors.New("无法查询到完整的设备信息")
+	}
+
+	// 2. 先在好友列表中匹配 receiverName（好友昵称）
+	if err = d.sendToFriend(ctx, deviceInfo, receiverName, content); err == nil {
+		return nil
+	}
+	// 3. 好友中未匹配到，查询家庭成员（同一 UID 下的其他设备），匹配 relation 或昵称
+	if deviceInfo.UID > 0 {
+		if err = d.sendToFamily(ctx, deviceInfo, receiverName, content); err == nil {
+			return nil
+		}
+	}
+
+	span.RecordError(errors.New("未找到匹配的接收人"))
+	span.SetAttributes(attribute.String("receiver_name", receiverName))
+	return errors.New("未找到匹配的接收人")
+}
+
+// sendToFriend 尝试在好友列表中按昵称匹配并发送 MQTT 消息，匹配成功返回 nil
+func (d *Service) sendToFriend(ctx context.Context, deviceInfo *model.Device, receiverName, content string) error {
+	friend, err := d.DeviceRelationshipRepo.GetFriendByNickName(ctx, deviceInfo.DeviceID, receiverName)
+	if err != nil {
+		return err
+	}
+	if friend == nil || friend.TargetDevice == nil {
+		return errors.New("好友中未找到匹配的接收人")
+	}
+	msgID := helpers.GenerateNumber(10)
+	if err = d.DeviceMessageRepo.CreateDeviceMessage(ctx, &model.DeviceMessage{
+		MsgID:        msgID,
+		FromDeviceID: deviceInfo.DeviceID,
+		ToDeviceID:   friend.TargetDeviceID,
+		Content:      content,
+		Fmt:          model.MessageFmtText,
+	}); err != nil {
+		return errors.New("创建消息失败")
+	}
+
+	username := deviceInfo.DeviceInfo.NickName
+	if err = mqttmessage.SendMessage(deviceInfo.DeviceID, username, friend.TargetDeviceID, msgID, content, model.MessageFmtText.String(), 0); err != nil {
+		return err
+	}
+	return nil
+}
+
+// sendToFamily 尝试在家庭成员中按 relation 或昵称匹配并发送 WebSocket 消息，匹配成功返回 nil
+func (d *Service) sendToFamily(ctx context.Context, deviceInfo *model.Device, receiverName, content string) error {
+	familyDevices, err := d.DeviceRepo.GetUserDeviceList(ctx, deviceInfo.UID)
+	if err != nil {
+		return err
+	}
+
+	for _, familyDevice := range familyDevices {
+		if familyDevice.Relation == receiverName {
+			msgID := helpers.GenerateNumber(10)
+			if err = d.DeviceMessageRepo.CreateDeviceMessage(ctx, &model.DeviceMessage{
+				MsgID:        msgID,
+				FromDeviceID: deviceInfo.DeviceID,
+				ToDeviceID:   familyDevice.DeviceID,
+				Content:      content,
+				Fmt:          model.MessageFmtText,
+			}); err != nil {
+				return errors.New("创建消息失败")
+			}
+
+			// 家庭成员使用小程序，只通过 WebSocket 通知，不需要 MQTT
+			username := deviceInfo.DeviceInfo.NickName
+			msg := map[string]any{
+				"msg_id":    msgID,
+				"from":      deviceInfo.DeviceID,
+				"from_user": username,
+				"content":   content,
+				"fmt":       model.MessageFmtText,
+				"dur":       0,
+			}
+			message, err := json.Marshal(msg)
+			if err != nil {
+				return err
+			}
+
+			websocket.SendMessage(cast.ToString(deviceInfo.UID), &websocket.DeviceToUserFrame{
+				Type:     websocket.FrameTypeDeviceMsg,
+				DeviceID: deviceInfo.DeviceID,
+				Message:  message,
+			})
+			return nil
+		}
+	}
+	return errors.New("家庭成员中未找到匹配的接收人")
 }

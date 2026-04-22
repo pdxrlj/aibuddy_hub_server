@@ -149,6 +149,59 @@ func (d *DeviceRelationshipRepo) DeleteDeviceRelationship(ctx context.Context, d
 	return nil
 }
 
+// GetFriendByNickName 根据好友昵称查找双向好友关系
+func (d *DeviceRelationshipRepo) GetFriendByNickName(ctx context.Context, deviceID, nickName string) (*model.DeviceRelationship, error) {
+	_, span := tracer.Start(ctx, "DeviceRelationshipRepo.GetFriendByNickName")
+	defer span.End()
+
+	// 先获取双向好友的 TargetDeviceID 列表
+	var reverseDeviceIDs []string
+	err := query.DeviceRelationship.WithContext(ctx).
+		Where(query.DeviceRelationship.TargetDeviceID.Eq(deviceID)).
+		Where(query.DeviceRelationship.Status.Eq(model.RelationshipStatusAccepted.String())).
+		Pluck(query.DeviceRelationship.DeviceID, &reverseDeviceIDs)
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	if len(reverseDeviceIDs) == 0 {
+		return nil, nil
+	}
+
+	// 从 device_info 表中查找昵称匹配的 device_id
+	var matchedDeviceIDs []string
+	err = query.DeviceInfo.WithContext(ctx).
+		Where(query.DeviceInfo.NickName.Eq(nickName)).
+		Where(query.DeviceInfo.DeviceID.In(reverseDeviceIDs...)).
+		Pluck(query.DeviceInfo.DeviceID, &matchedDeviceIDs)
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	if len(matchedDeviceIDs) == 0 {
+		return nil, nil
+	}
+
+	// 查询好友关系（取第一个匹配的）
+	relationship, err := query.DeviceRelationship.WithContext(ctx).
+		Preload(query.DeviceRelationship.Device).
+		Preload(query.DeviceRelationship.TargetDevice).
+		Preload(query.DeviceRelationship.Device.DeviceInfo).
+		Preload(field.NewRelation("TargetDevice.DeviceInfo", "model.DeviceInfo")).
+		Where(query.DeviceRelationship.DeviceID.Eq(deviceID)).
+		Where(query.DeviceRelationship.Status.Eq(model.RelationshipStatusAccepted.String())).
+		Where(query.DeviceRelationship.TargetDeviceID.In(matchedDeviceIDs...)).
+		First()
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	return relationship, nil
+}
+
 // GetFriendsByDeviceID 获取所有的朋友，在指定时间范围内的朋友
 func (d *DeviceRelationshipRepo) GetFriendsByDeviceID(ctx context.Context, deviceID string, startTime, endTime time.Time) ([]*model.DeviceRelationship, error) {
 	_, span := tracer.Start(ctx, "DeviceRelationshipRepo.GetFriendsByDeviceID")

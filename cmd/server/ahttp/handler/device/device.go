@@ -300,3 +300,18 @@ func (d *Device) OtaCheck(state *ahttp.State, req *OtaCheckRequest) error {
 
 	return state.Response().Success(device)
 }
+
+// SendMessageByName 根据用户或者好友/家庭名称发送消息---- 设备到设备端
+func (d *Device) SendMessageByName(state *ahttp.State, req *SendMessageByNameRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.SendMessageByName")
+	defer span.End()
+
+	err := d.Service.SendMessageByName(ctx, req.DeviceID, req.ReceiverName, req.Content)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("receiver_name", req.ReceiverName))
+		return state.Response().Error(err)
+	}
+
+	return state.Response().Success()
+}
