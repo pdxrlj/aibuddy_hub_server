@@ -79,7 +79,7 @@ func (d *DeviceRepo) ChangeDeviceRole(ctx context.Context, uid int64, deviceID s
 }
 
 // ChangeDeviceInfo 更换设备 SIM 卡号
-func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, simCard string, boardType, version string, relation string, tx ...*query.Query) error {
+func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, boardType, relation string, tx ...*query.Query) error {
 	_, span := tracer.Start(ctx, "ChangeDeviceInfo")
 	defer span.End()
 
@@ -90,20 +90,18 @@ func (d *DeviceRepo) ChangeDeviceInfo(ctx context.Context, deviceID string, simC
 
 	if _, err := db.Device.Where(db.Device.DeviceID.Eq(deviceID)).
 		Updates(map[string]interface{}{
-			db.Device.SIMCard.ColumnName().String():   simCard,
+			// db.Device.SIMCard.ColumnName().String():   simCard,
 			db.Device.BoardType.ColumnName().String(): boardType,
-			db.Device.Version.ColumnName().String():   version,
-			db.Device.Relation.ColumnName().String():  relation,
+			// db.Device.Version.ColumnName().String():   version,
+			db.Device.Relation.ColumnName().String(): relation,
 		}); err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", deviceID))
-		span.SetAttributes(attribute.String("sim_card", simCard))
 		span.SetAttributes(attribute.String("board_type", boardType))
-		span.SetAttributes(attribute.String("version", version))
 		span.SetAttributes(attribute.String("relation", relation))
 		span.SetAttributes(attribute.String("error", err.Error()))
 
-		slog.Error("[DeviceRepo] ChangeDeviceInfo error", "device_id", deviceID, "sim_card", simCard, "board_type", boardType, "version", version, "relation", relation, "error", err.Error())
+		slog.Error("[DeviceRepo] ChangeDeviceInfo error", "device_id", deviceID, "board_type", boardType, "relation", relation, "error", err.Error())
 		return err
 	}
 
@@ -135,6 +133,27 @@ func (d *DeviceRepo) UpdateDeviceHardwareInfo(deviceID string, hardwareInfo []by
 		}); err != nil {
 		return err
 	}
+	return nil
+}
+
+// UpdateSIMCardAndVersion 更新设备SIM卡号和版本号
+func (d *DeviceRepo) UpdateSIMCardAndVersion(ctx context.Context, deviceID, simCard, version string) error {
+	_, span := tracer.Start(ctx, "UpdateSIMCardAndVersion")
+	defer span.End()
+
+	if _, err := query.Device.Where(query.Device.DeviceID.Eq(deviceID)).
+		Updates(map[string]interface{}{
+			query.Device.SIMCard.ColumnName().String(): simCard,
+			query.Device.Version.ColumnName().String(): version,
+		}); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		span.SetAttributes(attribute.String("error", err.Error()))
+		slog.Error("[DeviceRepo] UpdateSIMCardAndVersion error", "device_id", deviceID, "error", err.Error())
+		return err
+	}
+
+	slog.Info("[DeviceRepo] UpdateSIMCardAndVersion success", "device_id", deviceID)
 	return nil
 }
 

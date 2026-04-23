@@ -70,7 +70,9 @@ func (s *Service) UpdateNFC(cid, ctype, title, content string, voice string, pic
 	nfc.Content = content
 	nfc.Voice = voice
 	nfc.Picture = picture
-	nfc.Dur = dur
+	if dur > 0 {
+		nfc.Dur = dur
+	}
 
 	// 失效后重新制作
 	if nfc.Status != model.NFCPaid {

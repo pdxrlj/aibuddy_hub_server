@@ -41,7 +41,7 @@ func (d *Device) FirstOnline(state *ahttp.State, req *FirstOnlineRequest) error 
 	ctx, span := tracer().Start(state.Context(), "Device.FirstOnline")
 	defer span.End()
 
-	configInfo, err := d.Service.FirstOnline(ctx, req.DeviceID, req.SIMCard, req.Version)
+	configInfo, err := d.Service.FirstOnline(ctx, req.DeviceID)
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID))
@@ -338,6 +338,21 @@ func (d *Device) MakeDeviceNFC(state *ahttp.State, req *MakeDeviceNFCRequest) er
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("nfc_id", req.NFCID))
+		return state.Response().Error(err)
+	}
+
+	return state.Response().Success()
+}
+
+// UpdateDeviceInfo 更新设备信息
+func (d *Device) UpdateDeviceInfo(state *ahttp.State, req *UpdateDeviceInfoRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.UpdateDeviceInfo")
+	defer span.End()
+
+	err := d.Service.UpdateDeviceInfo(ctx, req.DeviceID, req.SIMCard, req.Version)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID))
 		return state.Response().Error(err)
 	}
 

@@ -3,8 +3,8 @@ package devicehandler
 // FirstOnlineRequest 设备第一次上线请求
 type FirstOnlineRequest struct {
 	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,mac"`
-	SIMCard  string `json:"sim_card" form:"sim_card" param:"sim_card" query:"sim_card" validate:"required,min=20,max=300" msg:"required:SIM卡号不能为空|min:SIM卡号长度不能小于20|max:SIM卡号长度不能大于300"`
-	Version  string `json:"version" form:"version" param:"version" query:"version" validate:"required,semver" msg:"required:版本号不能为空|semver:版本号格式无效"`
+	// SIMCard  string `json:"sim_card" form:"sim_card" param:"sim_card" query:"sim_card" validate:"required,min=20,max=300" msg:"required:SIM卡号不能为空|min:SIM卡号长度不能小于20|max:SIM卡号长度不能大于300"`
+	// Version  string `json:"version" form:"version" param:"version" query:"version" validate:"required,semver" msg:"required:版本号不能为空|semver:版本号格式无效"`
 }
 
 // FirstOnlineResponse 设备第一次上线响应
@@ -165,4 +165,11 @@ type MakeDeviceNFCRequest struct {
 	Title    string `json:"title" form:"title" param:"title" query:"title" validate:"required" msg:"required:title不能为空"`
 	Voice    string `json:"voice" form:"voice" param:"voice" query:"voice" validate:"required" msg:"required:voice不能为空"`
 	Dur      int    `json:"dur" form:"dur" param:"dur" query:"dur" validate:"required" msg:"required:dur不能为空"`
+}
+
+// UpdateDeviceInfoRequest 更新设备信息请求
+type UpdateDeviceInfoRequest struct {
+	DeviceID string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
+	SIMCard  string `json:"sim_card" form:"sim_card" param:"sim_card" query:"sim_card" validate:"required,min=20,max=300" msg:"required:SIM卡号不能为空|min:SIM卡号长度不能小于20|max:SIM卡号长度不能大于300"` // iccid:898608171524D00003028imei:861540085739384imsi:4600418s884229501122
+	Version  string `json:"version" form:"version" param:"version" query:"version" validate:"required,semver" msg:"required:版本号不能为空|semver:版本号格式无效"`
 }

@@ -355,21 +355,21 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType, rel
 			return err
 		}
 
-		simCard, version, err := s.deviceService.FromCacheGetDeviceInfo(strings.ToUpper(d.DeviceID))
-		if err != nil {
-			span.RecordError(err)
-			span.SetAttributes(attribute.String("device_id", d.DeviceID))
-			span.SetAttributes(attribute.String("error", err.Error()))
-			slog.Error("[CompleteProfile] FromCacheGetDeviceInfo", "error", err.Error())
-			return err
-		}
+		// simCard, version, err := s.deviceService.FromCacheGetDeviceInfo(strings.ToUpper(d.DeviceID))
+		// if err != nil {
+		// 	span.RecordError(err)
+		// 	span.SetAttributes(attribute.String("device_id", d.DeviceID))
+		// 	span.SetAttributes(attribute.String("error", err.Error()))
+		// 	slog.Error("[CompleteProfile] FromCacheGetDeviceInfo", "error", err.Error())
+		// 	return err
+		// }
 
-		if err := s.DeviceRepo.ChangeDeviceInfo(ctx, d.DeviceID, simCard, boardType, version, relation, tx); err != nil {
+		if err := s.DeviceRepo.ChangeDeviceInfo(ctx, d.DeviceID, boardType, relation, tx); err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))
-			span.SetAttributes(attribute.String("sim_card", simCard))
+			// span.SetAttributes(attribute.String("sim_card", simCard))
 			span.SetAttributes(attribute.String("board_type", boardType))
-			span.SetAttributes(attribute.String("version", version))
+			// span.SetAttributes(attribute.String("version", version))
 			span.SetAttributes(attribute.String("relation", relation))
 			span.SetAttributes(attribute.String("error", err.Error()))
 			slog.Error("[CompleteProfile] ChangeDeviceInfo", "error", err.Error())

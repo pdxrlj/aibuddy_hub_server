@@ -72,6 +72,8 @@ func (h *NFCHandler) Handle(ctx *mqtt.Context) {
 			return err
 		}
 
+		slog.Info("[NFC]", "event", "收到制作完成通知")
+
 		return h.nfcRepository.Update(nfc, tx)
 	}); err != nil {
 		slog.Error("[MQTT] NFC", "device_id", deviceID, "error", err)

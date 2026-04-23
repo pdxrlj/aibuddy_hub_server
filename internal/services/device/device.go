@@ -17,7 +17,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"strconv"
@@ -102,13 +101,13 @@ type ConfigInfo struct {
 // deviceID: 设备ID
 // 返回：设备的配置信息，如 mqtt 的连接信息
 // 错误：如果生成 MQTT 认证信息失败，则返回错误
-func (d *Service) FirstOnline(ctx context.Context, deviceID, simCard, version string) (*ConfigInfo, error) {
+func (d *Service) FirstOnline(ctx context.Context, deviceID string) (*ConfigInfo, error) {
 	_, span := tracer().Start(ctx, "DeviceService.FirstOnline")
 	defer span.End()
 
 	mqttConfig := config.Instance.Aliyun
 	clientID := d.ClientIDPrefix + deviceID
-	slog.Info("[FirstOnline]", "client_id", clientID, "sim_card", simCard, "version", version)
+	slog.Info("[FirstOnline]", "client_id", clientID)
 	username, password, err := mqtt.GenerateAliyunMQTTAuth(clientID, mqttConfig.Ak, mqttConfig.Sk, mqttConfig.Mqtt.InstanceID)
 	if err != nil {
 		span.RecordError(err)
@@ -120,24 +119,6 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, simCard, version st
 	span.SetAttributes(attribute.String("client_id", clientID))
 	span.SetAttributes(attribute.String("username", username))
 	span.SetAttributes(attribute.String("password", password))
-
-	// 设备存在时更新版本号，不存在则忽略（新设备尚未绑定）
-	if result, err := d.DeviceRepo.SetDeviceVersion(deviceID, version); err != nil {
-		span.RecordError(err)
-		span.SetAttributes(attribute.String("device_id", deviceID))
-		slog.Error("[FirstOnline] SetDeviceVersion error", "err", err.Error())
-		return nil, err
-	} else if result.RowsAffected == 0 {
-		slog.Info("[FirstOnline] device not found, skip version update", "device_id", deviceID)
-	}
-
-	// 为后续的完善用户信息做准备，缓存设备信息
-	if err := d.cacheDeviceInfo(deviceID, simCard, version); err != nil {
-		span.RecordError(err)
-		span.SetAttributes(attribute.String("device_id", deviceID))
-		slog.Error("[FirstOnline]", "cacheDeviceInfo error", err)
-		return nil, err
-	}
 
 	mqttURL := mqttConfig.Mqtt.URL
 	mqttURL = strings.Replace(mqttURL, "tcp", "mqtt", 1)
@@ -157,54 +138,6 @@ func (d *Service) FirstOnline(ctx context.Context, deviceID, simCard, version st
 		MQTTUsername: username,
 		MQTTPassword: password,
 	}, nil
-}
-
-func (d *Service) cacheDeviceInfo(deviceID, simCard, version string) error {
-	cacheData := map[string]string{
-		"sim_card": simCard,
-		"version":  version,
-	}
-	jsonData, err := json.Marshal(cacheData)
-	if err != nil {
-		return err
-	}
-	deviceID = strings.ToUpper(strings.ReplaceAll(deviceID, ":", "-"))
-	return d.cache.Set("device_info:"+deviceID, jsonData)
-}
-
-// FromCacheGetDeviceInfo 获取设备 SIM 卡号和版本号信息
-func (d *Service) FromCacheGetDeviceInfo(deviceID string) (simCard, version string, err error) {
-	data, err := d.cache.Get("device_info:" + strings.ToUpper(strings.ReplaceAll(deviceID, ":", "-")))
-	if err != nil {
-		return "", "", fmt.Errorf("无法从缓存信息获取设备的 SIM 卡号: %w", err)
-	}
-
-	var jsonData []byte
-	switch v := data.(type) {
-	case []byte:
-		jsonData = v
-	case string:
-		jsonData = []byte(v)
-	default:
-		return "", "", fmt.Errorf("无法从缓存信息获取设备的 SIM 卡号: 数据类型错误")
-	}
-
-	var cacheData map[string]string
-	if err := json.Unmarshal(jsonData, &cacheData); err != nil {
-		return "", "", errors.New("无法从缓存信息获取设备的 SIM 卡号: 数据类型错误")
-	}
-	var ok bool
-
-	simCard, ok = cacheData["sim_card"]
-	if !ok {
-		return "", "", errors.New("无法从缓存信息获取设备的SIM卡号: sim_card not found")
-	}
-	version, ok = cacheData["version"]
-	if !ok {
-		return "", "", errors.New("无法从缓存信息获取设备的SIM卡号: version not found")
-	}
-
-	return simCard, version, nil
 }
 
 // GetLocation 获取设备位置信息
@@ -281,6 +214,22 @@ func (d *Service) GetDeviceInfo(ctx context.Context, deviceID string) (*model.De
 	}
 
 	return device, nil
+}
+
+// UpdateDeviceInfo 更新设备SIM卡号和版本号
+func (d *Service) UpdateDeviceInfo(ctx context.Context, deviceID, simCard, version string) error {
+	_, span := tracer().Start(ctx, "DeviceService.UpdateDeviceInfo")
+	defer span.End()
+
+	if err := d.DeviceRepo.UpdateSIMCardAndVersion(ctx, deviceID, simCard, version); err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", deviceID))
+		slog.Error("[UpdateDeviceInfo] UpdateSIMCardAndVersion", "error", err.Error())
+		return err
+	}
+
+	slog.Info("[UpdateDeviceInfo] success", "device_id", deviceID)
+	return nil
 }
 
 // UseMQTTSendTargetDeviceToFriendInfo 查询设备信息后给对端发送好友信息,通过MQTT发送

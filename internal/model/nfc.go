@@ -55,9 +55,11 @@ func (n *NFC) TableName() string {
 	return TableName("nfc")
 }
 
-// BeforeCreate 在存储的时候DeviceID变成大写
+// BeforeCreate 在存储的时候DeviceID变成大写，Voice和Picture提取filename
 func (n *NFC) BeforeCreate(_ *gorm.DB) (err error) {
 	n.DeviceID = strings.ToUpper(n.DeviceID)
+	n.Voice = ExtractFilename(n.Voice)
+	n.Picture = ExtractFilename(n.Picture)
 	return nil
 }
 
@@ -83,5 +85,6 @@ func (n *NFC) BeforeUpdate(_ *gorm.DB) (err error) {
 	n.DeviceID = strings.ToUpper(n.DeviceID)
 	n.Voice = ExtractFilename(n.Voice)
 	n.Picture = ExtractFilename(n.Picture)
+	slog.Info("[NFC] BeforeUpdate", "voice", n.Voice, "picture", n.Picture)
 	return nil
 }

@@ -90,6 +90,9 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 硬件制作nfc的内容
 			deviceGroup.POST("/:device_id/make_nfc", device.MakeDeviceNFC)
+
+			// 修改设备的SIM卡号与设备的版本信息
+			deviceGroup.POST("/:device_id/update_device_info", device.UpdateDeviceInfo)
 		})
 
 		group.Group("/file", nil, func(fileGroup *ahttp.Group) {
