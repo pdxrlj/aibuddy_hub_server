@@ -255,14 +255,16 @@ func (d *Device) MessageList(state *ahttp.State, req *MessageListRequest) error 
 	ctx, span := tracer().Start(state.Context(), "Device.MessageList")
 	defer span.End()
 
-	data, total, err := d.Service.GetMessage(ctx, req.DeviceID, req.Page, req.Size)
+	span.SetAttributes(
+		attribute.String("device_id", req.DeviceID),
+		attribute.String("target_device_id", req.TargetDeviceID),
+		attribute.Int("page", req.Page),
+		attribute.Int("size", req.Size),
+	)
+
+	data, total, err := d.Service.GetConvMessageList(ctx, req.DeviceID, req.TargetDeviceID, req.Page, req.Size)
 	if err != nil {
 		span.RecordError(err)
-		span.SetAttributes(
-			attribute.String("device_id", req.DeviceID),
-			attribute.Int("page", req.Page),
-			attribute.Int("size", req.Size),
-		)
 		return state.Response().Error(err)
 	}
 
@@ -313,6 +315,29 @@ func (d *Device) SendMessageByName(state *ahttp.State, req *SendMessageByNameReq
 	if err != nil {
 		span.RecordError(err)
 		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("receiver_name", req.ReceiverName))
+		return state.Response().Error(err)
+	}
+
+	return state.Response().Success()
+}
+
+// MakeDeviceNFC 硬件制作nfc的内容
+func (d *Device) MakeDeviceNFC(state *ahttp.State, req *MakeDeviceNFCRequest) error {
+	ctx, span := tracer().Start(state.Context(), "Device.MakeNFC")
+	defer span.End()
+
+	err := d.Service.MakeDeviceNFC(ctx, &device.MakeDevicePayload{
+		DeviceID: req.DeviceID,
+		NFCID:    req.NFCID,
+		Ctype:    req.Ctype,
+		Title:    req.Title,
+		Voice:    req.Voice,
+		Dur:      req.Dur,
+	})
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", req.DeviceID), attribute.String("nfc_id", req.NFCID))
 		return state.Response().Error(err)
 	}
 

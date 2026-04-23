@@ -101,10 +101,10 @@ type SendMessageRequest struct {
 
 // MessageListRequest 消息列表请求
 type MessageListRequest struct {
-	DeviceID string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
-	// TargetDeviceID string `json:"target_device_id" param:"target_device_id" validate:"required,aimac" msg:"required:目标设备ID不能为空"`
-	Page int `json:"page" query:"page" validate:"required" msg:"required:page不能为空"`
-	Size int `json:"size" query:"size" validate:"required" msg:"required:size不能为空"`
+	DeviceID       string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
+	TargetDeviceID string `json:"target_device_id" param:"target_device_id" query:"target_device_id" validate:"required" msg:"required:目标设备ID不能为空"`
+	Page           int    `json:"page" query:"page" validate:"required" msg:"required:page不能为空"`
+	Size           int    `json:"size" query:"size" validate:"required" msg:"required:size不能为空"`
 }
 
 // MessageListResponse 消息列表请求
@@ -155,4 +155,14 @@ type SendMessageByNameRequest struct {
 	DeviceID     string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
 	ReceiverName string `json:"receiver_name" form:"receiver_name" param:"receiver_name" query:"receiver_name" validate:"required" msg:"required:接收人名称不能为空"`
 	Content      string `json:"content" form:"content" validate:"required" msg:"required:消息内容不能为空"`
+}
+
+// MakeDeviceNFCRequest 硬件制作nfc的内容请求
+type MakeDeviceNFCRequest struct {
+	DeviceID string `json:"device_id" param:"device_id" validate:"required,aimac" msg:"required:设备ID不能为空"`
+	NFCID    string `json:"nfc_id" form:"nfc_id" param:"nfc_id" query:"nfc_id" validate:"required" msg:"required:NFCID不能为空"`
+	Ctype    string `json:"ctype" form:"ctype" param:"ctype" query:"ctype" validate:"required" msg:"required:ctype不能为空"`
+	Title    string `json:"title" form:"title" param:"title" query:"title" validate:"required" msg:"required:title不能为空"`
+	Voice    string `json:"voice" form:"voice" param:"voice" query:"voice" validate:"required" msg:"required:voice不能为空"`
+	Dur      int    `json:"dur" form:"dur" param:"dur" query:"dur" validate:"required" msg:"required:dur不能为空"`
 }

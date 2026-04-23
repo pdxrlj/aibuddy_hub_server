@@ -4,6 +4,7 @@ package repository
 import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
+	"context"
 	"errors"
 	"time"
 
@@ -110,4 +111,9 @@ func (r *NFCRepository) GetNfcDataByDeviceID(deviceID string, startTime, endTime
 	}
 
 	return nfcData, nil
+}
+
+// CreateDeviceNFC 创建NFC
+func (r *NFCRepository) CreateDeviceNFC(_ context.Context, nfc *model.NFC) error {
+	return query.NFC.Create(nfc)
 }

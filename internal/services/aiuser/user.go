@@ -1118,12 +1118,56 @@ func (s *Service) GetConvMessageList(ctx context.Context, uid int64, deviceID, t
 	return dtoMessages, total, nil
 }
 
+// fillSenderInfo 填充消息发送方信息（用户ID查user表，设备MAC查DeviceInfo）
+func (s *Service) fillSenderInfo(dto *device.MessageDTO, msg *model.DeviceMessage, getUser func(string) (*model.User, error)) {
+	if device.IsUserID(msg.FromDeviceID) {
+		if user, err := getUser(msg.FromDeviceID); err == nil {
+			dto.FromUsername = user.Nickname
+			dto.FromAvatar = user.Avatar
+		}
+	} else if msg.Device != nil && msg.Device.DeviceInfo != nil {
+		dto.FromAvatar = msg.Device.DeviceInfo.Avatar
+		dto.FromUsername = msg.Device.DeviceInfo.NickName
+	}
+
+	if device.IsUserID(msg.ToDeviceID) {
+		if user, err := getUser(msg.ToDeviceID); err == nil {
+			dto.ToUsername = user.Nickname
+			dto.ToAvatar = user.Avatar
+		}
+	} else if msg.ToDevice != nil && msg.ToDevice.DeviceInfo != nil {
+		dto.ToAvatar = msg.ToDevice.DeviceInfo.Avatar
+		dto.ToUsername = msg.ToDevice.DeviceInfo.NickName
+	}
+}
+
+// newGetUserFunc 创建带缓存的用户查询函数
+func (s *Service) newGetUserFunc() func(string) (*model.User, error) {
+	userCache := make(map[int64]*model.User)
+	return func(idStr string) (*model.User, error) {
+		uid, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		if u, ok := userCache[uid]; ok {
+			return u, nil
+		}
+		u, err := s.UserRepo.FindUserByUserID(uid)
+		if err != nil {
+			return nil, err
+		}
+		userCache[uid] = u
+		return u, nil
+	}
+}
+
 // toMessageDTO 将 DeviceMessage 列表转换为 MessageDTO 列表
 func (s *Service) toMessageDTO(messages []*model.DeviceMessage) []*device.MessageDTO {
+	getUser := s.newGetUserFunc()
+
 	result := make([]*device.MessageDTO, 0, len(messages))
 	for _, msg := range messages {
 		dto := &device.MessageDTO{
-			ID:           msg.ID,
 			MsgID:        msg.MsgID,
 			FromDeviceID: msg.FromDeviceID,
 			ToDeviceID:   msg.ToDeviceID,
@@ -1134,16 +1178,9 @@ func (s *Service) toMessageDTO(messages []*model.DeviceMessage) []*device.Messag
 			CreatedAt:    time.Time(msg.CreatedAt).Format(time.DateTime),
 			UpdatedAt:    time.Time(msg.UpdatedAt).Format(time.DateTime),
 		}
-		// 从 Device.DeviceInfo 获取头像和用户名
-		if msg.Device != nil && msg.Device.DeviceInfo != nil {
-			dto.FromAvatar = msg.Device.DeviceInfo.Avatar
-			dto.FromUsername = msg.Device.DeviceInfo.NickName
-		}
-		// 从 ToDevice.DeviceInfo 获取头像和用户名
-		if msg.ToDevice != nil && msg.ToDevice.DeviceInfo != nil {
-			dto.ToAvatar = msg.ToDevice.DeviceInfo.Avatar
-			dto.ToUsername = msg.ToDevice.DeviceInfo.NickName
-		}
+
+		s.fillSenderInfo(dto, msg, getUser)
+
 		result = append(result, dto)
 	}
 

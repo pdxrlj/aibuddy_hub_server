@@ -87,6 +87,9 @@ func RegisterRoutes(base *ahttp.Base) {
 
 			// 根据用户或者好友名称发送消息---- 设备到设备端
 			deviceGroup.POST("/:device_id/send_message_by_name", device.SendMessageByName)
+
+			// 硬件制作nfc的内容
+			deviceGroup.POST("/:device_id/make_nfc", device.MakeDeviceNFC)
 		})
 
 		group.Group("/file", nil, func(fileGroup *ahttp.Group) {

@@ -51,6 +51,8 @@ type Service struct {
 
 	DeviceSnRepo *repository.BindDeviceSnRepo
 
+	NFCRepo *repository.NFCRepository
+
 	FileStorage storage.ObjectStorage[io.ReadCloser]
 
 	// 连接后Hook
@@ -73,6 +75,8 @@ func NewService() *Service {
 		DeviceSnRepo:           repository.NewBindDeviceSnRepo(),
 		OtaResource:            repository.NewDeviceOtaRepo(),
 		OtaResourceRepo:        repository.NewOtaResourceRepo(),
+		NFCRepo:                repository.NewNFCRepository(),
+
 		FileStorage: storage.NewStorage(
 			config.Instance.Storage.OSS.AccessKeyID,
 			config.Instance.Storage.OSS.AccessKeySecret,
@@ -494,7 +498,7 @@ func (d *Service) SendMessageToUser(ctx context.Context, deviceID string, uid in
 
 // GetMessage 获取指定留言（按对话分组）
 func (d *Service) GetMessage(ctx context.Context, deviceID string, page int, pageSize int) ([][]*MessageDTO, int64, error) {
-	_, span := tracer().Start(ctx, "CreateMessage")
+	_, span := tracer().Start(ctx, "GetMessage")
 	defer span.End()
 
 	messages, total, err := d.DeviceMessageRepo.GetMessageFromUser(ctx, deviceID, page, pageSize)
@@ -509,9 +513,29 @@ func (d *Service) GetMessage(ctx context.Context, deviceID string, page int, pag
 	return dtoMessages, total, nil
 }
 
+// GetConvMessageList 获取两个设备之间的对话消息列表
+func (d *Service) GetConvMessageList(ctx context.Context, deviceID, targetDeviceID string, page, pageSize int) ([]*MessageDTO, int64, error) {
+	_, span := tracer().Start(ctx, "GetConvMessageList")
+	defer span.End()
+
+	messages, total, err := d.DeviceMessageRepo.GetConvMessageList(ctx, deviceID, targetDeviceID, page, pageSize)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(
+			attribute.String("device_id", deviceID),
+			attribute.String("target_device_id", targetDeviceID),
+			attribute.Int("page", page),
+			attribute.Int("page_size", pageSize),
+		)
+		return nil, 0, err
+	}
+
+	dtoMessages := d.toMessageDTOList(messages)
+	return dtoMessages, total, nil
+}
+
 // MessageDTO 留言响应DTO
 type MessageDTO struct {
-	ID           int    `json:"id"`
 	MsgID        string `json:"msg_id"`
 	FromDeviceID string `json:"from_device_id"`
 	FromUsername string `json:"from_username"`
@@ -527,15 +551,59 @@ type MessageDTO struct {
 	UpdatedAt    string `json:"updated_at"`
 }
 
+// fillSenderInfo 填充消息发送方信息（用户ID查user表，设备MAC查DeviceInfo）
+func (d *Service) fillSenderInfo(dto *MessageDTO, msg *model.DeviceMessage, getUser func(string) (*model.User, error)) {
+	if IsUserID(msg.FromDeviceID) {
+		if user, err := getUser(msg.FromDeviceID); err == nil {
+			dto.FromUsername = user.Nickname
+			dto.FromAvatar = user.Avatar
+		}
+	} else if msg.Device != nil && msg.Device.DeviceInfo != nil {
+		dto.FromAvatar = msg.Device.DeviceInfo.Avatar
+		dto.FromUsername = msg.Device.DeviceInfo.NickName
+	}
+
+	if IsUserID(msg.ToDeviceID) {
+		if user, err := getUser(msg.ToDeviceID); err == nil {
+			dto.ToUsername = user.Nickname
+			dto.ToAvatar = user.Avatar
+		}
+	} else if msg.ToDevice != nil && msg.ToDevice.DeviceInfo != nil {
+		dto.ToAvatar = msg.ToDevice.DeviceInfo.Avatar
+		dto.ToUsername = msg.ToDevice.DeviceInfo.NickName
+	}
+}
+
+// newGetUserFunc 创建带缓存的用户查询函数
+func (d *Service) newGetUserFunc() func(string) (*model.User, error) {
+	userCache := make(map[int64]*model.User)
+	return func(idStr string) (*model.User, error) {
+		uid, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		if u, ok := userCache[uid]; ok {
+			return u, nil
+		}
+		u, err := d.UserRepo.FindUserByUserID(uid)
+		if err != nil {
+			return nil, err
+		}
+		userCache[uid] = u
+		return u, nil
+	}
+}
+
 // ToMessageDTO 将 DeviceMessage 列表转换为按对话分组的 MessageDTO 列表
 // 返回格式: [][]*MessageDTO，每个子数组代表与同一个聊天对象的所有消息
 func (d *Service) ToMessageDTO(messages []*model.DeviceMessage) [][]*MessageDTO {
+	getUser := d.newGetUserFunc()
+
 	// 按对话双方分组，确保 A->B 和 B->A 的消息在同一个组
 	groups := make(map[string][]*MessageDTO)
 
 	for _, msg := range messages {
 		dto := &MessageDTO{
-			ID:           msg.ID,
 			MsgID:        msg.MsgID,
 			FromDeviceID: msg.FromDeviceID,
 			ToDeviceID:   msg.ToDeviceID,
@@ -546,16 +614,8 @@ func (d *Service) ToMessageDTO(messages []*model.DeviceMessage) [][]*MessageDTO 
 			CreatedAt:    time.Time(msg.CreatedAt).Format(time.DateTime),
 			UpdatedAt:    time.Time(msg.UpdatedAt).Format(time.DateTime),
 		}
-		// 从 Device.DeviceInfo 获取头像
-		if msg.Device != nil && msg.Device.DeviceInfo != nil {
-			dto.FromAvatar = msg.Device.DeviceInfo.Avatar
-			dto.FromUsername = msg.Device.DeviceInfo.NickName
-		}
-		// 从 ToDevice.DeviceInfo 获取头像
-		if msg.ToDevice != nil && msg.ToDevice.DeviceInfo != nil {
-			dto.ToAvatar = msg.ToDevice.DeviceInfo.Avatar
-			dto.ToUsername = msg.ToDevice.DeviceInfo.NickName
-		}
+
+		d.fillSenderInfo(dto, msg, getUser)
 
 		// 生成分组key：将两个deviceID排序后拼接，确保双向对话在同一组
 		key := makeConversationKey(msg.FromDeviceID, msg.ToDeviceID)
@@ -577,6 +637,37 @@ func makeConversationKey(id1, id2 string) string {
 		return id1 + ":" + id2
 	}
 	return id2 + ":" + id1
+}
+
+// IsUserID 判断是否为用户ID（纯数字），而非设备MAC地址（包含冒号）
+func IsUserID(id string) bool {
+	_, err := strconv.ParseInt(id, 10, 64)
+	return err == nil
+}
+
+// toMessageDTOList 将 DeviceMessage 列表转换为 MessageDTO 列表
+func (d *Service) toMessageDTOList(messages []*model.DeviceMessage) []*MessageDTO {
+	getUser := d.newGetUserFunc()
+
+	result := make([]*MessageDTO, 0, len(messages))
+	for _, msg := range messages {
+		dto := &MessageDTO{
+			MsgID:        msg.MsgID,
+			FromDeviceID: msg.FromDeviceID,
+			ToDeviceID:   msg.ToDeviceID,
+			Content:      msg.Content,
+			Fmt:          msg.Fmt.String(),
+			Dur:          msg.Dur,
+			Read:         msg.Read,
+			CreatedAt:    time.Time(msg.CreatedAt).Format(time.DateTime),
+			UpdatedAt:    time.Time(msg.UpdatedAt).Format(time.DateTime),
+		}
+
+		d.fillSenderInfo(dto, msg, getUser)
+
+		result = append(result, dto)
+	}
+	return result
 }
 
 // AccountInfo 账户信息
@@ -771,4 +862,53 @@ func (d *Service) sendToFamily(ctx context.Context, deviceInfo *model.Device, re
 		}
 	}
 	return errors.New("家庭成员中未找到匹配的接收人")
+}
+
+// MakeDevicePayload 制作NFC的参数
+type MakeDevicePayload struct {
+	DeviceID string
+	NFCID    string
+	Ctype    string
+	Title    string
+	Voice    string
+	Dur      int
+}
+
+// MakeDeviceNFC 硬件制作nfc的内容
+func (d *Service) MakeDeviceNFC(ctx context.Context, payload *MakeDevicePayload) error {
+	_, span := tracer().Start(ctx, "DeviceService.MakeDeviceNFC")
+	defer span.End()
+
+	deviceInfo, err := d.GetDeviceInfo(ctx, payload.DeviceID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", payload.DeviceID))
+		return err
+	}
+	if deviceInfo == nil || deviceInfo.DeviceInfo == nil {
+		span.RecordError(errors.New("无法查询到完整的设备信息"))
+		span.SetAttributes(attribute.String("device_id", payload.DeviceID))
+		return errors.New("无法查询到完整的设备信息")
+	}
+
+	uid := deviceInfo.UID
+
+	err = d.NFCRepo.CreateDeviceNFC(ctx, &model.NFC{
+		DeviceID: payload.DeviceID,
+		NFCID:    payload.NFCID,
+		UID:      uid,
+		Cid:      helpers.GenerateNumber(10),
+		Ctype:    payload.Ctype,
+		Title:    payload.Title,
+		Voice:    payload.Voice,
+		Status:   model.NFCPaid,
+		Dur:      payload.Dur,
+	})
+	if err != nil {
+		span.RecordError(err)
+		span.SetAttributes(attribute.String("device_id", payload.DeviceID), attribute.String("nfc_id", payload.NFCID))
+		return err
+	}
+
+	return nil
 }
