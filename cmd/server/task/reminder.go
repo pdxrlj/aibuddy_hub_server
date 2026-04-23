@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand/v2"
+	"time"
 
 	"github.com/hibiken/asynq"
 	"gorm.io/gorm"
@@ -61,9 +62,8 @@ func ReminderHandler(_ context.Context, t *asynq.Task) error {
 		}
 		return nil
 	}
-
 	// 计算下次提醒事件
-	info.ComputedNextReminderTime()
+	info.NextReminderTime = cmputedNextReminderTime(info.ReminderTime, info.NextReminderTime, info.RepeatType)
 
 	manager := NewManager()
 	taskID := fmt.Sprintf("remind_%d_%d", info.ID, rand.IntN(100))
@@ -78,4 +78,26 @@ func ReminderHandler(_ context.Context, t *asynq.Task) error {
 		return err
 	}
 	return nil
+}
+
+// cmputedNextReminderTime 计算下次提醒时间
+func cmputedNextReminderTime(remindTime time.Time, nextTime time.Time, repeatType model.RepeatType) time.Time {
+	if nextTime.Unix() <= 0 {
+		nextTime = remindTime
+	}
+	switch repeatType {
+	case model.RepeatTypeNone:
+		nextTime = remindTime
+	case model.RepeatTypeDaily:
+		nextTime = remindTime.AddDate(0, 0, 1)
+	case model.RepeatTypeWeekly:
+		nextTime = remindTime.AddDate(0, 0, 7)
+	case model.RepeatTypeMonthly:
+		nextTime = remindTime.AddDate(0, 1, 0)
+	case model.RepeatTypeYearly:
+		nextTime = remindTime.AddDate(1, 0, 0)
+	default:
+		nextTime = remindTime
+	}
+	return nextTime
 }
