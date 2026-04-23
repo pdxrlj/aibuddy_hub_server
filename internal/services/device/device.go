@@ -893,6 +893,13 @@ func (d *Service) MakeDeviceNFC(ctx context.Context, payload *MakeDevicePayload)
 
 	uid := deviceInfo.UID
 
+	// 将相同nfc_id的已有NFC设置为失效
+	if invErr := d.NFCRepo.UpdateNFCStatusInvalidByNFCID(payload.NFCID); invErr != nil {
+		span.RecordError(invErr)
+		span.SetAttributes(attribute.String("nfc_id", payload.NFCID))
+		return invErr
+	}
+
 	err = d.NFCRepo.CreateDeviceNFC(ctx, &model.NFC{
 		DeviceID: payload.DeviceID,
 		NFCID:    payload.NFCID,
