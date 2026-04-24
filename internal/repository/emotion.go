@@ -5,10 +5,12 @@ import (
 	"aibuddy/internal/model"
 	"aibuddy/internal/query"
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
 	"gorm.io/gen"
+	"gorm.io/gorm"
 )
 
 // EmotionRepo is the repository for the emotion
@@ -41,6 +43,9 @@ func (r *EmotionRepo) GetUnreadCount(ctx context.Context, deviceID string) (int6
 		Order(query.Emotion.ID.Desc()).
 		First()
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, nil, nil
+		}
 		return 0, nil, err
 	}
 	count, err := query.Emotion.WithContext(ctx).

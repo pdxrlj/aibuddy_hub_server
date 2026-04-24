@@ -81,12 +81,12 @@ func (s *Service) HandleConnect(uid int64, w http.ResponseWriter, r *http.Reques
 
 // HandleMessage 处理消息
 func (s *Service) HandleMessage(session *melody.Session, msg []byte) {
-	uid, ok := session.Get("uid")
-	if !ok {
-		slog.Error("uid is required")
-		return
-	}
-	slog.Info("[Websocket] HandleMessage", "uid", uid, "message", string(msg))
+	// uid, ok := session.Get("uid")
+	// if !ok {
+	// 	slog.Error("uid is required")
+	// 	return
+	// }
+	// slog.Info("[Websocket] HandleMessage", "uid", uid, "message", string(msg))
 
 	var frame struct {
 		Type     FrameType       `json:"type"`

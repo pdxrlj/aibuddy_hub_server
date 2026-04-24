@@ -6,8 +6,11 @@ import (
 	"aibuddy/internal/repository"
 	"aibuddy/pkg/mqtt"
 	"context"
+	"errors"
 	"log/slog"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // InitInfoHandler 初始化状态信息处理器
@@ -36,13 +39,13 @@ func (h *InitInfoHandler) Handle(ctx *mqtt.Context) {
 // DeviceUserInfo 发送设备用户信息到设备
 func (h *InitInfoHandler) DeviceUserInfo(deviceID string) {
 	userInfo, err := h.DeviceRepo.GetDeviceInfo(context.Background(), deviceID)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		slog.Error("[MQTT] InitInfoHandler get device info failed", "device_id", deviceID, "error", err)
 		return
 	}
 
 	if userInfo == nil {
-		slog.Error("[MQTT] InitInfoHandler user info not found", "device_id", deviceID)
+		slog.Warn("[MQTT] InitInfoHandler user info not found, device not bound", "device_id", deviceID)
 		return
 	}
 

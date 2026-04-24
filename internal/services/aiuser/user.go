@@ -1009,6 +1009,9 @@ func (s *Service) GetMyInfo(ctx context.Context, uid int64, deviceID string) (*M
 	if err != nil {
 		return nil, err
 	}
+	if info == nil || info.DeviceInfo == nil {
+		return nil, fmt.Errorf("设备信息不存在: %s", deviceID)
+	}
 	_ = uid
 	// 获取好友数量
 	_, friendCount, err := s.deviceService.GetFriends(ctx, deviceID, 1, 1)

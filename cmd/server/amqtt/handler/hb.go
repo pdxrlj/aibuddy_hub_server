@@ -70,5 +70,6 @@ func (h *HbHandler) Handle(ctx *mqtt.Context) {
 		Type:     websocket.FrameTypeOnline,
 		Message:  hardwareJSON,
 	}
+	slog.Info("[HB]", "event", "接收到硬件心跳上报，发送设备上线消息")
 	websocket.SendMessage(cast.ToString(device.UID), onlineFrame)
 }

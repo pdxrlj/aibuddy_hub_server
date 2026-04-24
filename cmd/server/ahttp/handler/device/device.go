@@ -8,6 +8,7 @@ import (
 	"aibuddy/pkg/config"
 	"log/slog"
 	"strconv"
+	"time"
 
 	"github.com/cespare/xxhash/v2"
 	"github.com/spf13/cast"
@@ -61,6 +62,7 @@ func (d *Device) FirstOnline(state *ahttp.State, req *FirstOnlineRequest) error 
 			UserID:     req.DeviceID,
 			InstanceID: instanceID,
 		},
+		CurrentTime: time.Now(),
 	})
 }
 
@@ -134,7 +136,7 @@ func (d *Device) GetFriends(state *ahttp.State, req *GetFriendsRequest) error {
 	}
 
 	return state.Response().Success(&GetFriendsResponse{
-		Total:   total,
+		Total:   total + 1,
 		Page:    req.Page,
 		Size:    req.Size,
 		Friends: friendsResponse,

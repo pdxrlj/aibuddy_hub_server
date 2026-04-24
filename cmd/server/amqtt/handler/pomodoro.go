@@ -53,7 +53,7 @@ func (h *PomodoroHandler) Handle(ctx *mqtt.Context) {
 			pomodoroClock.DistractionRecord = recordJSON
 		}
 	}
-
+	slog.Info("[pomodoro]", "event", "学习模式", "payload", pomodoroClock)
 	if err := h.PomodoroClockRepo.Create(context.Background(), pomodoroClock); err != nil {
 		slog.Error("[MQTT] PomodoroHandler create pomodoro clock failed", "device_id", deviceID, "error", err)
 		return

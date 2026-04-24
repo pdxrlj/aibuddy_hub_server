@@ -4,6 +4,7 @@ package management
 import (
 	"aibuddy/aiframe"
 	"aibuddy/pkg/mqtt"
+	"log/slog"
 )
 
 // SendBoundToDevice 发送绑定信息到设备
@@ -12,7 +13,7 @@ func (m *Mgmt) SendBoundToDevice(deviceID string) error {
 	if err != nil {
 		return err
 	}
-
+	slog.Info("[MQTT]", "event", "绑定通知")
 	return mqtt.Instance.Publish(aiframe.MQTTBoundTopic(deviceID), 1, false, payload)
 }
 
@@ -25,6 +26,6 @@ func SendUnboundToDevice(deviceID string) error {
 	if err != nil {
 		return err
 	}
-
+	slog.Info("[MQTT]", "event", "解绑通知")
 	return mqtt.Instance.Publish(aiframe.MQTTUnbindTopic(deviceID), 1, false, payload)
 }

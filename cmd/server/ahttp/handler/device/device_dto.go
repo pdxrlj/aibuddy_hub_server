@@ -1,5 +1,7 @@
 package devicehandler
 
+import "time"
+
 // FirstOnlineRequest 设备第一次上线请求
 type FirstOnlineRequest struct {
 	DeviceID string `json:"device_id" form:"device_id" param:"device_id" query:"device_id" validate:"required,mac"`
@@ -12,6 +14,8 @@ type FirstOnlineResponse struct {
 	MQTTConfig *MQTTConfig `json:"mqtt_config"`
 
 	DeviceInfo *DeviceInfo `json:"device_info"`
+
+	CurrentTime time.Time `json:"current_time"`
 }
 
 // MQTTConfig MQTT配置
