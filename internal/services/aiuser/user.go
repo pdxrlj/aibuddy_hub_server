@@ -417,6 +417,7 @@ func (s *Service) CompleteProfile(ctx context.Context, uid int64, boardType, rel
 			Avatar: user.Avatar,
 			Sn:     sn,
 		}
+
 		if err := mMgmt.SendBoundToDevice(d.DeviceID); err != nil {
 			span.RecordError(err)
 			span.SetAttributes(attribute.String("device_id", d.DeviceID))

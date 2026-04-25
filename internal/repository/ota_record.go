@@ -18,9 +18,10 @@ func NewOtaResourceRepo() *OtaResourceRepo {
 }
 
 // GetLatestOtaResource 获取最新的OTA资源
-func (r *OtaResourceRepo) GetLatestOtaResource(ctx context.Context, currentVersion string) (*model.OtaResource, error) {
+func (r *OtaResourceRepo) GetLatestOtaResource(ctx context.Context, boardType, currentVersion string) (*model.OtaResource, error) {
 	resources, err := query.OtaResource.WithContext(ctx).
 		Order(query.OtaResource.ID.Desc()).
+		Where(query.OtaResource.BoardType.Eq(boardType)).
 		Find()
 	if err != nil {
 		return nil, err

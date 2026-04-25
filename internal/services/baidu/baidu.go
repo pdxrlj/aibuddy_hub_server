@@ -39,6 +39,8 @@ type ConfigRequest struct {
 
 	SceneRole string `json:"sceneRole,omitempty"`
 
+	// AsrVad int `json:"asr_vad,omitempty"`
+
 	EmotionRecognitionCfg *EmotionRecognitionCfg `json:"emotion_recognition_cfg,omitempty"`
 }
 
@@ -102,6 +104,11 @@ func buildConfigStr(cfg *ConfigRequest, voiceID, roleName string) (string, error
 	if roleName != "" {
 		cfg.SceneRole = roleName
 	}
+
+	// if cfg.AsrVad == 0 {
+	// 	cfg.AsrVad = 500
+	// }
+
 	fmt.Println("当前构建的房间的请求参数信息:")
 	helpers.PP(cfg)
 

@@ -13,7 +13,7 @@ func (m *Mgmt) SendBoundToDevice(deviceID string) error {
 	if err != nil {
 		return err
 	}
-	slog.Info("[MQTT]", "event", "绑定通知")
+	slog.Info("[MQTT]", "event", "绑定通知", "payload", m)
 	return mqtt.Instance.Publish(aiframe.MQTTBoundTopic(deviceID), 1, false, payload)
 }
 
@@ -26,6 +26,6 @@ func SendUnboundToDevice(deviceID string) error {
 	if err != nil {
 		return err
 	}
-	slog.Info("[MQTT]", "event", "解绑通知")
+	slog.Info("[MQTT]", "event", "解绑通知", "payload", unbound)
 	return mqtt.Instance.Publish(aiframe.MQTTUnbindTopic(deviceID), 1, false, payload)
 }

@@ -104,7 +104,8 @@ func (r *EmotionRepo) GetEmotionsByDeviceID(ctx context.Context, deviceID string
 			return d
 		}).
 		Where(query.Emotion.DeviceID.Eq(deviceID)).
-		Where(query.Emotion.CreatedAt.Between(startTime, endTime)).
+		Where(query.Emotion.CreatedAt.Gte(model.LocalTime(startTime))).
+		Where(query.Emotion.CreatedAt.Lte(model.LocalTime(endTime))).
 		Order(query.Emotion.CreatedAt.Desc()).
 		Find()
 }

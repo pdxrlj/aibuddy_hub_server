@@ -34,6 +34,7 @@ func newOtaResource(db *gorm.DB, opts ...gen.DOOption) otaResource {
 	_otaResource.ModelURL = field.NewString(tableName, "model_url")
 	_otaResource.ResourceURL = field.NewString(tableName, "resource_url")
 	_otaResource.ForceUpdate = field.NewBool(tableName, "force_update")
+	_otaResource.BoardType = field.NewString(tableName, "board_type")
 	_otaResource.CreatedAt = field.NewTime(tableName, "created_at")
 	_otaResource.UpdatedAt = field.NewTime(tableName, "updated_at")
 
@@ -52,6 +53,7 @@ type otaResource struct {
 	ModelURL    field.String // 模型下载地址
 	ResourceURL field.String // 资源下载地址
 	ForceUpdate field.Bool   // 是否强制更新
+	BoardType   field.String // 板型
 	CreatedAt   field.Time
 	UpdatedAt   field.Time
 
@@ -76,6 +78,7 @@ func (o *otaResource) updateTableName(table string) *otaResource {
 	o.ModelURL = field.NewString(table, "model_url")
 	o.ResourceURL = field.NewString(table, "resource_url")
 	o.ForceUpdate = field.NewBool(table, "force_update")
+	o.BoardType = field.NewString(table, "board_type")
 	o.CreatedAt = field.NewTime(table, "created_at")
 	o.UpdatedAt = field.NewTime(table, "updated_at")
 
@@ -94,13 +97,14 @@ func (o *otaResource) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (o *otaResource) fillFieldMap() {
-	o.fieldMap = make(map[string]field.Expr, 8)
+	o.fieldMap = make(map[string]field.Expr, 9)
 	o.fieldMap["id"] = o.ID
 	o.fieldMap["version"] = o.Version
 	o.fieldMap["ota_url"] = o.OtaURL
 	o.fieldMap["model_url"] = o.ModelURL
 	o.fieldMap["resource_url"] = o.ResourceURL
 	o.fieldMap["force_update"] = o.ForceUpdate
+	o.fieldMap["board_type"] = o.BoardType
 	o.fieldMap["created_at"] = o.CreatedAt
 	o.fieldMap["updated_at"] = o.UpdatedAt
 }

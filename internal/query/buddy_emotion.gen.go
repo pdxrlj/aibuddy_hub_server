@@ -44,8 +44,8 @@ func newEmotion(db *gorm.DB, opts ...gen.DOOption) emotion {
 	_emotion.EmotionalRisk = field.NewField(tableName, "emotional_risk")
 	_emotion.OverallAssessment = field.NewString(tableName, "overall_assessment")
 	_emotion.Read = field.NewBool(tableName, "read")
-	_emotion.CreatedAt = field.NewTime(tableName, "created_at")
-	_emotion.UpdatedAt = field.NewTime(tableName, "updated_at")
+	_emotion.CreatedAt = field.NewField(tableName, "created_at")
+	_emotion.UpdatedAt = field.NewField(tableName, "updated_at")
 
 	_emotion.fillFieldMap()
 
@@ -72,8 +72,8 @@ type emotion struct {
 	EmotionalRisk      field.Field   // 情绪风险
 	OverallAssessment  field.String  // 整体评估
 	Read               field.Bool    // 是否已读
-	CreatedAt          field.Time    // 创建时间
-	UpdatedAt          field.Time    // 更新时间
+	CreatedAt          field.Field   // 创建时间
+	UpdatedAt          field.Field   // 更新时间
 
 	fieldMap map[string]field.Expr
 }
@@ -106,8 +106,8 @@ func (e *emotion) updateTableName(table string) *emotion {
 	e.EmotionalRisk = field.NewField(table, "emotional_risk")
 	e.OverallAssessment = field.NewString(table, "overall_assessment")
 	e.Read = field.NewBool(table, "read")
-	e.CreatedAt = field.NewTime(table, "created_at")
-	e.UpdatedAt = field.NewTime(table, "updated_at")
+	e.CreatedAt = field.NewField(table, "created_at")
+	e.UpdatedAt = field.NewField(table, "updated_at")
 
 	e.fillFieldMap()
 

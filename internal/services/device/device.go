@@ -674,9 +674,20 @@ func (d *Service) OtaCheck(ctx context.Context, deviceID, currentVersion string)
 	_, span := tracer().Start(ctx, "DeviceService.OtaCheck")
 	defer span.End()
 
-	_ = deviceID
+	deviceInfo, err := d.DeviceRepo.GetDeviceInfo(ctx, deviceID)
+	if err != nil {
+		span.RecordError(err)
+		slog.Error("[OtaCheck] get device info failed", "error", err)
+		return nil, err
+	}
+	if deviceInfo == nil {
+		span.RecordError(errors.New("device not found"))
+		return nil, errors.New("device not found")
+	}
 
-	latestOta, err := d.OtaResourceRepo.GetLatestOtaResource(ctx, currentVersion)
+	boardType := deviceInfo.BoardType
+
+	latestOta, err := d.OtaResourceRepo.GetLatestOtaResource(ctx, boardType, currentVersion)
 	if err != nil {
 		span.RecordError(err)
 		slog.Error("[OtaCheck] get latest ota resource failed", "error", err)

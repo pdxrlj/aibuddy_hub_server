@@ -13,6 +13,8 @@ type OtaResource struct {
 	ResourceURL string `gorm:"column:resource_url;type:varchar(255);not null;comment:资源下载地址;"`
 	ForceUpdate bool   `gorm:"column:force_update;type:boolean;not null;default:false;comment:是否强制更新;"`
 
+	BoardType string `gorm:"column:board_type;type:varchar(255);default:nl;not null;comment:板型;"`
+
 	CreatedAt time.Time `gorm:"column:created_at;type:timestamp;not null;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;type:timestamp;not null;"`
 }
